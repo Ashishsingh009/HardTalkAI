@@ -6,6 +6,15 @@ HardTalkAI lets you rehearse high-stakes conversations — asking for a raise, g
 critical feedback, saying no — against an AI counterpart that reacts to your tone, and
 gives you live coaching on clarity, empathy, and assertiveness.
 
+## How it works
+
+![How HardTalkAI works: the browser talks to the React/Vite web UI, which proxies to the Express API and coaching engine; the counterpart reply and live scores flow back to you. The practice loop: 1) pick a scenario, 2) talk to the AI, 3) get live coaching scores, 4) refine and retry.](docs/how-it-works.svg)
+
+1. **Pick a scenario** — ask for a raise, give critical feedback, or say no to extra work.
+2. **Talk to the AI** — it role-plays the counterpart and reacts to your tone.
+3. **Get live coaching** — each message is scored on clarity, empathy, and assertiveness, with specific tips.
+4. **Refine & retry** — adjust your wording and watch the counterpart warm up.
+
 ## Stack
 
 - **`packages/server`** — Express + TypeScript API. Serves scenarios and runs the
