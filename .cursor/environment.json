@@ -1,0 +1,18 @@
+{
+  "name": "HardTalkAI",
+  "install": "pnpm install --frozen-lockfile",
+  "terminals": [
+    {
+      "name": "server",
+      "command": "pnpm --filter @hardtalkai/server dev"
+    },
+    {
+      "name": "web",
+      "command": "pnpm --filter @hardtalkai/web dev"
+    }
+  ],
+  "ports": [
+    { "name": "web", "port": 5173 },
+    { "name": "server", "port": 3001 }
+  ]
+}
