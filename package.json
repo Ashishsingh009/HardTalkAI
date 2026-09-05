@@ -1,0 +1,21 @@
+{
+  "name": "hardtalkai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Flight Simulator for Difficult Conversations",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.33.3",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./packages/*\" dev",
+    "build": "pnpm --filter @hardtalkai/server build && pnpm --filter @hardtalkai/web build",
+    "start": "pnpm --filter @hardtalkai/server start",
+    "typecheck": "pnpm --filter @hardtalkai/server typecheck && pnpm --filter @hardtalkai/web typecheck",
+    "test": "pnpm --filter @hardtalkai/server test"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
