@@ -1,14 +1,16 @@
 {
   "name": "HardTalkAI",
-  "install": "pnpm install --frozen-lockfile",
+  "install": "pnpm install --frozen-lockfile\n./gradlew --no-daemon :shared:build :server:build -x test",
   "terminals": [
     {
       "name": "server",
-      "command": "pnpm --filter @hardtalkai/server dev"
+      "command": "./gradlew --no-daemon :server:run",
+      "description": "Ktor API (Kotlin) on :3001, using the shared coaching engine"
     },
     {
       "name": "web",
-      "command": "pnpm --filter @hardtalkai/web dev"
+      "command": "pnpm --filter @hardtalkai/web dev",
+      "description": "React + Vite web app on :5173 (proxies /api to :3001)"
     }
   ],
   "ports": [

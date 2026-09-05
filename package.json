@@ -9,11 +9,13 @@
   },
   "packageManager": "pnpm@10.33.3",
   "scripts": {
-    "dev": "pnpm --parallel --filter \"./packages/*\" dev",
-    "build": "pnpm --filter @hardtalkai/server build && pnpm --filter @hardtalkai/web build",
-    "start": "pnpm --filter @hardtalkai/server start",
-    "typecheck": "pnpm --filter @hardtalkai/server typecheck && pnpm --filter @hardtalkai/web typecheck",
-    "test": "pnpm --filter @hardtalkai/server test"
+    "dev:web": "pnpm --filter @hardtalkai/web dev",
+    "dev:server": "./gradlew :server:run",
+    "build:web": "pnpm --filter @hardtalkai/web build",
+    "build:server": "./gradlew :server:build",
+    "typecheck": "pnpm --filter @hardtalkai/web typecheck",
+    "test:web": "pnpm --filter @hardtalkai/web test --if-present",
+    "test:jvm": "./gradlew :shared:jvmTest :server:test"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild"]

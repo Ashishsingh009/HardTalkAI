@@ -1,114 +1,112 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 590" width="960" height="590" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 616" width="960" height="616" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#64748b" />
     </marker>
-    <marker id="arrowAccent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6" />
-    </marker>
   </defs>
 
   <!-- panel -->
-  <rect x="2" y="2" width="956" height="586" rx="16" fill="#0f172a" stroke="#334155" stroke-width="1.5" />
+  <rect x="2" y="2" width="956" height="612" rx="16" fill="#0f172a" stroke="#334155" stroke-width="1.5" />
 
   <!-- header -->
   <text x="40" y="46" fill="#e2e8f0" font-size="26" font-weight="700">How HardTalkAI works</text>
-  <text x="40" y="72" fill="#94a3b8" font-size="14">Rehearse a difficult conversation, then get instant coaching on how you said it.</text>
+  <text x="40" y="72" fill="#94a3b8" font-size="14">One Kotlin Multiplatform engine, shared across every app and the server.</text>
 
-  <!-- ============ Architecture band ============ -->
-  <!-- N1 You -->
-  <rect x="40" y="120" width="170" height="96" rx="12" fill="#1e293b" stroke="#334155" />
-  <text x="125" y="162" text-anchor="middle" fill="#e2e8f0" font-size="18" font-weight="700">You</text>
-  <text x="125" y="186" text-anchor="middle" fill="#94a3b8" font-size="12">in the browser</text>
+  <!-- ================= KMP architecture ================= -->
+  <!-- Hero: shared module -->
+  <rect x="230" y="94" width="500" height="66" rx="12" fill="#273449" stroke="#6366f1" stroke-width="2" />
+  <text x="480" y="123" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="700">:shared - Kotlin Multiplatform (KMP)</text>
+  <text x="480" y="145" text-anchor="middle" fill="#94a3b8" font-size="12">coaching engine / scenarios / message scoring / serializable DTOs</text>
 
-  <!-- N2 Web -->
-  <rect x="270" y="120" width="170" height="96" rx="12" fill="#1e293b" stroke="#334155" />
-  <text x="355" y="156" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="700">Web UI</text>
-  <text x="355" y="178" text-anchor="middle" fill="#94a3b8" font-size="12">React + Vite</text>
-  <text x="355" y="196" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600">:5173</text>
+  <!-- dashed connectors: shared compiled into every target -->
+  <line x1="255" y1="160" x2="135" y2="208" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" />
+  <line x1="360" y1="160" x2="365" y2="208" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" />
+  <line x1="600" y1="160" x2="595" y2="208" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" />
+  <line x1="705" y1="160" x2="825" y2="208" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" />
+  <text x="480" y="192" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="600">same Kotlin compiled into every target</text>
 
-  <!-- N3 API -->
-  <rect x="500" y="120" width="170" height="96" rx="12" fill="#1e293b" stroke="#334155" />
-  <text x="585" y="156" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="700">API</text>
-  <text x="585" y="178" text-anchor="middle" fill="#94a3b8" font-size="12">Express</text>
-  <text x="585" y="196" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600">:3001</text>
+  <!-- Targets row -->
+  <!-- T1 Web (live) -->
+  <rect x="40" y="210" width="190" height="76" rx="12" fill="#1e293b" stroke="#334155" />
+  <text x="135" y="240" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700">Web app</text>
+  <text x="135" y="260" text-anchor="middle" fill="#94a3b8" font-size="12">React + Vite</text>
+  <text x="135" y="278" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600">:5173</text>
 
-  <!-- N4 Engine -->
-  <rect x="730" y="120" width="190" height="96" rx="12" fill="#1e293b" stroke="#334155" />
-  <text x="825" y="156" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="700">Coaching Engine</text>
-  <text x="825" y="178" text-anchor="middle" fill="#94a3b8" font-size="12">scenarios +</text>
-  <text x="825" y="196" text-anchor="middle" fill="#94a3b8" font-size="12">message scoring</text>
+  <!-- T2 Android (planned) -->
+  <rect x="270" y="210" width="190" height="76" rx="12" fill="#1e293b" stroke="#475569" stroke-dasharray="5 4" />
+  <text x="365" y="240" text-anchor="middle" fill="#cbd5e1" font-size="14" font-weight="700">Android</text>
+  <text x="365" y="260" text-anchor="middle" fill="#94a3b8" font-size="12">Compose</text>
+  <text x="365" y="278" text-anchor="middle" fill="#64748b" font-size="11">(planned)</text>
 
-  <!-- forward arrows -->
-  <line x1="212" y1="168" x2="266" y2="168" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
-  <text x="239" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">opens</text>
+  <!-- T3 iOS (planned) -->
+  <rect x="500" y="210" width="190" height="76" rx="12" fill="#1e293b" stroke="#475569" stroke-dasharray="5 4" />
+  <text x="595" y="240" text-anchor="middle" fill="#cbd5e1" font-size="14" font-weight="700">iOS</text>
+  <text x="595" y="260" text-anchor="middle" fill="#94a3b8" font-size="12">SwiftUI / Compose</text>
+  <text x="595" y="278" text-anchor="middle" fill="#64748b" font-size="11">(planned)</text>
 
-  <line x1="442" y1="168" x2="496" y2="168" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
-  <text x="470" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">/api proxy</text>
+  <!-- T4 Ktor server (live) -->
+  <rect x="730" y="210" width="190" height="76" rx="12" fill="#1e293b" stroke="#334155" />
+  <text x="825" y="240" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700">Ktor server</text>
+  <text x="825" y="260" text-anchor="middle" fill="#94a3b8" font-size="12">Kotlin</text>
+  <text x="825" y="278" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600">:3001</text>
 
-  <line x1="672" y1="168" x2="726" y2="168" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
-  <text x="700" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">analyze</text>
-
-  <!-- feedback return arrow -->
-  <polyline points="825,218 825,250 125,250 125,220" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrowAccent)" />
-  <rect x="360" y="238" width="240" height="22" rx="6" fill="#0f172a" />
-  <text x="480" y="253" text-anchor="middle" fill="#c4b5fd" font-size="12" font-weight="600">counterpart reply + live scores</text>
+  <!-- caption -->
+  <text x="480" y="312" text-anchor="middle" fill="#94a3b8" font-size="12">Web, Android and iOS call the Ktor server over /api (HTTP + JSON) - and can run the same engine on-device, offline.</text>
 
   <!-- divider -->
-  <line x1="40" y1="292" x2="920" y2="292" stroke="#334155" />
+  <line x1="40" y1="336" x2="920" y2="336" stroke="#334155" />
 
-  <!-- ============ Practice loop ============ -->
-  <text x="40" y="322" fill="#e2e8f0" font-size="18" font-weight="700">The practice loop</text>
+  <!-- ================= Practice loop ================= -->
+  <text x="40" y="366" fill="#e2e8f0" font-size="18" font-weight="700">The practice loop</text>
 
   <!-- Card 1 -->
-  <rect x="40" y="342" width="175" height="196" rx="12" fill="#1e293b" stroke="#334155" />
-  <circle cx="70" cy="378" r="16" fill="#6366f1" />
-  <text x="70" y="383" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">1</text>
-  <text x="52" y="418" fill="#e2e8f0" font-size="14" font-weight="700">Pick a scenario</text>
-  <text x="52" y="444" fill="#94a3b8" font-size="12">Ask for a raise, give</text>
-  <text x="52" y="462" fill="#94a3b8" font-size="12">critical feedback, or</text>
-  <text x="52" y="480" fill="#94a3b8" font-size="12">say no to extra work.</text>
+  <rect x="40" y="384" width="175" height="190" rx="12" fill="#1e293b" stroke="#334155" />
+  <circle cx="70" cy="420" r="16" fill="#6366f1" />
+  <text x="70" y="425" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">1</text>
+  <text x="52" y="460" fill="#e2e8f0" font-size="14" font-weight="700">Pick a scenario</text>
+  <text x="52" y="486" fill="#94a3b8" font-size="12">Ask for a raise, give</text>
+  <text x="52" y="504" fill="#94a3b8" font-size="12">critical feedback, or</text>
+  <text x="52" y="522" fill="#94a3b8" font-size="12">say no to extra work.</text>
 
   <!-- Card 2 -->
-  <rect x="275" y="342" width="175" height="196" rx="12" fill="#1e293b" stroke="#334155" />
-  <circle cx="305" cy="378" r="16" fill="#6366f1" />
-  <text x="305" y="383" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">2</text>
-  <text x="287" y="418" fill="#e2e8f0" font-size="14" font-weight="700">Talk to the AI</text>
-  <text x="287" y="444" fill="#94a3b8" font-size="12">It role-plays the</text>
-  <text x="287" y="462" fill="#94a3b8" font-size="12">counterpart and reacts</text>
-  <text x="287" y="480" fill="#94a3b8" font-size="12">to your tone.</text>
+  <rect x="275" y="384" width="175" height="190" rx="12" fill="#1e293b" stroke="#334155" />
+  <circle cx="305" cy="420" r="16" fill="#6366f1" />
+  <text x="305" y="425" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">2</text>
+  <text x="287" y="460" fill="#e2e8f0" font-size="14" font-weight="700">Talk to the AI</text>
+  <text x="287" y="486" fill="#94a3b8" font-size="12">It role-plays the</text>
+  <text x="287" y="504" fill="#94a3b8" font-size="12">counterpart and reacts</text>
+  <text x="287" y="522" fill="#94a3b8" font-size="12">to your tone.</text>
 
   <!-- Card 3 -->
-  <rect x="510" y="342" width="175" height="196" rx="12" fill="#1e293b" stroke="#334155" />
-  <circle cx="540" cy="378" r="16" fill="#6366f1" />
-  <text x="540" y="383" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">3</text>
-  <text x="522" y="418" fill="#e2e8f0" font-size="14" font-weight="700">Get live coaching</text>
-  <!-- score bars -->
-  <text x="522" y="446" fill="#94a3b8" font-size="10">Clarity</text>
-  <rect x="582" y="438" width="95" height="8" rx="4" fill="#0f172a" />
-  <rect x="582" y="438" width="76" height="8" rx="4" fill="#22c55e" />
-  <text x="522" y="470" fill="#94a3b8" font-size="10">Empathy</text>
-  <rect x="582" y="462" width="95" height="8" rx="4" fill="#0f172a" />
-  <rect x="582" y="462" width="66" height="8" rx="4" fill="#84cc16" />
-  <text x="522" y="494" fill="#94a3b8" font-size="10">Assert.</text>
-  <rect x="582" y="486" width="95" height="8" rx="4" fill="#0f172a" />
-  <rect x="582" y="486" width="52" height="8" rx="4" fill="#f59e0b" />
-  <text x="522" y="520" fill="#94a3b8" font-size="11">+ specific tips.</text>
+  <rect x="510" y="384" width="175" height="190" rx="12" fill="#1e293b" stroke="#334155" />
+  <circle cx="540" cy="420" r="16" fill="#6366f1" />
+  <text x="540" y="425" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">3</text>
+  <text x="522" y="460" fill="#e2e8f0" font-size="14" font-weight="700">Get live coaching</text>
+  <text x="522" y="488" fill="#94a3b8" font-size="10">Clarity</text>
+  <rect x="582" y="480" width="95" height="8" rx="4" fill="#0f172a" />
+  <rect x="582" y="480" width="76" height="8" rx="4" fill="#22c55e" />
+  <text x="522" y="512" fill="#94a3b8" font-size="10">Empathy</text>
+  <rect x="582" y="504" width="95" height="8" rx="4" fill="#0f172a" />
+  <rect x="582" y="504" width="66" height="8" rx="4" fill="#84cc16" />
+  <text x="522" y="536" fill="#94a3b8" font-size="10">Assert.</text>
+  <rect x="582" y="528" width="95" height="8" rx="4" fill="#0f172a" />
+  <rect x="582" y="528" width="52" height="8" rx="4" fill="#f59e0b" />
+  <text x="522" y="560" fill="#94a3b8" font-size="11">+ specific tips.</text>
 
   <!-- Card 4 -->
-  <rect x="745" y="342" width="175" height="196" rx="12" fill="#1e293b" stroke="#334155" />
-  <circle cx="775" cy="378" r="16" fill="#6366f1" />
-  <text x="775" y="383" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">4</text>
-  <text x="757" y="418" fill="#e2e8f0" font-size="14" font-weight="700">Refine &amp; retry</text>
-  <text x="757" y="444" fill="#94a3b8" font-size="12">Adjust your wording</text>
-  <text x="757" y="462" fill="#94a3b8" font-size="12">and watch the</text>
-  <text x="757" y="480" fill="#94a3b8" font-size="12">counterpart warm up.</text>
+  <rect x="745" y="384" width="175" height="190" rx="12" fill="#1e293b" stroke="#334155" />
+  <circle cx="775" cy="420" r="16" fill="#6366f1" />
+  <text x="775" y="425" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">4</text>
+  <text x="757" y="460" fill="#e2e8f0" font-size="14" font-weight="700">Refine &amp; retry</text>
+  <text x="757" y="486" fill="#94a3b8" font-size="12">Adjust your wording</text>
+  <text x="757" y="504" fill="#94a3b8" font-size="12">and watch the</text>
+  <text x="757" y="522" fill="#94a3b8" font-size="12">counterpart warm up.</text>
 
   <!-- loop arrows between cards -->
-  <line x1="217" y1="440" x2="273" y2="440" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
-  <line x1="452" y1="440" x2="508" y2="440" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
-  <line x1="687" y1="440" x2="743" y2="440" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+  <line x1="217" y1="478" x2="273" y2="478" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+  <line x1="452" y1="478" x2="508" y2="478" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+  <line x1="687" y1="478" x2="743" y2="478" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
 
   <!-- footer -->
-  <text x="40" y="566" fill="#64748b" font-size="12">Runs fully offline. The coaching engine needs no API keys.</text>
+  <text x="40" y="600" fill="#64748b" font-size="12">Runs fully offline. The coaching engine needs no API keys.</text>
 </svg>

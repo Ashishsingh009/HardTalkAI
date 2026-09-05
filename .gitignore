@@ -1,9 +1,15 @@
 node_modules/
 dist/
-build/
 .DS_Store
 *.log
 .env
 .env.local
 coverage/
 .vite/
+
+# Gradle / Kotlin / JVM
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+*.class
+.kotlin/
