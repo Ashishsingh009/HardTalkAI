@@ -9,11 +9,13 @@
   },
   "packageManager": "pnpm@10.33.3",
   "scripts": {
-    "dev": "pnpm --parallel --filter \"./packages/*\" dev",
-    "build": "pnpm --filter @hardtalkai/server build && pnpm --filter @hardtalkai/web build",
-    "start": "pnpm --filter @hardtalkai/server start",
-    "typecheck": "pnpm --filter @hardtalkai/server typecheck && pnpm --filter @hardtalkai/web typecheck",
-    "test": "pnpm --filter @hardtalkai/server test"
+    "dev:web": "pnpm --filter @hardtalkai/web dev",
+    "dev:server": ".venv/bin/uvicorn app.main:app --app-dir server --reload --port 3001",
+    "build:web": "pnpm --filter @hardtalkai/web build",
+    "typecheck": "pnpm --filter @hardtalkai/web typecheck",
+    "test:web": "pnpm --filter @hardtalkai/web test --if-present",
+    "test:server": "cd server && ../.venv/bin/python -m pytest",
+    "test:shared": "./gradlew :shared:jvmTest"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild"]
