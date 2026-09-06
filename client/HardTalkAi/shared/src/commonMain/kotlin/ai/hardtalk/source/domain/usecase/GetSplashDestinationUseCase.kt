@@ -1,6 +1,6 @@
 package ai.hardtalk.source.domain.usecase
 
-import ai.hardtalk.source.domain.model.SplashDestination
+import ai.hardtalk.source.domain.model.NavigationDestination
 import ai.hardtalk.source.domain.repository.SplashRepository
 
 /**
@@ -10,7 +10,7 @@ import ai.hardtalk.source.domain.repository.SplashRepository
 class GetSplashDestinationUseCase(
     private val repository: SplashRepository
 ) {
-    suspend operator fun invoke(): Result<SplashDestination> {
+    suspend operator fun invoke(): Result<NavigationDestination> {
         return runCatching {
             val result = repository.initializeApp()
             result.destination

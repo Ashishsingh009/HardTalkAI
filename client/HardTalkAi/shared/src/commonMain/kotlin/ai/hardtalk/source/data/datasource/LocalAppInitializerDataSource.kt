@@ -1,8 +1,9 @@
 package ai.hardtalk.source.data.datasource
 
 import ai.hardtalk.source.domain.model.AppInitializationResult
-import ai.hardtalk.source.domain.model.SplashDestination
+import ai.hardtalk.source.domain.model.NavigationDestination
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Local implementation of initialization data source.
@@ -15,12 +16,12 @@ class LocalAppInitializerDataSource(
     override suspend fun loadInitialData(): AppInitializationResult {
         // Enforce minimum splash delay for branding/smooth entrance animation
         if (splashDelayMs > 0) {
-            delay(splashDelayMs)
+            delay(splashDelayMs.milliseconds)
         }
 
         // Simulate determining destination based on local/remote data
         return AppInitializationResult(
-            destination = SplashDestination.HOME,
+            destination = NavigationDestination.HOME,
             isUserLoggedIn = true,
             isFirstLaunch = false
         )

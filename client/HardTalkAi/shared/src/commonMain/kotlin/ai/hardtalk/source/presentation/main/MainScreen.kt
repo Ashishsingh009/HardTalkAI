@@ -1,6 +1,6 @@
 package ai.hardtalk.source.presentation.main
 
-import ai.hardtalk.source.domain.model.SplashDestination
+import ai.hardtalk.source.domain.model.NavigationDestination
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
  * Home/Main destination screen reached after successful splash screen initialization.
  */
 @Composable
-fun MainScreen(destination: SplashDestination) {
+fun MainScreen(destination: NavigationDestination) {
     Box(
         modifier = Modifier
             .fillMaxSize()

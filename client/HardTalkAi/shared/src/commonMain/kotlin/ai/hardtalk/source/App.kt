@@ -1,6 +1,6 @@
 package ai.hardtalk.source
 
-import ai.hardtalk.source.domain.model.SplashDestination
+import ai.hardtalk.source.domain.model.NavigationDestination
 import ai.hardtalk.source.presentation.main.MainScreen
 import ai.hardtalk.source.presentation.splash.SplashScreen
 import androidx.compose.animation.Crossfade
@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 @Preview
 fun App() {
     MaterialTheme {
-        var destination by remember { mutableStateOf<SplashDestination?>(null) }
+        var destination by remember { mutableStateOf<NavigationDestination?>(null) }
 
         Crossfade(
             targetState = destination,

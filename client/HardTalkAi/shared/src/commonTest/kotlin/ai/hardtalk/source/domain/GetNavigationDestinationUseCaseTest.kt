@@ -1,7 +1,7 @@
 package ai.hardtalk.source.domain
 
 import ai.hardtalk.source.domain.model.AppInitializationResult
-import ai.hardtalk.source.domain.model.SplashDestination
+import ai.hardtalk.source.domain.model.NavigationDestination
 import ai.hardtalk.source.domain.repository.SplashRepository
 import ai.hardtalk.source.domain.usecase.GetSplashDestinationUseCase
 import kotlinx.coroutines.test.runTest
@@ -9,11 +9,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class GetSplashDestinationUseCaseTest {
+class GetNavigationDestinationUseCaseTest {
 
     private class FakeSplashRepository(
         private val shouldFail: Boolean = false,
-        private val destination: SplashDestination = SplashDestination.HOME
+        private val destination: NavigationDestination = NavigationDestination.HOME
     ) : SplashRepository {
         override suspend fun initializeApp(): AppInitializationResult {
             if (shouldFail) {
@@ -29,13 +29,13 @@ class GetSplashDestinationUseCaseTest {
 
     @Test
     fun `invoke returns success destination when repository succeeds`() = runTest {
-        val fakeRepository = FakeSplashRepository(destination = SplashDestination.HOME)
+        val fakeRepository = FakeSplashRepository(destination = NavigationDestination.HOME)
         val useCase = GetSplashDestinationUseCase(fakeRepository)
 
         val result = useCase()
 
         assertTrue(result.isSuccess)
-        assertEquals(SplashDestination.HOME, result.getOrNull())
+        assertEquals(NavigationDestination.HOME, result.getOrNull())
     }
 
     @Test

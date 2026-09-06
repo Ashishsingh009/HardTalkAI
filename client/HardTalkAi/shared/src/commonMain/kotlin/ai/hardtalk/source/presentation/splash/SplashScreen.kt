@@ -1,6 +1,6 @@
 package ai.hardtalk.source.presentation.splash
 
-import ai.hardtalk.source.domain.model.SplashDestination
+import ai.hardtalk.source.domain.model.NavigationDestination
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import hardtalkai.shared.generated.resources.Res
 import hardtalkai.shared.generated.resources.compose_multiplatform
 import org.jetbrains.compose.resources.painterResource
@@ -46,8 +47,8 @@ import org.jetbrains.compose.resources.painterResource
  */
 @Composable
 fun SplashScreen(
-    viewModel: SplashViewModel = SplashViewModel(),
-    onNavigateNext: (SplashDestination) -> Unit,
+    viewModel: SplashViewModel = viewModel { SplashViewModel() },
+    onNavigateNext: (NavigationDestination) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
