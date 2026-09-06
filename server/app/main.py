@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+import logging
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from . import ai
+from .coach import respond
+from .models import ChatRequest, HealthResponse, ScenariosResponse
+from .scenarios import SCENARIOS, find_scenario
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-5s %(name)s - %(message)s")
+logger = logging.getLogger("hardtalkai")
+
+app = FastAPI(title="HardTalkAI", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+
+def _error(status: int, message: str) -> JSONResponse:
+    return JSONResponse(status_code=status, content={"error": message})
+
+
+@app.get("/api/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    return HealthResponse(status="ok", engine=ai.engine_name(), scenarios=len(SCENARIOS))
+
+
+@app.get("/api/scenarios", response_model=ScenariosResponse)
+def scenarios() -> ScenariosResponse:
+    return ScenariosResponse(scenarios=SCENARIOS)
+
+
+@app.post("/api/chat")
+def chat(body: ChatRequest) -> JSONResponse:
+    scenario_id = (body.scenarioId or "").strip()
+    if not scenario_id:
+        return _error(400, "scenarioId is required")
+
+    message = (body.message or "").strip()
+    if not message:
+        return _error(400, "message is required")
+
+    scenario = find_scenario(scenario_id)
+    if scenario is None:
+        return _error(404, f"Unknown scenario: {scenario_id}")
+
+    result = respond(scenario, body.history, message)
+    return JSONResponse(content=result.model_dump())

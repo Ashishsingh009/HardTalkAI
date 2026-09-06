@@ -1,11 +1,11 @@
 {
   "name": "HardTalkAI",
-  "install": "pnpm install --frozen-lockfile\n./gradlew --no-daemon :shared:build :server:build -x test",
+  "install": "sudo apt-get update -y\nsudo apt-get install -y python3-venv\npnpm install --frozen-lockfile\npython3 -m venv .venv\n.venv/bin/pip install --upgrade pip\n.venv/bin/pip install -r server/requirements-dev.txt",
   "terminals": [
     {
       "name": "server",
-      "command": "./gradlew --no-daemon :server:run",
-      "description": "Ktor API (Kotlin) on :3001, using the shared coaching engine"
+      "command": ".venv/bin/uvicorn app.main:app --app-dir server --host 0.0.0.0 --port 3001 --reload",
+      "description": "FastAPI backend on :3001 (coaching engine + optional LLM). Set OPENAI_API_KEY to enable AI replies."
     },
     {
       "name": "web",

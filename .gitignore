@@ -13,3 +13,9 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 *.class
 .kotlin/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
