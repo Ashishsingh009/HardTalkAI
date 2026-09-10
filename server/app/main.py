@@ -32,8 +32,8 @@ def _error(status: int, message: str) -> JSONResponse:
     return JSONResponse(status_code=status, content={"error": message})
 
 
-@app.get("/privacy")
-@app.get("/privacy.html")
+@app.get("/privacy", response_model=None)
+@app.get("/privacy.html", response_model=None)
 def privacy_policy() -> FileResponse | JSONResponse:
     if not PRIVACY_HTML.is_file():
         return _error(404, "Privacy policy is not available")
