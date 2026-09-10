@@ -66,7 +66,7 @@ fun ScenarioListScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Three short drills — not an open-ended chat.",
+                text = "Three short career drills — not an open-ended chat.",
                 color = HardTalkColors.TextMuted,
                 fontSize = 13.sp,
             )

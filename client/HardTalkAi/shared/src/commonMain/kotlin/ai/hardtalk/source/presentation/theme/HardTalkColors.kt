@@ -1,5 +1,6 @@
 package ai.hardtalk.source.presentation.theme
 
+import ai.hardtalk.source.domain.model.CounterpartTone
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
@@ -17,6 +18,8 @@ object HardTalkColors {
     val WarmUp = Color(0xFF34D399)
     val Moderate = Color(0xFFFBBF24)
     val Hard = Color(0xFFF87171)
+    val Coach = Color(0xFFC4B5FD)
+    val TakeawaySurface = Color(0xFF312E81)
 
     val ScreenGradient = Brush.verticalGradient(
         colors = listOf(Background, BackgroundMid, Background),
@@ -33,4 +36,10 @@ fun difficultyColor(difficulty: String): Color = when (difficulty.lowercase()) {
 fun scoreColor(value: Int): Color {
     val hue = (value.coerceIn(0, 100) / 100f) * 120f
     return Color.hsv(hue, 0.70f, 0.55f)
+}
+
+fun moodColor(tone: CounterpartTone): Color = when (tone) {
+    CounterpartTone.WARMING -> HardTalkColors.WarmUp
+    CounterpartTone.GUARDED -> HardTalkColors.Hard
+    CounterpartTone.NEUTRAL -> HardTalkColors.Moderate
 }

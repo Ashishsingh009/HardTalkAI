@@ -30,9 +30,12 @@ gives you live coaching on clarity, empathy, and assertiveness.
   `:shared` (Ktor Client + kotlinx.serialization DTOs matching the FastAPI models). Hosts
   stay thin: `androidApp` / `iosApp` only start `App()`. Mobile does **not** embed a second
   coaching engine — it calls `/api` like web.
-- **Android** — practice loop (scenario pick → up to three scored turns → retry), not an
+- **Android** — practice loop (scenario pick → up to three scored turns → recap → retry), not an
   open-ended chat. The three FastAPI scenarios stay: ask for a raise, give critical
-  feedback, say no. Debug default API base URL is `http://10.0.2.2:3001`
+  feedback, say no. After each turn the mobile client shows the same coaching payload
+  as web (clarity / empathy / assertiveness, tips, counterpart mood) plus score history
+  across the round. After the third turn a summary names how scores moved and **one
+  thing to try next**. Debug default API base URL is `http://10.0.2.2:3001`
   (emulator → host FastAPI).
 - **iOS** — same shared UI; simulator default is `http://127.0.0.1:3001`. Android is the
   current end-to-end success path.
@@ -81,9 +84,11 @@ itself. Use **`http://10.0.2.2:3001`**, which is Android's alias for the host lo
    The scenario list shows the active base URL at the top.
 
 3. Complete a practice round: pick a scenario → send a reply → confirm clarity / empathy /
-   assertiveness under your turn. After three scored turns the composer closes; **Try this
-   scenario again** resets to the opening line. **Choose another scenario** returns to the
-   list (still the same three drills).
+   assertiveness, tips, and a score sparkline under your turn. Coach Heather's panel
+   frames the drill goals and how the counterpart is showing up. After three scored
+   turns the composer closes on a **round recap** (how scores moved + one takeaway);
+   **Try this scenario again** resets to the opening line. **Choose another scenario**
+   returns to the list (still the same three drills).
 
 **Physical device:** the phone cannot see `10.0.2.2`. Pass your machine's LAN IP (and keep
 uvicorn on `--host 0.0.0.0`):
