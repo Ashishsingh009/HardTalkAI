@@ -13,32 +13,32 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
-    scenario: Scenario,
+    private val scenario: Scenario,
     private val practiceRepository: PracticeRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        ChatUiState(
-            scenario = scenario,
-            messages = listOf(
-                ChatMessage(role = ChatRole.COUNTERPART, content = scenario.opening),
-            ),
-            mood = scenario.persona.mood,
-        ),
-    )
+    private var attemptId = 0
+
+    private val _uiState = MutableStateFlow(initialState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
     fun onInputChange(value: String) {
         _uiState.update { it.copy(input = value) }
     }
 
+    fun retryScenario() {
+        attemptId += 1
+        _uiState.value = initialState()
+    }
+
     fun send() {
         val current = _uiState.value
         val message = current.input.trim()
-        if (message.isEmpty() || current.sending) return
+        if (message.isEmpty() || !current.canSend) return
 
         val history = current.messages
         val userTurn = ChatMessage(role = ChatRole.USER, content = message)
+        val capturedAttempt = attemptId
         _uiState.update {
             it.copy(
                 messages = it.messages + userTurn,
@@ -56,6 +56,7 @@ class ChatViewModel(
                     history = history,
                 )
             }.onSuccess { result ->
+                if (capturedAttempt != attemptId) return@launch
                 _uiState.update { state ->
                     val withFeedback = state.messages.mapIndexed { index, turn ->
                         if (index == state.messages.lastIndex && turn.role == ChatRole.USER) {
@@ -74,6 +75,7 @@ class ChatViewModel(
                     )
                 }
             }.onFailure { error ->
+                if (capturedAttempt != attemptId) return@launch
                 _uiState.update {
                     it.copy(
                         sending = false,
@@ -83,4 +85,12 @@ class ChatViewModel(
             }
         }
     }
+
+    private fun initialState(): ChatUiState = ChatUiState(
+        scenario = scenario,
+        messages = listOf(
+            ChatMessage(role = ChatRole.COUNTERPART, content = scenario.opening),
+        ),
+        mood = scenario.persona.mood,
+    )
 }

@@ -4,6 +4,7 @@ import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
 import ai.hardtalk.source.domain.model.Feedback
 import ai.hardtalk.source.domain.model.Persona
+import ai.hardtalk.source.domain.model.PracticeLoop
 import ai.hardtalk.source.domain.model.ReplyResult
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.repository.PracticeRepository
@@ -76,6 +77,48 @@ class PracticeViewModelTest {
         assertEquals("Walk me through the number.", after.messages[2].content)
         assertEquals("curious", after.mood)
         assertEquals("", after.input)
+        assertEquals(1, after.scoredUserTurns)
+        assertTrue(after.canRetry)
+        assertFalse(after.roundComplete)
+    }
+
+    @Test
+    fun `retryScenario restores opening and clears scores`() = runTest {
+        val viewModel = ChatViewModel(sampleScenario(), FakePracticeRepository())
+        viewModel.onInputChange("I shipped 3 launches and would like a raise.")
+        viewModel.send()
+        viewModel.retryScenario()
+
+        val reset = viewModel.uiState.value
+        assertEquals(1, reset.messages.size)
+        assertEquals(ChatRole.COUNTERPART, reset.messages[0].role)
+        assertEquals(sampleScenario().opening, reset.messages[0].content)
+        assertEquals(sampleScenario().persona.mood, reset.mood)
+        assertEquals(0, reset.scoredUserTurns)
+        assertFalse(reset.canRetry)
+        assertFalse(reset.roundComplete)
+        assertEquals("", reset.input)
+        assertEquals(null, reset.error)
+    }
+
+    @Test
+    fun `practice round ends after max scored turns and ignores further sends`() = runTest {
+        val viewModel = ChatViewModel(sampleScenario(), FakePracticeRepository())
+        repeat(PracticeLoop.MAX_USER_TURNS) { index ->
+            viewModel.onInputChange("Attempt ${index + 1} with a clear ask and evidence.")
+            viewModel.send()
+        }
+
+        val complete = viewModel.uiState.value
+        assertTrue(complete.roundComplete)
+        assertEquals(PracticeLoop.MAX_USER_TURNS, complete.scoredUserTurns)
+        assertFalse(complete.canSend)
+        val sizeAfterRound = complete.messages.size
+
+        viewModel.onInputChange("This should not send.")
+        viewModel.send()
+        assertEquals(sizeAfterRound, viewModel.uiState.value.messages.size)
+        assertTrue(viewModel.uiState.value.roundComplete)
     }
 
     @Test

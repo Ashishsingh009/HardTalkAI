@@ -3,6 +3,7 @@ package ai.hardtalk.source.presentation.chat
 import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
 import ai.hardtalk.source.domain.model.Feedback
+import ai.hardtalk.source.domain.model.PracticeLoop
 import ai.hardtalk.source.presentation.theme.HardTalkColors
 import ai.hardtalk.source.presentation.theme.difficultyColor
 import ai.hardtalk.source.presentation.theme.scoreColor
@@ -27,6 +28,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -50,7 +52,7 @@ fun ChatScreen(
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
 
-    LaunchedEffect(uiState.messages.size, uiState.sending) {
+    LaunchedEffect(uiState.messages.size, uiState.sending, uiState.roundComplete) {
         val lastIndex = uiState.messages.lastIndex
         if (lastIndex >= 0) {
             listState.animateScrollToItem(lastIndex)
@@ -70,8 +72,13 @@ fun ChatScreen(
             difficulty = uiState.scenario.difficulty,
             personaName = uiState.scenario.persona.name,
             mood = uiState.mood,
+            scoredTurns = uiState.scoredUserTurns,
+            canRetry = uiState.canRetry,
             onBack = onBack,
+            onRetry = viewModel::retryScenario,
         )
+
+        GoalsStrip(goals = uiState.scenario.goals)
 
         uiState.error?.let { message ->
             Text(
@@ -101,7 +108,7 @@ fun ChatScreen(
             if (uiState.sending) {
                 item {
                     Text(
-                        text = "${uiState.scenario.persona.name} is thinking…",
+                        text = "${uiState.scenario.persona.name} is scoring your reply…",
                         color = HardTalkColors.TextMuted,
                         fontSize = 13.sp,
                         modifier = Modifier.padding(start = 8.dp),
@@ -110,13 +117,21 @@ fun ChatScreen(
             }
         }
 
-        Composer(
-            value = uiState.input,
-            enabled = !uiState.sending,
-            placeholder = "Respond to ${uiState.scenario.persona.name}…",
-            onValueChange = viewModel::onInputChange,
-            onSend = viewModel::send,
-        )
+        if (uiState.roundComplete) {
+            RoundCompleteBar(
+                feedback = uiState.lastFeedback,
+                onRetry = viewModel::retryScenario,
+                onPickAnother = onBack,
+            )
+        } else {
+            Composer(
+                value = uiState.input,
+                enabled = uiState.canSend,
+                placeholder = "Practice your reply to ${uiState.scenario.persona.name}…",
+                onValueChange = viewModel::onInputChange,
+                onSend = viewModel::send,
+            )
+        }
     }
 }
 
@@ -126,7 +141,10 @@ private fun ChatHeader(
     difficulty: String,
     personaName: String,
     mood: String,
+    scoredTurns: Int,
+    canRetry: Boolean,
     onBack: () -> Unit,
+    onRetry: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -138,6 +156,11 @@ private fun ChatHeader(
                 Text("← Scenarios", color = HardTalkColors.AccentMuted)
             }
             Spacer(modifier = Modifier.weight(1f))
+            if (canRetry) {
+                TextButton(onClick = onRetry) {
+                    Text("Try again", color = HardTalkColors.AccentMuted)
+                }
+            }
             Text(
                 text = difficulty,
                 color = difficultyColor(difficulty),
@@ -157,8 +180,42 @@ private fun ChatHeader(
             text = "$personaName · Mood: $mood",
             color = HardTalkColors.TextSecondary,
             fontSize = 13.sp,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
         )
+        Text(
+            text = "Turn ${scoredTurns.coerceAtMost(PracticeLoop.MAX_USER_TURNS)} of ${PracticeLoop.MAX_USER_TURNS} · practice → score → retry",
+            color = HardTalkColors.TextMuted,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+        )
+    }
+}
+
+@Composable
+private fun GoalsStrip(goals: List<String>) {
+    if (goals.isEmpty()) return
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(HardTalkColors.Surface)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = "This round's goals",
+            color = HardTalkColors.TextSecondary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        goals.forEach { goal ->
+            Text(
+                text = "• $goal",
+                color = HardTalkColors.TextMuted,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
     }
 }
 
@@ -205,7 +262,7 @@ private fun FeedbackCard(feedback: Feedback) {
             .padding(12.dp),
     ) {
         Text(
-            text = "Coaching · overall ${feedback.overall}",
+            text = "Score · overall ${feedback.overall}",
             color = HardTalkColors.TextSecondary,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
@@ -262,6 +319,62 @@ private fun ScoreRow(label: String, value: Int) {
             fontSize = 12.sp,
             modifier = Modifier.padding(start = 8.dp),
         )
+    }
+}
+
+@Composable
+private fun RoundCompleteBar(
+    feedback: Feedback?,
+    onRetry: () -> Unit,
+    onPickAnother: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(HardTalkColors.Surface)
+            .padding(16.dp),
+    ) {
+        Text(
+            text = "Round complete",
+            color = HardTalkColors.TextPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = "Refine your wording and retry this drill — this is not an open chat.",
+            color = HardTalkColors.TextMuted,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+        )
+        if (feedback != null) {
+            Text(
+                text = "Latest: Clarity ${feedback.clarity} · Empathy ${feedback.empathy} · Assertiveness ${feedback.assertiveness}",
+                color = HardTalkColors.TextSecondary,
+                fontSize = 13.sp,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+        Button(
+            onClick = onRetry,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = HardTalkColors.Accent,
+                contentColor = HardTalkColors.TextPrimary,
+            ),
+            shape = RoundedCornerShape(12.dp),
+        ) {
+            Text("Try this scenario again")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = onPickAnother,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+        ) {
+            Text("Choose another scenario", color = HardTalkColors.AccentMuted)
+        }
     }
 }
 

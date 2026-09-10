@@ -13,7 +13,9 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
     folder is the appropriate location.
 
 `:shared` talks to the FastAPI backend (`GET /api/scenarios`, `POST /api/chat`). There is no
-on-device coaching engine — scores and counterpart replies come from the server.
+on-device coaching engine — scores and counterpart replies come from the server. The Android
+loop is practice → score → retry (three existing scenarios, three scored turns per round),
+not an open-ended chat.
 
 ### Running the apps
 

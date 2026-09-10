@@ -60,9 +60,15 @@ fun ScenarioListScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Pick a scenario to practice",
+                text = "Practice · score · retry",
                 color = HardTalkColors.TextSecondary,
                 fontSize = 16.sp,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Three short drills — not an open-ended chat.",
+                color = HardTalkColors.TextMuted,
+                fontSize = 13.sp,
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(

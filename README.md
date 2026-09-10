@@ -30,8 +30,10 @@ gives you live coaching on clarity, empathy, and assertiveness.
   `:shared` (Ktor Client + kotlinx.serialization DTOs matching the FastAPI models). Hosts
   stay thin: `androidApp` / `iosApp` only start `App()`. Mobile does **not** embed a second
   coaching engine — it calls `/api` like web.
-- **Android** — runnable practice loop (scenario list → chat → scores). Debug default API
-  base URL is `http://10.0.2.2:3001` (emulator → host FastAPI).
+- **Android** — practice loop (scenario pick → up to three scored turns → retry), not an
+  open-ended chat. The three FastAPI scenarios stay: ask for a raise, give critical
+  feedback, say no. Debug default API base URL is `http://10.0.2.2:3001`
+  (emulator → host FastAPI).
 - **iOS** — same shared UI; simulator default is `http://127.0.0.1:3001`. Android is the
   current end-to-end success path.
 
@@ -78,9 +80,10 @@ itself. Use **`http://10.0.2.2:3001`**, which is Android's alias for the host lo
    Debug builds already point at `http://10.0.2.2:3001` (`BuildConfig.API_BASE_URL`).
    The scenario list shows the active base URL at the top.
 
-3. Complete one practice turn: pick a scenario → type a reply → Send. You should see the
-   counterpart message plus coaching scores (clarity / empathy / assertiveness) and tips
-   under your turn. Mood is shown in the chat header.
+3. Complete a practice round: pick a scenario → send a reply → confirm clarity / empathy /
+   assertiveness under your turn. After three scored turns the composer closes; **Try this
+   scenario again** resets to the opening line. **Choose another scenario** returns to the
+   list (still the same three drills).
 
 **Physical device:** the phone cannot see `10.0.2.2`. Pass your machine's LAN IP (and keep
 uvicorn on `--host 0.0.0.0`):
