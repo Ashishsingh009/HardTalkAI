@@ -16,8 +16,8 @@
 | D3 | RevenueCat / free-tier paywall | **Blocked** | Needs RevenueCat keys + Play products. Raise is `free: true` in the catalog only — **not** a gate. Do not implement. |
 | D4 | Career catalog → 10 manager drills | **Done** (open PR) | [#7](https://github.com/Ashishsingh009/HardTalkAI/pull/7) `cursor/career-scenarios-d4-00ac` |
 | D5 | Play listing + privacy | **Partial** (open PR) | [#8](https://github.com/Ashishsingh009/HardTalkAI/pull/8) `cursor/play-listing-d5-d562` — docs + in-app Privacy. **No** Console, **no** AAB upload. |
-| D6 | Demo video | **Script ready; Ashish films** | `docs/shipaton-demo-script.md` (≤2 min, Android preferred) |
-| D7 | Devpost | **Draft ready; Ashish pastes** | `docs/shipaton-devpost.md` |
+| D6 | Demo video | **Script ready; Ashish films** | `docs/shipaton-demo-script.md` (≤2 min, Android preferred). Docs PR [#9](https://github.com/Ashishsingh009/HardTalkAI/pull/9) |
+| D7 | Devpost | **Draft ready; Ashish pastes** | `docs/shipaton-devpost.md` (same PR #9) |
 
 PRs **#1–#4** (env, stale bot, FastAPI, KMP scaffold) are already on `main`. The Shipaton product week is **#5–#8** plus D6/D7 assets.
 
@@ -33,16 +33,16 @@ main
        └─ #6  android-richer-feedback-d177   D2  scores, sparkline, recap
             └─ #7  career-scenarios-d4-00ac      D4  10 drills + Free badge
                  └─ #8  play-listing-d5-d562         D5  privacy + listing stubs
-                      └─ shipaton-d6-d7-prep         D6/D7  this docs PR
+                      └─ #9  shipaton-d6-d7-prep-f533    D6/D7  demo script + Devpost
 ```
 
 1. Merge **#5** into `main`.
 2. Retarget / merge **#6**.
 3. Retarget / merge **#7**.
 4. Retarget / merge **#8**.
-5. Merge the D6/D7 docs PR that stacks on #8.
+5. Merge **#9** (this D6/D7 docs PR).
 
-Do **not** merge #8 (or this docs PR) onto `main` until #5–#7 are in — #8’s base is the D4 catalog branch, not `main`.
+Do **not** merge #8 or **#9** onto `main` until #5–#7 are in — #8’s base is the D4 catalog branch, not `main`.
 
 ---
 
