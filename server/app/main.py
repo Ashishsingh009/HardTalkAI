@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from . import ai
 from .coach import respond
 from .models import ChatRequest, HealthResponse, ScenariosResponse
 from .scenarios import SCENARIOS, find_scenario
+
+# repo-root/docs/privacy-policy.html (this file is server/app/main.py)
+PRIVACY_HTML = Path(__file__).resolve().parents[2] / "docs" / "privacy-policy.html"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-5s %(name)s - %(message)s")
 logger = logging.getLogger("hardtalkai")
@@ -26,6 +30,14 @@ app.add_middleware(
 
 def _error(status: int, message: str) -> JSONResponse:
     return JSONResponse(status_code=status, content={"error": message})
+
+
+@app.get("/privacy")
+@app.get("/privacy.html")
+def privacy_policy() -> FileResponse | JSONResponse:
+    if not PRIVACY_HTML.is_file():
+        return _error(404, "Privacy policy is not available")
+    return FileResponse(PRIVACY_HTML, media_type="text/html; charset=utf-8")
 
 
 @app.get("/api/health", response_model=HealthResponse)

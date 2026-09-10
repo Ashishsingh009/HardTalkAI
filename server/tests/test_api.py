@@ -1,7 +1,11 @@
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.scenarios import FREE_SCENARIO_ID, SCENARIOS
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 client = TestClient(app)
 
@@ -82,3 +86,40 @@ def test_chat_validates_missing_message():
 def test_chat_unknown_scenario():
     res = client.post("/api/chat", json={"scenarioId": "nope", "message": "hi there"})
     assert res.status_code == 404
+
+
+def test_privacy_policy_html():
+    for path in ("/privacy", "/privacy.html"):
+        res = client.get(path)
+        assert res.status_code == 200, path
+        assert "text/html" in res.headers["content-type"]
+        body = res.text.lower()
+        assert "hardtalkai" in body
+        assert "hello@hardtalk.ai" in body
+        assert "aashish2k2@gmail.com" in body
+        assert "openai" in body
+        assert "do not sell" in body
+        assert "prototype" in body
+
+
+def test_play_docs_exist_and_stay_honest():
+    md = (REPO_ROOT / "docs" / "privacy-policy.md").read_text(encoding="utf-8")
+    html = (REPO_ROOT / "docs" / "privacy-policy.html").read_text(encoding="utf-8")
+    listing = (REPO_ROOT / "docs" / "play-store-listing.md").read_text(encoding="utf-8")
+    checklist = (REPO_ROOT / "docs" / "play-console-checklist.md").read_text(encoding="utf-8")
+    for text in (md, html):
+        assert "hello@hardtalk.ai" in text
+        assert "aashish2k2@gmail.com" in text
+        assert "OpenAI" in text
+        assert "prototype" in text.lower()
+        assert "do not sell" in text.lower()
+        assert "RevenueCat" in text or "do not take payments" in text.lower()
+    assert "not legal advice" in md.lower()
+    short = "Practice manager talks. Coach Heather scores clarity, empathy & assertiveness."
+    assert short in listing
+    assert len(short) <= 80
+    assert "Free practice" in listing or "Free badge" in listing
+    assert "Round complete" in listing
+    assert "bundleRelease" in checklist
+    assert "RevenueCat" in checklist
+    assert "Play credentials" in checklist or "credentials" in checklist.lower()

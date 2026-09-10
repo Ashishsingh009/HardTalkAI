@@ -22,6 +22,8 @@ catalog is ~10 career scenarios from the same FastAPI backend for web and Androi
 
 The **ask-for-raise** drill is marked `free` in the catalog (the later free-tier gate). Every scenario stays playable in this build — no paywall, no RevenueCat.
 
+Play Console is not wired in this repo. Privacy stub, store listing draft, screenshot shot list, and an internal-testing checklist live in `docs/` (`privacy-policy.md`, `play-store-listing.md`, `play-console-checklist.md`). Web and Android expose a **Privacy** link; the HTML policy is also served at FastAPI `/privacy`.
+
 ## Architecture
 
 - **`server/`** — **FastAPI** (Python) backend on `:3001`. Serves the coaching engine
@@ -116,6 +118,7 @@ cd server && ../.venv/bin/python -m pytest
 cd client/HardTalkAi && ./gradlew :shared:testAndroidHostTest
 cd client/HardTalkAi && ./gradlew :androidApp:assembleDebug
 pnpm --filter @hardtalkai/web build
+curl -s http://localhost:3001/privacy | head  # privacy stub (needs FastAPI)
 ```
 
 ## Cloud Agent environment
