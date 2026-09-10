@@ -22,6 +22,13 @@ class LiveFastApiPracticeTurnTest {
             return@runBlocking
         }
         assertTrue(scenarios.isNotEmpty(), "API returned no scenarios")
+        assertTrue(
+            scenarios.size in 8..10,
+            "expected 8–10 career scenarios, got ${scenarios.size}",
+        )
+        assertTrue(scenarios.any { it.id == "ask-for-raise" && it.free })
+        assertTrue(scenarios.any { it.id == "give-feedback" })
+        assertTrue(scenarios.any { it.id == "decline-request" })
 
         val scenario = scenarios.first { it.id == "ask-for-raise" }
         val result = api.sendChat(

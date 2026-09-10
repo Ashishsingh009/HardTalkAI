@@ -114,7 +114,7 @@ export function App() {
           <span className="logo" aria-hidden>✈️</span>
           <div>
             <h1>HardTalkAI</h1>
-            <p>Flight Simulator for Difficult Conversations</p>
+            <p>Career Coaching · Coach Heather</p>
           </div>
         </div>
         {active && (
@@ -127,23 +127,40 @@ export function App() {
       {error && <div className="banner error">{error}</div>}
 
       {!active ? (
-        <section className="scenario-grid">
-          {scenarios.length === 0 && !error && <p className="muted">Loading scenarios…</p>}
-          {scenarios.map((s) => (
-            <button key={s.id} className="scenario-card" onClick={() => startScenario(s)}>
-              <span className={`badge badge-${s.difficulty}`}>{s.difficulty}</span>
-              <h3>{s.title}</h3>
-              <p>{s.summary}</p>
-              <div className="persona-line">
-                You'll talk to <strong>{s.persona.name}</strong> — {s.persona.role}
-              </div>
-            </button>
-          ))}
-        </section>
+        <>
+          <p className="catalog-lede">
+            Practice a manager conversation, get scored on clarity, empathy, and
+            assertiveness, then retry. {scenarios.length > 0 ? `${scenarios.length} career drills.` : ""}{" "}
+            The raise is the free-tier practice — the rest stay playable here.
+          </p>
+          <section className="scenario-grid">
+            {scenarios.length === 0 && !error && <p className="muted">Loading scenarios…</p>}
+            {scenarios.map((s) => (
+              <button
+                key={s.id}
+                className={`scenario-card${s.free ? " scenario-card-free" : ""}`}
+                onClick={() => startScenario(s)}
+              >
+                <div className="badge-row">
+                  <span className={`badge badge-${s.difficulty}`}>{s.difficulty}</span>
+                  {s.free && <span className="badge badge-free">Free practice</span>}
+                </div>
+                <h3>{s.title}</h3>
+                <p>{s.summary}</p>
+                <div className="persona-line">
+                  You'll talk to <strong>{s.persona.name}</strong> — {s.persona.role}
+                </div>
+              </button>
+            ))}
+          </section>
+        </>
       ) : (
         <section className="conversation">
           <aside className="scenario-panel">
-            <span className={`badge badge-${active.difficulty}`}>{active.difficulty}</span>
+            <div className="badge-row">
+              <span className={`badge badge-${active.difficulty}`}>{active.difficulty}</span>
+              {active.free && <span className="badge badge-free">Free practice</span>}
+            </div>
             <h2>{active.title}</h2>
             <p>{active.summary}</p>
             <div className="persona-box">

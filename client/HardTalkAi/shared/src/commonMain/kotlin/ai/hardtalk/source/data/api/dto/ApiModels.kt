@@ -18,6 +18,7 @@ data class ScenarioDto(
     val persona: PersonaDto,
     val opening: String,
     val goals: List<String> = emptyList(),
+    val free: Boolean = false,
 )
 
 @Serializable
