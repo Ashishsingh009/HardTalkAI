@@ -24,6 +24,12 @@ The **ask-for-raise** drill is marked `free` in the catalog (the later free-tier
 
 Play Console is not wired in this repo. Privacy stub, store listing draft, screenshot shot list, and an internal-testing checklist live in `docs/` (`privacy-policy.md`, `play-store-listing.md`, `play-console-checklist.md`). Web and Android expose a **Privacy** link; the HTML policy is also served at FastAPI `/privacy`.
 
+Shipaton D6/D7 paste-ready assets (no RevenueCat, no Play upload):
+
+- Demo camera brief (≤2 min, Android preferred): [`docs/shipaton-demo-script.md`](docs/shipaton-demo-script.md)
+- Devpost draft (Career Coaching lane): [`docs/shipaton-devpost.md`](docs/shipaton-devpost.md)
+- Week status + merge order for PRs #5–#8: [`docs/shipaton-week-status.md`](docs/shipaton-week-status.md)
+
 ## Architecture
 
 - **`server/`** — **FastAPI** (Python) backend on `:3001`. Serves the coaching engine
