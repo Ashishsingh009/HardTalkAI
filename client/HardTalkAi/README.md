@@ -35,7 +35,7 @@ Then use the run configurations in your IDE's toolbar, or:
 
 Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 
-- Android / shared tests: `./gradlew :shared:testDebugHostTest`
+- Android / shared tests: `./gradlew :shared:testAndroidHostTest`
 - iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
 
 ---

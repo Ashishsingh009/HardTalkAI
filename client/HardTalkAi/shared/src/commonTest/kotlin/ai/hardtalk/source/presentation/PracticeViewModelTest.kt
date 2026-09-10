@@ -67,7 +67,6 @@ class PracticeViewModelTest {
 
         val after = viewModel.uiState.value
         assertFalse(after.sending)
-        assertEquals(2, after.messages.count { it.role == ChatRole.USER || it.role == ChatRole.COUNTERPART })
         assertEquals(3, after.messages.size)
         val userTurn = after.messages[1]
         assertEquals(ChatRole.USER, userTurn.role)

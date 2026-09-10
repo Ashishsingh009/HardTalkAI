@@ -99,7 +99,7 @@ HTTP (`NSAllowsLocalNetworking`).
 .venv/bin/uvicorn app.main:app --app-dir server --host 0.0.0.0 --port 3001 --reload
 pnpm --filter @hardtalkai/web dev
 cd server && ../.venv/bin/python -m pytest
-cd client/HardTalkAi && ./gradlew :shared:testDebugHostTest
+cd client/HardTalkAi && ./gradlew :shared:testAndroidHostTest
 cd client/HardTalkAi && ./gradlew :androidApp:assembleDebug
 pnpm --filter @hardtalkai/web build
 ```

@@ -18,7 +18,7 @@ class HardTalkApiTest {
     @Test
     fun `getScenarios returns list from FastAPI envelope`() = runTest {
         val api = apiWith(
-            handler = { request ->
+            MockEngine { request ->
                 assertEquals(HttpMethod.Get, request.method)
                 assertTrue(request.url.toString().endsWith("/api/scenarios"))
                 respond(
@@ -38,7 +38,7 @@ class HardTalkApiTest {
     @Test
     fun `sendChat posts scenarioId message and history then parses reply`() = runTest {
         val api = apiWith(
-            handler = { request ->
+            MockEngine { request ->
                 assertEquals(HttpMethod.Post, request.method)
                 assertTrue(request.url.toString().endsWith("/api/chat"))
                 val body = (request.body as TextContent).text
@@ -68,7 +68,7 @@ class HardTalkApiTest {
     @Test
     fun `sendChat surfaces FastAPI error body`() = runTest {
         val api = apiWith(
-            handler = {
+            MockEngine {
                 respond(
                     content = """{"error":"Unknown scenario: nope"}""",
                     status = HttpStatusCode.NotFound,
@@ -83,15 +83,10 @@ class HardTalkApiTest {
         assertEquals("Unknown scenario: nope", error.message)
     }
 
-    private fun apiWith(
-        handler: suspend io.ktor.client.engine.mock.MockRequestHandleScope.(io.ktor.client.request.HttpRequestData) -> io.ktor.client.engine.mock.HttpResponseData,
-    ): HardTalkApi {
-        val engine = MockEngine { request -> handler(request) }
-        return HardTalkApi(
-            baseUrl = "http://10.0.2.2:3001/",
-            client = createHardTalkHttpClient(engine),
-        )
-    }
+    private fun apiWith(engine: MockEngine): HardTalkApi = HardTalkApi(
+        baseUrl = "http://10.0.2.2:3001/",
+        client = createHardTalkHttpClient(engine),
+    )
 
     private val jsonHeaders = headersOf(HttpHeaders.ContentType, "application/json")
 }
