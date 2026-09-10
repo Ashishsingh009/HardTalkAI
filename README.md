@@ -8,7 +8,7 @@ gives you live coaching on clarity, empathy, and assertiveness.
 
 ## How it works
 
-![How HardTalkAI works: a FastAPI backend on :3001 serves scenarios, message scoring, coaching tips, and optional AI-generated counterpart replies. The web app (React + Vite) and planned Android/iOS clients call it over /api (HTTP + JSON). A shared Kotlin Multiplatform module gives the mobile clients shared models and an offline engine. The practice loop: 1) pick a scenario, 2) talk to the AI, 3) get live coaching scores, 4) refine and retry.](docs/how-it-works.svg)
+![How HardTalkAI works: a FastAPI backend on :3001 serves scenarios, message scoring, coaching tips, and optional AI-generated counterpart replies. The web app (React + Vite) and Android/iOS clients call it over /api (HTTP + JSON). A shared Compose Multiplatform module gives the mobile clients shared UI, models, and an HTTP client. The practice loop: 1) pick a scenario, 2) talk to the AI, 3) get live coaching scores, 4) refine and retry.](docs/how-it-works.svg)
 
 1. **Pick a scenario** — ask for a raise, give critical feedback, or say no to extra work.
 2. **Talk to the AI** — it role-plays the counterpart and reacts to your tone.
@@ -26,16 +26,19 @@ gives you live coaching on clarity, empathy, and assertiveness.
     scores/tips are always computed locally, keeping them fast and testable.
 - **`packages/web/`** — React + Vite + TypeScript UI on `:5173`. Scenario picker, chat, and
   a live feedback panel; proxies `/api` to the backend in development.
-- **`shared/`** — Kotlin Multiplatform module for the planned mobile clients: shared models
-  and an offline copy of the coaching engine. The `jvm` target is enabled; `js`,
-  `androidTarget`, and the iOS targets are stubbed in `shared/build.gradle.kts`.
-- **Android / iOS** — planned Compose Multiplatform / SwiftUI clients that call the API and
-  reuse `:shared`.
+- **`client/HardTalkAi/`** — Compose Multiplatform app. Shared UI and networking live in
+  `:shared` (Ktor Client + kotlinx.serialization DTOs matching the FastAPI models). Hosts
+  stay thin: `androidApp` / `iosApp` only start `App()`. Mobile does **not** embed a second
+  coaching engine — it calls `/api` like web.
+- **Android** — runnable practice loop (scenario list → chat → scores). Debug default API
+  base URL is `http://10.0.2.2:3001` (emulator → host FastAPI).
+- **iOS** — same shared UI; simulator default is `http://127.0.0.1:3001`. Android is the
+  current end-to-end success path.
 
 ## Getting started
 
 Requires **Python 3.12+**, Node 20+, and [pnpm](https://pnpm.io) (repo pins `pnpm@10`).
-(JDK 21 + the Gradle wrapper are only needed to work on `:shared`.)
+Android work also needs **JDK 21** and Android Studio / an emulator (API 24+).
 
 ```bash
 pnpm install                                     # web dependencies
@@ -51,14 +54,54 @@ pnpm --filter @hardtalkai/web dev
 
 Then open http://localhost:5173. To enable AI replies: `export OPENAI_API_KEY=sk-...`.
 
+### Android emulator against local FastAPI
+
+The Android emulator cannot use `localhost` to reach your machine — that is the emulator
+itself. Use **`http://10.0.2.2:3001`**, which is Android's alias for the host loopback.
+
+1. Start FastAPI so it is reachable from the emulator (bind all interfaces):
+
+   ```bash
+   .venv/bin/uvicorn app.main:app --app-dir server --host 0.0.0.0 --port 3001 --reload
+   ```
+
+   Confirm with `curl http://localhost:3001/api/health`.
+
+2. From `client/HardTalkAi`, install the Android app (Android Studio **androidApp** run
+   configuration, or Gradle):
+
+   ```bash
+   cd client/HardTalkAi
+   ./gradlew :androidApp:installDebug
+   ```
+
+   Debug builds already point at `http://10.0.2.2:3001` (`BuildConfig.API_BASE_URL`).
+   The scenario list shows the active base URL at the top.
+
+3. Complete one practice turn: pick a scenario → type a reply → Send. You should see the
+   counterpart message plus coaching scores (clarity / empathy / assertiveness) and tips
+   under your turn. Mood is shown in the chat header.
+
+**Physical device:** the phone cannot see `10.0.2.2`. Pass your machine's LAN IP (and keep
+uvicorn on `--host 0.0.0.0`):
+
+```bash
+cd client/HardTalkAi
+./gradlew :androidApp:installDebug -Phardtalk.apiBaseUrl=http://192.168.1.10:3001
+```
+
+**iOS simulator:** the shared default is `http://127.0.0.1:3001`. `Info.plist` allows local
+HTTP (`NSAllowsLocalNetworking`).
+
 ### Useful commands
 
 ```bash
-.venv/bin/uvicorn app.main:app --app-dir server --reload --port 3001  # run the API
-pnpm --filter @hardtalkai/web dev                                     # run the web app
-cd server && ../.venv/bin/python -m pytest                            # backend tests
-./gradlew :shared:jvmTest                                             # shared Kotlin tests
-pnpm --filter @hardtalkai/web build                                  # web production build
+.venv/bin/uvicorn app.main:app --app-dir server --host 0.0.0.0 --port 3001 --reload
+pnpm --filter @hardtalkai/web dev
+cd server && ../.venv/bin/python -m pytest
+cd client/HardTalkAi && ./gradlew :shared:testDebugHostTest
+cd client/HardTalkAi && ./gradlew :androidApp:assembleDebug
+pnpm --filter @hardtalkai/web build
 ```
 
 ## Cloud Agent environment

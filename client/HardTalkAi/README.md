@@ -12,18 +12,30 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
     Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
     folder is the appropriate location.
 
+`:shared` talks to the FastAPI backend (`GET /api/scenarios`, `POST /api/chat`). There is no
+on-device coaching engine — scores and counterpart replies come from the server.
+
 ### Running the apps
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+Start FastAPI from the repo root first:
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+```bash
+.venv/bin/uvicorn app.main:app --app-dir server --host 0.0.0.0 --port 3001 --reload
+```
+
+Then use the run configurations in your IDE's toolbar, or:
+
+- Android app: `./gradlew :androidApp:installDebug`
+  - Emulator default API URL: `http://10.0.2.2:3001` (`10.0.2.2` = host loopback).
+  - Physical device: `./gradlew :androidApp:installDebug -Phardtalk.apiBaseUrl=http://<lan-ip>:3001`
+- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there
+  (simulator default API URL: `http://127.0.0.1:3001`).
 
 ### Running tests
 
 Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 
-- Android tests: `./gradlew :shared:testAndroidHostTest`
+- Android / shared tests: `./gradlew :shared:testDebugHostTest`
 - iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
 
 ---

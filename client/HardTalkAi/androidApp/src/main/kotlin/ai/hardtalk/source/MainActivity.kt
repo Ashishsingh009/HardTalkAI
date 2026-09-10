@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            App()
+            App(apiBaseUrl = BuildConfig.API_BASE_URL)
         }
     }
 }
