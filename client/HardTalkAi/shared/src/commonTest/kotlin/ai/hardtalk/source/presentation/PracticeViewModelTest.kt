@@ -206,4 +206,5 @@ private fun sampleScenario() = Scenario(
     persona = Persona("Dana", "Your engineering manager", "busy"),
     opening = "What did you want to talk about?",
     goals = listOf("State clearly that you want a raise"),
+    free = true,
 )

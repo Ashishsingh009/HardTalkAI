@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .models import Persona, Scenario
 
-# Later free-tier gating (D3 / RevenueCat) should keep this id playable and lock the rest.
+# Android free-tier gating (D3 / RevenueCat) keeps this id playable and locks the rest in the client.
 # Do not enforce that gate in this catalog — every scenario stays callable.
 FREE_SCENARIO_ID = "ask-for-raise"
 

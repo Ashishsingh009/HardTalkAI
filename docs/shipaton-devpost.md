@@ -43,7 +43,7 @@ HardTalkAI is **career coaching**, not open-ended chat.
 3. **Get scored every turn** on clarity, empathy, and assertiveness, plus specific tips (“lead with *I'd like…*”, stop hedging, add a number).
 4. **Retry.** On Android the round is three scored turns, then a **recap**: how overall moved (e.g. 31 → 67), biggest lift, one thing to try next, **Try this scenario again** / **Choose another scenario**.
 
-The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practice** in the catalog. Every scenario is playable in this build — there is no paywall.
+The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practice** in the catalog. On Android the rest of the catalog is locked behind HardTalk Pro (RevenueCat); web stays ungated for this demo.
 
 **Honest about the prototype**
 
@@ -51,7 +51,7 @@ The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practi
 - Coaching scores and tips are computed on our FastAPI server with a deterministic rubric (markers for hedges, “I” asks, empathy, numbers). They do not require an LLM.
 - Counterpart *replies* are canned in-character lines unless the operator sets `OPENAI_API_KEY`. Without a key the app still runs fully offline. We did not enable OpenAI for the default demo so the video is reproducible.
 - Web (`localhost:5173`) shares the catalog and scores. The finite round + recap is the **Android / Compose Multiplatform** loop.
-- No accounts, no analytics SDK, no RevenueCat, no Play upload in this submission.
+- No accounts, no analytics SDK, no Play upload in this submission. Android Pro is wired to RevenueCat (Test Store key, not a store AAB).
 
 ---
 
@@ -63,7 +63,7 @@ Three clients, one coaching API.
 - **React + Vite + TypeScript** web app on `:5173` — scenario grid, conversation, live score bars. Dev proxy to the API.
 - **Kotlin Multiplatform / Compose Multiplatform** (`client/HardTalkAi`) — shared UI, Ktor Client, kotlinx.serialization DTOs that match the FastAPI models. Android is the judged path: catalog with a Free badge, Coach Heather panel, per-turn bars + sparkline, three-turn recap. iOS uses the same shared UI; we did not cut an iOS store build this week.
 
-Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `docs/` so a Console upload is paste, not invention. We did not implement billing or upload an AAB.
+Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `docs/` so a Console upload is paste, not invention. Android billing is RevenueCat Test Store in debug; we did not upload an AAB.
 
 ---
 
@@ -71,7 +71,8 @@ Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `d
 
 - **Keep it a drill, not a chatbot.** The web UI will happily keep scoring turn 4+. Android had to close the composer after three turns and invent a recap from the *existing* feedback payload (no extra API fields). That tension is still visible if you demo web.
 - **Stacking a week of PRs.** D1–D5 landed as stacked branches (`#5` → `#6` → `#7` → `#8`). Catalog size, recap UI, and privacy all assume that merge order. Landing them out of order would drop the Free badge or the recap.
-- **Keys we do not have.** RevenueCat, Play Console, and OpenAI are blocked on Ashish’s accounts. We refused to fake a paywall or a store listing URL. Raise is `free: true` as a catalog hint only.
+- **Play Console and a live Play product.** RevenueCat Android is in the client (entitlement `pro`, monthly `hardtalkai_pro_monthly`). Creating the dashboard product, a `goog_` key, and a signed AAB is still Ashish-only. We did not fake a store listing URL.
+- **OpenAI key.** Live in-character replies stay optional. Raise is `free: true` and stays playable without any cloud billing key.
 - **Scoring that is demoable without an LLM.** A rubric that punishes “maybe / just / if that's okay” and rewards “I'd like” + a number is easy to game and easy to show. We accepted that honesty: it is a coaching *gym*, not a judge of real performance reviews.
 
 ---
@@ -96,8 +97,7 @@ Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `d
 
 ## What's next
 
-- **RevenueCat** free-tier gate: keep raise playable, lock the rest (needs SDK keys + Play products). Not started on purpose.
-- **Play Console** internal testing: signed AAB, hosted privacy URL, screenshots from `docs/play-store-listing.md`. Blocked on account access.
+- **Play Console** internal testing: signed AAB, hosted privacy URL, screenshots from `docs/play-store-listing.md`. Blocked on account access. Swap the Test Store `test_` key for a `goog_` Play key before any store upload.
 - **OpenAI replies** in the demo environment so Dana/Sam are less canned, with the same local scores.
 - Later, not this submission: voice rehearsal, iOS store, real persistence. We will not pretend those shipped.
 
@@ -105,7 +105,7 @@ Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `d
 
 ## Built with
 
-Python, FastAPI, Uvicorn, Pydantic, OpenAI API (optional), React, TypeScript, Vite, Kotlin, Kotlin Multiplatform, Compose Multiplatform, Ktor, kotlinx.serialization, Android, Material 3, pytest, Gradle
+Python, FastAPI, Uvicorn, Pydantic, OpenAI API (optional), React, TypeScript, Vite, Kotlin, Kotlin Multiplatform, Compose Multiplatform, Ktor, kotlinx.serialization, Android, Material 3, RevenueCat, pytest, Gradle
 
 *(Devpost tag list — tick what the form offers, paste the rest into “other”:)*
 

@@ -1,6 +1,6 @@
 # Play Console checklist (when access lands)
 
-Play Console is **not** available yet. Nothing here requires Play credentials in the repo. Do **not** add RevenueCat for this drop.
+Play Console is **not** available yet. Nothing here requires Play credentials in the repo. RevenueCat Android wiring lives in the app + [`revenuecat-android.md`](revenuecat-android.md).
 
 Privacy text, listing copy, and the screenshot shot list already live in:
 
@@ -60,7 +60,7 @@ Min SDK is whatever the version catalog says (API 24+). No separate iOS store bu
 4. Release notes (internal):
 
    ```
-   First internal build: career catalog, scored practice round, recap. Prototype — no IAP.
+   First internal build: career catalog, scored practice round, recap. Raise is free; other drills use HardTalk Pro (RevenueCat).
    ```
 
 5. **Testers** tab → email list (or Google Group) → add Ashish + whoever should install
@@ -85,16 +85,29 @@ Internal testing still needs a **package name**, **AAB**, and usually **App sign
 
 In-app **Privacy** (web header + Android catalog) already points at this policy. After you host Pages, you can change `LegalLinks.PRIVACY_POLICY_URL` to the Pages URL.
 
-## 4. Explicitly out of scope
+## 4. RevenueCat / Play Billing (D3)
 
-- **RevenueCat** / Play Billing / paywall — do not implement for this drop. Raise stays `free: true` as a catalog badge only.
+Client code is in. Ashish still has to create dashboard objects (cannot be done from git):
+
+- Entitlement id **`pro`**
+- Product id **`hardtalkai_pro_monthly`** (monthly)
+- Current offering **`default`**, package **`$rc_monthly`**
+- Test Store public key in `client/HardTalkAi/local.properties` as `revenuecat.androidApiKey`
+- Later: Play subscription with the same product id + `goog_` key as `revenuecat.playApiKey`
+
+Full steps: [`revenuecat-android.md`](revenuecat-android.md). Do **not** put API keys, Play JSON, or keystores in git.
+
+## 5. Explicitly out of scope
+
 - **Play API keys, service accounts, `google-services.json`, keystores** — do not put them in the repo.
 - Production rollout / closed–open testing — after internal testers can install.
+- iOS App Store / iOS RevenueCat — not this drop.
 
-## 5. Smoke the internal build
+## 6. Smoke the internal build
 
 - Install from the internal-track link (not sideload)
 - Catalog shows ~10 career drills and **Free practice** on the raise
+- Locked cards open the Pro paywall; raise still starts without a purchase
 - Complete one 3-turn round → recap
 - Open **Privacy** from the catalog; policy loads
 - Confirm the binary talks to the **HTTPS** API, not `10.0.2.2`

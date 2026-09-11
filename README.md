@@ -20,11 +20,14 @@ catalog is ~10 career scenarios from the same FastAPI backend for web and Androi
 3. **Get live coaching** — each message is scored on clarity, empathy, and assertiveness, with specific tips.
 4. **Refine & retry** — adjust your wording, watch the counterpart warm up, and run the round again.
 
-The **ask-for-raise** drill is marked `free` in the catalog (the later free-tier gate). Every scenario stays playable in this build — no paywall, no RevenueCat.
+On **Android**, the **ask-for-raise** drill is free; the rest of the catalog is locked
+behind **HardTalk Pro** (RevenueCat entitlement `pro`, monthly product
+`hardtalkai_pro_monthly`). Web and FastAPI stay ungated. Setup, dashboard IDs, and
+Test Store sandbox steps: [`docs/revenuecat-android.md`](docs/revenuecat-android.md).
 
 Play Console is not wired in this repo. Privacy stub, store listing draft, screenshot shot list, and an internal-testing checklist live in `docs/` (`privacy-policy.md`, `play-store-listing.md`, `play-console-checklist.md`). Web and Android expose a **Privacy** link; the HTML policy is also served at FastAPI `/privacy`.
 
-Shipaton D6/D7 paste-ready assets (no RevenueCat, no Play upload):
+Shipaton D6/D7 paste-ready assets (Play upload is still Ashish-only):
 
 - Demo camera brief (≤2 min, Android preferred): [`docs/shipaton-demo-script.md`](docs/shipaton-demo-script.md)
 - Devpost draft (Career Coaching lane): [`docs/shipaton-devpost.md`](docs/shipaton-devpost.md)
@@ -46,7 +49,8 @@ Shipaton D6/D7 paste-ready assets (no RevenueCat, no Play upload):
   stay thin: `androidApp` / `iosApp` only start `App()`. Mobile does **not** embed a second
   coaching engine — it calls `/api` like web.
 - **Android** — practice loop (scenario pick → up to three scored turns → recap → retry), not an
-  open-ended chat. The FastAPI catalog is ~10 career drills; the list scrolls. After each
+  open-ended chat. The FastAPI catalog is ~10 career drills; the list scrolls. Unpaid users
+  can start only the free raise drill; Pro (RevenueCat) unlocks the rest. After each
   turn the mobile client shows the same coaching payload as web (clarity / empathy /
   assertiveness, tips, counterpart mood) plus score history across the round. After the
   third turn a summary names how scores moved and **one thing to try next**. Debug default
@@ -102,7 +106,24 @@ itself. Use **`http://10.0.2.2:3001`**, which is Android's alias for the host lo
    frames the drill goals and how the counterpart is showing up. After three scored
    turns the composer closes on a **round recap** (how scores moved + one takeaway);
    **Try this scenario again** resets to the opening line. **Choose another scenario**
-   returns to the scrolling career catalog (raise is marked free practice).
+   returns to the scrolling career catalog (raise is free; other drills need Pro).
+
+### Android RevenueCat (Pro)
+
+1. Copy `client/HardTalkAi/local.properties.example` → `local.properties` (gitignored).
+2. Set `revenuecat.androidApiKey` to the RevenueCat **Test Store** public SDK key (`test_…`).
+   Do not commit the key. You can also pass `-Prevenuecat.androidApiKey=…` or
+   `REVENUECAT_ANDROID_API_KEY`.
+3. In the RevenueCat dashboard create entitlement **`pro`**, product
+   **`hardtalkai_pro_monthly`** (monthly), and put it on the **current** offering as package
+   **`$rc_monthly`**. Play Console must use the same product id when you add a real
+   subscription. Step-by-step: [`docs/revenuecat-android.md`](docs/revenuecat-android.md).
+4. Debug builds talk to Test Store. On purchase the SDK shows a test sheet (success / fail /
+   cancel) instead of Google Play. Release builds need `revenuecat.playApiKey` (`goog_…`);
+   a `test_` key is never compiled into release.
+
+Without a key the app still runs: the raise drill is playable, locked cards open a paywall
+that explains the missing offering.
 
 **Physical device:** the phone cannot see `10.0.2.2`. Pass your machine's LAN IP (and keep
 uvicorn on `--host 0.0.0.0`):
