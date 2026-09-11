@@ -1,8 +1,11 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.scenarios import FREE_SCENARIO_ID, SCENARIOS
 
 client = TestClient(app)
+
+ORIGINAL_IDS = {"ask-for-raise", "give-feedback", "decline-request"}
 
 
 def test_health_reports_ok():
@@ -10,13 +13,33 @@ def test_health_reports_ok():
     assert res.status_code == 200
     body = res.json()
     assert body["status"] == "ok"
-    assert body["scenarios"] == 3
+    assert 8 <= body["scenarios"] <= 10
+    assert body["scenarios"] == len(SCENARIOS)
 
 
-def test_scenarios_returns_all():
+def test_scenarios_returns_career_catalog():
     body = client.get("/api/scenarios").json()
-    ids = {s["id"] for s in body["scenarios"]}
-    assert ids == {"ask-for-raise", "give-feedback", "decline-request"}
+    scenarios = body["scenarios"]
+    ids = [s["id"] for s in scenarios]
+    assert 8 <= len(ids) <= 10
+    assert len(ids) == len(set(ids))
+    assert ORIGINAL_IDS <= set(ids)
+    assert ids[0] == FREE_SCENARIO_ID == "ask-for-raise"
+
+    by_id = {s["id"]: s for s in scenarios}
+    free_ids = {s["id"] for s in scenarios if s.get("free")}
+    assert free_ids == {FREE_SCENARIO_ID}
+    assert by_id["ask-for-raise"]["free"] is True
+    assert by_id["ask-for-raise"]["persona"]["name"] == "Dana"
+    assert by_id["give-feedback"]["persona"]["name"] == "Sam"
+    assert by_id["decline-request"]["persona"]["name"] == "Priya"
+    for scenario in scenarios:
+        assert scenario["title"]
+        assert scenario["summary"]
+        assert scenario["opening"]
+        assert scenario["goals"]
+        assert scenario["persona"]["name"]
+        assert scenario["difficulty"] in {"warm-up", "moderate", "hard"}
 
 
 def test_chat_returns_reply_and_feedback():
@@ -34,6 +57,20 @@ def test_chat_returns_reply_and_feedback():
     assert "feedback" in body
     assert "mood" in body
     assert set(body["feedback"]) >= {"clarity", "empathy", "assertiveness", "overall", "tips"}
+    assert "Go on - I'm listening." not in body["reply"]
+
+
+def test_chat_new_leadership_scenario_has_canned_reply():
+    res = client.post(
+        "/api/chat",
+        json={
+            "scenarioId": "disagree-up",
+            "message": "I hear the board pressure. I'd like us to keep a thin reliability slice — last quarter we had 3 Sev-1s. Can we scope both?",
+            "history": [],
+        },
+    )
+    assert res.status_code == 200
+    assert "Go on - I'm listening." not in res.json()["reply"]
 
 
 def test_chat_validates_missing_message():

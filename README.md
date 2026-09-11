@@ -2,18 +2,25 @@
 
 Flight Simulator for Difficult Conversations.
 
-HardTalkAI lets you rehearse high-stakes conversations — asking for a raise, giving
-critical feedback, saying no — against an AI counterpart that reacts to your tone, and
-gives you live coaching on clarity, empathy, and assertiveness.
+HardTalkAI is **career coaching** (Coach Heather): rehearse high-stakes manager and
+leadership talks — asking for a raise, giving critical feedback, saying no, pushing
+back on a date, advocating in calibration — against an AI counterpart that reacts to
+your tone, then scores you on clarity, empathy, and assertiveness.
+
+The loop is **practice → score → retry**, not an open-ended chat. Shipaton demo
+quality lives in the polished raise, critical-feedback, and boundaries drills; the
+catalog is ~10 career scenarios from the same FastAPI backend for web and Android.
 
 ## How it works
 
 ![How HardTalkAI works: a FastAPI backend on :3001 serves scenarios, message scoring, coaching tips, and optional AI-generated counterpart replies. The web app (React + Vite) and Android/iOS clients call it over /api (HTTP + JSON). A shared Compose Multiplatform module gives the mobile clients shared UI, models, and an HTTP client. The practice loop: 1) pick a scenario, 2) talk to the AI, 3) get live coaching scores, 4) refine and retry.](docs/how-it-works.svg)
 
-1. **Pick a scenario** — ask for a raise, give critical feedback, or say no to extra work.
-2. **Talk to the AI** — it role-plays the counterpart and reacts to your tone.
+1. **Pick a career drill** — raise, critical feedback, saying no, plus leadership talks (impossible date, calibration, skip-level disagreement, and more).
+2. **Talk to the counterpart** — they role-play a busy manager, peer, or skip-level and push back on your tone.
 3. **Get live coaching** — each message is scored on clarity, empathy, and assertiveness, with specific tips.
-4. **Refine & retry** — adjust your wording and watch the counterpart warm up.
+4. **Refine & retry** — adjust your wording, watch the counterpart warm up, and run the round again.
+
+The **ask-for-raise** drill is marked `free` in the catalog (the later free-tier gate). Every scenario stays playable in this build — no paywall, no RevenueCat.
 
 ## Architecture
 
@@ -30,12 +37,14 @@ gives you live coaching on clarity, empathy, and assertiveness.
   `:shared` (Ktor Client + kotlinx.serialization DTOs matching the FastAPI models). Hosts
   stay thin: `androidApp` / `iosApp` only start `App()`. Mobile does **not** embed a second
   coaching engine — it calls `/api` like web.
-- **Android** — practice loop (scenario pick → up to three scored turns → retry), not an
-  open-ended chat. The three FastAPI scenarios stay: ask for a raise, give critical
-  feedback, say no. Debug default API base URL is `http://10.0.2.2:3001`
-  (emulator → host FastAPI).
+- **Android** — practice loop (scenario pick → up to three scored turns → recap → retry), not an
+  open-ended chat. The FastAPI catalog is ~10 career drills; the list scrolls. After each
+  turn the mobile client shows the same coaching payload as web (clarity / empathy /
+  assertiveness, tips, counterpart mood) plus score history across the round. After the
+  third turn a summary names how scores moved and **one thing to try next**. Debug default
+  API base URL is `http://10.0.2.2:3001` (emulator → host FastAPI).
 - **iOS** — same shared UI; simulator default is `http://127.0.0.1:3001`. Android is the
-  current end-to-end success path.
+  current end-to-end success path. No separate iOS store build in this lane.
 
 ## Getting started
 
@@ -81,9 +90,11 @@ itself. Use **`http://10.0.2.2:3001`**, which is Android's alias for the host lo
    The scenario list shows the active base URL at the top.
 
 3. Complete a practice round: pick a scenario → send a reply → confirm clarity / empathy /
-   assertiveness under your turn. After three scored turns the composer closes; **Try this
-   scenario again** resets to the opening line. **Choose another scenario** returns to the
-   list (still the same three drills).
+   assertiveness, tips, and a score sparkline under your turn. Coach Heather's panel
+   frames the drill goals and how the counterpart is showing up. After three scored
+   turns the composer closes on a **round recap** (how scores moved + one takeaway);
+   **Try this scenario again** resets to the opening line. **Choose another scenario**
+   returns to the scrolling career catalog (raise is marked free practice).
 
 **Physical device:** the phone cannot see `10.0.2.2`. Pass your machine's LAN IP (and keep
 uvicorn on `--host 0.0.0.0`):

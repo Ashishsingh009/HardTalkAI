@@ -2,9 +2,13 @@ package ai.hardtalk.source.presentation.chat
 
 import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
+import ai.hardtalk.source.domain.model.CoachingInsights
+import ai.hardtalk.source.domain.model.CounterpartTone
 import ai.hardtalk.source.domain.model.Feedback
 import ai.hardtalk.source.domain.model.PracticeLoop
+import ai.hardtalk.source.domain.model.RoundProgress
 import ai.hardtalk.source.domain.model.Scenario
+import ai.hardtalk.source.domain.model.TurnScore
 
 data class ChatUiState(
     val scenario: Scenario,
@@ -28,4 +32,16 @@ data class ChatUiState(
 
     val canSend: Boolean
         get() = !sending && !roundComplete
+
+    val scoreHistory: List<TurnScore>
+        get() = CoachingInsights.scoredTurns(messages)
+
+    val roundProgress: RoundProgress?
+        get() = CoachingInsights.progress(messages, scenario.goals)
+
+    val roundSummary: RoundProgress?
+        get() = roundProgress?.takeIf { it.roundComplete }
+
+    val counterpartTone: CounterpartTone
+        get() = CoachingInsights.toneOf(mood)
 }
