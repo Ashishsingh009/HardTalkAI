@@ -27,7 +27,8 @@ class ApiDtoSerializationTest {
                     "mood": "busy and slightly guarded about budget"
                   },
                   "opening": "Hey, thanks for grabbing time.",
-                  "goals": ["State clearly that you want a raise"]
+                  "goals": ["State clearly that you want a raise"],
+                  "free": true
                 }
               ]
             }
@@ -38,6 +39,34 @@ class ApiDtoSerializationTest {
         assertEquals("ask-for-raise", parsed.scenarios[0].id)
         assertEquals("Dana", parsed.scenarios[0].persona.name)
         assertEquals("moderate", parsed.scenarios[0].difficulty)
+        assertTrue(parsed.scenarios[0].free)
+    }
+
+    @Test
+    fun `scenarios payload without free defaults to false`() {
+        val json = """
+            {
+              "scenarios": [
+                {
+                  "id": "give-feedback",
+                  "title": "Give feedback",
+                  "summary": "A teammate missed dates.",
+                  "difficulty": "hard",
+                  "persona": {
+                    "name": "Sam",
+                    "role": "A peer",
+                    "mood": "defensive"
+                  },
+                  "opening": "You wanted to chat?",
+                  "goals": ["Name the behavior"]
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val parsed = apiJson.decodeFromString(ScenariosResponseDto.serializer(), json)
+        assertEquals("give-feedback", parsed.scenarios[0].id)
+        assertEquals(false, parsed.scenarios[0].free)
     }
 
     @Test
