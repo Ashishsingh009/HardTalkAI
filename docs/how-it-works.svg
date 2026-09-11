@@ -32,11 +32,11 @@
   <text x="200" y="272" text-anchor="middle" fill="#94a3b8" font-size="12">React + Vite</text>
   <text x="200" y="290" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600">:5173</text>
 
-  <!-- Android (planned) -->
-  <rect x="370" y="222" width="220" height="76" rx="12" fill="#1e293b" stroke="#475569" stroke-dasharray="5 4" />
-  <text x="480" y="252" text-anchor="middle" fill="#cbd5e1" font-size="14" font-weight="700">Android</text>
-  <text x="480" y="272" text-anchor="middle" fill="#94a3b8" font-size="12">Compose</text>
-  <text x="480" y="290" text-anchor="middle" fill="#64748b" font-size="11">(planned)</text>
+  <!-- Android -->
+  <rect x="370" y="222" width="220" height="76" rx="12" fill="#1e293b" stroke="#6366f1" stroke-width="2" />
+  <text x="480" y="252" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700">Android</text>
+  <text x="480" y="272" text-anchor="middle" fill="#94a3b8" font-size="12">Compose Multiplatform</text>
+  <text x="480" y="290" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600">emulator → :3001</text>
 
   <!-- iOS (planned) -->
   <rect x="650" y="222" width="220" height="76" rx="12" fill="#1e293b" stroke="#475569" stroke-dasharray="5 4" />
@@ -45,7 +45,7 @@
   <text x="760" y="290" text-anchor="middle" fill="#64748b" font-size="11">(planned)</text>
 
   <!-- shared KMP caption -->
-  <text x="480" y="322" text-anchor="middle" fill="#94a3b8" font-size="12">:shared (Kotlin Multiplatform) gives the Android/iOS clients shared models and an offline engine.</text>
+  <text x="480" y="322" text-anchor="middle" fill="#94a3b8" font-size="12">:shared (Kotlin Multiplatform) gives Android/iOS shared UI, models, and a Ktor HTTP client — no second engine.</text>
 
   <!-- divider -->
   <line x1="40" y1="342" x2="920" y2="342" stroke="#334155" />

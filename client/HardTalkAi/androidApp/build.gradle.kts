@@ -29,6 +29,10 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        // Override at build time: ./gradlew :androidApp:installDebug -Phardtalk.apiBaseUrl=http://192.168.1.10:3001
+        val apiBaseUrl = providers.gradleProperty("hardtalk.apiBaseUrl")
+            .getOrElse("http://10.0.2.2:3001")
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
     packaging {
         resources {
@@ -50,5 +54,6 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
