@@ -88,6 +88,17 @@ def test_chat_unknown_scenario():
     assert res.status_code == 404
 
 
+def test_root_serves_html_home():
+    res = client.get("/")
+    assert res.status_code == 200
+    assert "text/html" in res.headers["content-type"]
+    body = res.text
+    assert "HardTalkAI" in body
+    assert "Coach Heather" in body
+    assert 'href="/privacy"' in body
+    assert "Not Found" not in body
+
+
 def test_privacy_policy_html():
     for path in ("/privacy", "/privacy.html"):
         res = client.get(path)
@@ -100,6 +111,20 @@ def test_privacy_policy_html():
         assert "openai" in body
         assert "do not sell" in body
         assert "prototype" in body
+        assert 'href="/"' in res.text
+        assert "← HardTalkAI" in res.text
+
+
+def test_privacy_back_link_reaches_html_home_not_json_404():
+    html = (REPO_ROOT / "docs" / "privacy-policy.html").read_text(encoding="utf-8")
+    assert 'class="back"' in html
+    assert '<a href="/">← HardTalkAI</a>' in html
+    res = client.get("/")
+    assert res.status_code == 200
+    assert "text/html" in res.headers["content-type"]
+    assert res.headers["content-type"].startswith("text/html")
+    assert "HardTalkAI" in res.text
+    assert res.text.strip()[:1] != "{"
 
 
 def test_play_docs_exist_and_stay_honest():
