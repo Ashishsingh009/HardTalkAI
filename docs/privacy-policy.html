@@ -46,7 +46,7 @@
     <main>
       <p class="back"><a href="/">← HardTalkAI</a></p>
       <h1>Privacy policy</h1>
-      <p class="muted">HardTalkAI · Career coaching practice · Last updated 10 September 2026</p>
+      <p class="muted">HardTalkAI · Career coaching practice · Last updated 11 September 2026</p>
       <div class="card">
         <p>
           This is a short, honest policy for a <strong>prototype</strong>.
@@ -102,12 +102,12 @@
         <li>We do not sell personal information.</li>
         <li>We do not run ads, attribution SDKs, or analytics packages in this build.</li>
         <li>We do not ask for your name, email, phone, location, contacts, photos, or microphone.</li>
-        <li>We do not take payments in this build. There is no RevenueCat (or other IAP) yet.</li>
+        <li>We do not take card numbers in the app. Android Pro is a monthly subscription through Google Play, configured with RevenueCat (entitlement <code>pro</code>). The raise drill stays free. Play processes the payment. Web and FastAPI do not process payments.</li>
         <li>Practice messages are not posted publicly and are not shown to other users.</li>
         <li>This is a workplace-coaching prototype aimed at adults. Do not use it if you are under 13.</li>
       </ul>
       <p>
-        Android’s INTERNET permission is used to reach the coaching API.
+        Android’s INTERNET permission is used to reach the coaching API and, on Android, RevenueCat.
         Debug builds may use HTTP on a local network; a store build should use HTTPS.
       </p>
 
@@ -123,7 +123,7 @@
       <h2>Changes</h2>
       <p>
         We will update this page when the product persists data, adds accounts,
-        payments, analytics, or a production host.
+        analytics, or a production host.
       </p>
       <p class="muted">
         Canonical markdown:

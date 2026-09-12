@@ -17,8 +17,11 @@ on-device coaching engine — scores and counterpart replies come from the serve
 loop is practice → score → retry (career catalog from FastAPI, three scored turns per round),
 not an open-ended chat. After each turn, shared UI presents the existing feedback payload
 (clarity / empathy / assertiveness, tips, mood) with score history; after three turns a
-recap names how scores moved and what to try next. The raise drill is marked free in the
-catalog for a later gate; every scenario stays playable in this build.
+recap names how scores moved and what to try next. On Android, only the raise drill
+(`free: true`) is playable until RevenueCat entitlement `pro` is active. Keys go in
+`local.properties` (see `local.properties.example`); dashboard IDs and sandbox steps are in
+the repo-root [`docs/revenuecat-android.md`](../../docs/revenuecat-android.md). iOS is not
+wired to RevenueCat in this drop.
 
 ### Running the apps
 

@@ -1,0 +1,9 @@
+## Android SDK (required by the Android Gradle Plugin)
+## sdk.dir=/Users/YOU/Library/Android/sdk
+
+## RevenueCat public SDK keys — copy this file to local.properties (gitignored).
+## Never commit the real key. Debug builds use the Test Store key (`test_…`).
+## Release builds must use a Play key (`goog_…`); a test_ key is stripped from release.
+#
+# revenuecat.androidApiKey=test_YOUR_TEST_STORE_KEY
+# revenuecat.playApiKey=goog_YOUR_PLAY_SDK_KEY

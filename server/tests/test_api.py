@@ -123,3 +123,29 @@ def test_play_docs_exist_and_stay_honest():
     assert "bundleRelease" in checklist
     assert "RevenueCat" in checklist
     assert "Play credentials" in checklist or "credentials" in checklist.lower()
+    assert "hardtalkai_pro_monthly" in checklist or "pro" in checklist
+
+
+def test_revenuecat_android_doc_names_ids_and_key_setup():
+    text = (REPO_ROOT / "docs" / "revenuecat-android.md").read_text(encoding="utf-8")
+    assert "revenuecat.androidApiKey" in text
+    assert "local.properties" in text
+    assert "pro" in text
+    assert "hardtalkai_pro_monthly" in text
+    assert "$rc_monthly" in text
+    assert "Test Store" in text
+    assert "goog_" in text
+    assert "ask-for-raise" in text
+    example = REPO_ROOT / "client" / "HardTalkAi" / "local.properties.example"
+    assert example.is_file()
+    example_text = example.read_text(encoding="utf-8")
+    assert "revenuecat.androidApiKey" in example_text
+    assert "test_YOUR_TEST_STORE_KEY" in example_text
+    assert "goog_YOUR_PLAY_SDK_KEY" in example_text
+    # Real Test Store keys must stay in gitignored local.properties, not the example file.
+    uncommented = [
+        line.split("=", 1)[-1].strip()
+        for line in example_text.splitlines()
+        if line.strip().startswith("revenuecat.androidApiKey=")
+    ]
+    assert uncommented == []

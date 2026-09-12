@@ -1,5 +1,6 @@
 package ai.hardtalk.source.presentation.scenarios
 
+import ai.hardtalk.source.domain.billing.isPlayable
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.presentation.theme.HardTalkColors
 import ai.hardtalk.source.presentation.theme.difficultyColor
@@ -31,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,6 +45,7 @@ fun ScenarioListScreen(
     viewModel: ScenarioListViewModel,
     onScenarioSelected: (Scenario) -> Unit,
     onPrivacyClick: () -> Unit,
+    onUnlockClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -142,16 +145,17 @@ fun ScenarioListScreen(
                         contentPadding = PaddingValues(bottom = 24.dp),
                     ) {
                         item {
-                            Text(
-                                text = "${state.scenarios.size} manager conversations. Raise is the free practice.",
-                                color = HardTalkColors.TextMuted,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(bottom = 4.dp),
+                            CatalogStatusRow(
+                                isPro = state.isPro,
+                                monthlyPriceLabel = state.monthlyPriceLabel,
+                                catalogSize = state.scenarios.size,
+                                onUnlockClick = onUnlockClick,
                             )
                         }
                         items(state.scenarios, key = { it.id }) { scenario ->
                             ScenarioCard(
                                 scenario = scenario,
+                                locked = !scenario.isPlayable(state.isPro),
                                 onClick = { onScenarioSelected(scenario) },
                             )
                         }
@@ -163,8 +167,56 @@ fun ScenarioListScreen(
 }
 
 @Composable
+private fun CatalogStatusRow(
+    isPro: Boolean,
+    monthlyPriceLabel: String?,
+    catalogSize: Int,
+    onUnlockClick: () -> Unit,
+) {
+    Column(modifier = Modifier.padding(bottom = 4.dp)) {
+        Text(
+            text = if (isPro) {
+                "$catalogSize manager conversations unlocked with Pro."
+            } else {
+                "$catalogSize manager conversations. Raise is free; the rest need Pro."
+            },
+            color = HardTalkColors.TextMuted,
+            fontSize = 13.sp,
+        )
+        if (isPro) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Pro",
+                color = HardTalkColors.Coach,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(HardTalkColors.TakeawaySurface)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(onClick = onUnlockClick) {
+                Text(
+                    text = if (monthlyPriceLabel != null) {
+                        "Unlock remaining drills · $monthlyPriceLabel"
+                    } else {
+                        "Unlock remaining drills"
+                    },
+                    color = HardTalkColors.AccentMuted,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ScenarioCard(
     scenario: Scenario,
+    locked: Boolean,
     onClick: () -> Unit,
 ) {
     Column(
@@ -173,6 +225,7 @@ private fun ScenarioCard(
             .clip(RoundedCornerShape(16.dp))
             .background(HardTalkColors.Surface)
             .clickable(onClick = onClick)
+            .alpha(if (locked) 0.72f else 1f)
             .padding(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -192,6 +245,18 @@ private fun ScenarioCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(999.dp))
                         .background(HardTalkColors.TakeawaySurface)
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                )
+            } else if (locked) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Locked",
+                    color = HardTalkColors.Moderate,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(HardTalkColors.SurfaceAlt)
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
@@ -215,7 +280,11 @@ private fun ScenarioCard(
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "You'll talk to ${scenario.persona.name} — ${scenario.persona.role}",
+            text = if (locked) {
+                "Unlock with HardTalk Pro to talk to ${scenario.persona.name}"
+            } else {
+                "You'll talk to ${scenario.persona.name} — ${scenario.persona.role}"
+            },
             color = HardTalkColors.TextSecondary,
             fontSize = 12.sp,
             maxLines = 2,

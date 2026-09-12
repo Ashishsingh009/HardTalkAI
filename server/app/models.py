@@ -25,8 +25,8 @@ class Scenario(BaseModel):
     opening: str
     # Coaching goals the user is trying to achieve in this conversation.
     goals: list[str]
-    # Catalog hint for a later free-tier gate (D3). Only the polished raise is free.
-    # Do not enforce gating here — clients may badge it, but every scenario stays playable.
+    # Catalog hint for the Android free-tier gate (D3 / RevenueCat). Only the polished raise is free.
+    # Do not enforce that gate here — the Android client badges and locks; every scenario stays callable.
     free: bool = False
 
 
