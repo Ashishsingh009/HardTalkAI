@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,6 +42,7 @@ fun ScenarioListScreen(
     apiBaseUrl: String,
     viewModel: ScenarioListViewModel,
     onScenarioSelected: (Scenario) -> Unit,
+    onPrivacyClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -55,18 +57,29 @@ fun ScenarioListScreen(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp, vertical = 16.dp),
         ) {
-            Text(
-                text = "HardTalk AI",
-                color = HardTalkColors.TextPrimary,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Career coaching · Coach Heather",
-                color = HardTalkColors.TextSecondary,
-                fontSize = 16.sp,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "HardTalk AI",
+                        color = HardTalkColors.TextPrimary,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Career coaching · Coach Heather",
+                        color = HardTalkColors.TextSecondary,
+                        fontSize = 16.sp,
+                    )
+                }
+                TextButton(onClick = onPrivacyClick) {
+                    Text("Privacy", color = HardTalkColors.AccentMuted, fontSize = 14.sp)
+                }
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Pick a drill, get scored, retry — not an open-ended chat.",

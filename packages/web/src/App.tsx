@@ -117,11 +117,16 @@ export function App() {
             <p>Career Coaching · Coach Heather</p>
           </div>
         </div>
-        {active && (
-          <button className="ghost-btn" onClick={reset}>
-            ← Choose another scenario
-          </button>
-        )}
+        <nav className="header-links">
+          {active && (
+            <button className="ghost-btn" onClick={reset}>
+              ← Choose another scenario
+            </button>
+          )}
+          <a className="privacy-link" href="/privacy.html">
+            Privacy
+          </a>
+        </nav>
       </header>
 
       {error && <div className="banner error">{error}</div>}

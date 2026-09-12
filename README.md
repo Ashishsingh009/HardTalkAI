@@ -22,6 +22,14 @@ catalog is ~10 career scenarios from the same FastAPI backend for web and Androi
 
 The **ask-for-raise** drill is marked `free` in the catalog (the later free-tier gate). Every scenario stays playable in this build — no paywall, no RevenueCat.
 
+Play Console is not wired in this repo. Privacy stub, store listing draft, screenshot shot list, and an internal-testing checklist live in `docs/` (`privacy-policy.md`, `play-store-listing.md`, `play-console-checklist.md`). Web and Android expose a **Privacy** link; the HTML policy is also served at FastAPI `/privacy`.
+
+Shipaton D6/D7 paste-ready assets (no RevenueCat, no Play upload):
+
+- Demo camera brief (≤2 min, Android preferred): [`docs/shipaton-demo-script.md`](docs/shipaton-demo-script.md)
+- Devpost draft (Career Coaching lane): [`docs/shipaton-devpost.md`](docs/shipaton-devpost.md)
+- Week status + merge order for PRs #5–#8: [`docs/shipaton-week-status.md`](docs/shipaton-week-status.md)
+
 ## Architecture
 
 - **`server/`** — **FastAPI** (Python) backend on `:3001`. Serves the coaching engine
@@ -116,6 +124,7 @@ cd server && ../.venv/bin/python -m pytest
 cd client/HardTalkAi && ./gradlew :shared:testAndroidHostTest
 cd client/HardTalkAi && ./gradlew :androidApp:assembleDebug
 pnpm --filter @hardtalkai/web build
+curl -s http://localhost:3001/privacy | head  # privacy stub (needs FastAPI)
 ```
 
 ## Cloud Agent environment

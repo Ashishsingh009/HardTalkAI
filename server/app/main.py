@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from . import ai
 from .coach import respond
 from .models import ChatRequest, HealthResponse, ScenariosResponse
 from .scenarios import SCENARIOS, find_scenario
+
+# repo-root/docs/*.html (this file is server/app/main.py)
+DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
+HOME_HTML = DOCS_DIR / "index.html"
+PRIVACY_HTML = DOCS_DIR / "privacy-policy.html"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-5s %(name)s - %(message)s")
 logger = logging.getLogger("hardtalkai")
@@ -26,6 +32,24 @@ app.add_middleware(
 
 def _error(status: int, message: str) -> JSONResponse:
     return JSONResponse(status_code=status, content={"error": message})
+
+
+def _html(path: Path, missing: str) -> FileResponse | JSONResponse:
+    if not path.is_file():
+        return _error(404, missing)
+    return FileResponse(path, media_type="text/html; charset=utf-8")
+
+
+@app.get("/", response_model=None)
+def home() -> FileResponse | JSONResponse:
+    """HTML home for the FastAPI host so privacy's ← HardTalkAI link is not a JSON 404."""
+    return _html(HOME_HTML, "Home page is not available")
+
+
+@app.get("/privacy", response_model=None)
+@app.get("/privacy.html", response_model=None)
+def privacy_policy() -> FileResponse | JSONResponse:
+    return _html(PRIVACY_HTML, "Privacy policy is not available")
 
 
 @app.get("/api/health", response_model=HealthResponse)

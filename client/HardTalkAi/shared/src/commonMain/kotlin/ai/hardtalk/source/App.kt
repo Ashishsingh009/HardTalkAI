@@ -2,6 +2,7 @@ package ai.hardtalk.source
 
 import ai.hardtalk.source.data.api.defaultApiBaseUrl
 import ai.hardtalk.source.domain.model.Scenario
+import ai.hardtalk.source.presentation.about.PrivacyPolicyScreen
 import ai.hardtalk.source.presentation.chat.ChatScreen
 import ai.hardtalk.source.presentation.chat.ChatViewModel
 import ai.hardtalk.source.presentation.scenarios.ScenarioListScreen
@@ -21,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 private sealed interface PracticeRoute {
     data object Splash : PracticeRoute
     data object Scenarios : PracticeRoute
+    data object Privacy : PracticeRoute
     data class Chat(val scenario: Scenario) : PracticeRoute
 }
 
@@ -54,6 +56,12 @@ fun App(apiBaseUrl: String = defaultApiBaseUrl()) {
                             chatSession += 1
                             route = PracticeRoute.Chat(it)
                         },
+                        onPrivacyClick = { route = PracticeRoute.Privacy },
+                    )
+                }
+                PracticeRoute.Privacy -> {
+                    PrivacyPolicyScreen(
+                        onBack = { route = PracticeRoute.Scenarios },
                     )
                 }
                 is PracticeRoute.Chat -> {
