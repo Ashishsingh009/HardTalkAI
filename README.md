@@ -127,6 +127,16 @@ pnpm --filter @hardtalkai/web build
 curl -s http://localhost:3001/privacy | head  # privacy stub (needs FastAPI)
 ```
 
+### Host FastAPI on Hugging Face Spaces (free)
+
+Docker Space, CPU basic, HTTPS. Full steps: [`docs/huggingface-space.md`](docs/huggingface-space.md).
+
+1. Create a Space at [huggingface.co/new-space](https://huggingface.co/new-space) with **SDK = Docker**.
+2. Connect this GitHub repo (branch that contains the root `Dockerfile`) or `git push` to `https://huggingface.co/spaces/YOUR_HF_USER/HardTalkAI`.
+3. Optional secret: `OPENAI_API_KEY`.
+4. App URL: `https://YOUR_HF_USER-HardTalkAI.hf.space` — health `/api/health`, privacy `/privacy`.
+5. Android: `./gradlew :androidApp:installDebug -Phardtalk.apiBaseUrl=https://YOUR_HF_USER-HardTalkAI.hf.space`
+
 ## Cloud Agent environment
 
 `.cursor/environment.json` installs `python3-venv`, web dependencies

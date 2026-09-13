@@ -16,7 +16,7 @@ Do these before or while filling the console. The agent cannot.
 - [ ] Play developer account (one-time registration) and **app created** named HardTalkAI
 - [ ] Confirm **application id** `ai.hardtalk.source` — or change it in Gradle **before** the first AAB upload (permanent)
 - [ ] Create an **upload keystore** on your machine. Do **not** commit `.jks` / passwords / Play JSON keys
-- [ ] Host the privacy policy on **public HTTPS** (GitHub Pages from `/docs`, or FastAPI `/privacy` on a public host). Blob URL is a stopgap: `https://github.com/Ashishsingh009/HardTalkAI/blob/main/docs/privacy-policy.md`
+- [ ] Host the privacy policy on **public HTTPS** (Hugging Face Space `/privacy` — [docs/huggingface-space.md](huggingface-space.md), GitHub Pages from `/docs`, or FastAPI `/privacy` on a public host). Blob URL is a stopgap: `https://github.com/Ashishsingh009/HardTalkAI/blob/main/docs/privacy-policy.md`
 - [ ] Confirm `hello@hardtalk.ai` is a real inbox, or use `aashish2k2@gmail.com` in the listing
 - [ ] Capture Android screenshots from the [shot list](play-store-listing.md#screenshot-shot-list-capture-on-android)
 - [ ] Export **512×512** icon and **1024×500** feature graphic

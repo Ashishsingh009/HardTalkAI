@@ -1,0 +1,14 @@
+.git
+.venv
+node_modules
+client
+packages
+.cursor
+.gradle
+**/build
+**/.gradle
+**/.kotlin
+**/__pycache__
+*.pyc
+.env
+.env.local
