@@ -21,5 +21,3 @@ class IosBillingRepository : BillingRepository {
     override suspend fun restore(): Result<Unit> =
         Result.failure(IllegalStateException("HardTalk Pro is not available on iOS yet."))
 }
-
-actual fun createBillingRepository(): BillingRepository = IosBillingRepository()

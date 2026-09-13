@@ -164,6 +164,3 @@ private fun formatPrice(offerings: Offerings): String? {
     val pkg = offerings.current?.availablePackages?.firstOrNull() ?: return null
     return pkg.product.price.formatted
 }
-
-actual fun createBillingRepository(): BillingRepository =
-    AndroidBillingRepository(ungated = true, activityProvider = { null })
