@@ -1,6 +1,6 @@
 # Play Console checklist (when access lands)
 
-Play Console is **not** available yet. Nothing here requires Play credentials in the repo. Do **not** add RevenueCat for this drop.
+Play Console is **not** available yet. Nothing here requires Play credentials in the repo. Keep RevenueCat **public** SDK keys in `local.properties`, never in git.
 
 Privacy text, listing copy, and the screenshot shot list already live in:
 
@@ -60,7 +60,7 @@ Min SDK is whatever the version catalog says (API 24+). No separate iOS store bu
 4. Release notes (internal):
 
    ```
-   First internal build: career catalog, scored practice round, recap. Prototype — no IAP.
+   First internal build: career catalog, scored practice round, recap. Raise is free; other drills need HardTalk Pro.
    ```
 
 5. **Testers** tab → email list (or Google Group) → add Ashish + whoever should install
@@ -87,9 +87,10 @@ In-app **Privacy** (web header + Android catalog) already points at this policy.
 
 ## 4. Explicitly out of scope
 
-- **RevenueCat** / Play Billing / paywall — do not implement for this drop. Raise stays `free: true` as a catalog badge only.
 - **Play API keys, service accounts, `google-services.json`, keystores** — do not put them in the repo.
 - Production rollout / closed–open testing — after internal testers can install.
+
+HardTalk Pro is a client-side catalog gate (`hardtalk_pro`). Create the Play product and RevenueCat entitlement on the dashboards. Put only the public Google SDK key in `client/HardTalkAi/local.properties` as `hardtalk.revenuecatGoogleApiKey`.
 
 ## 5. Smoke the internal build
 

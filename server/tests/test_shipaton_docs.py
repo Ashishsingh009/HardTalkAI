@@ -132,7 +132,7 @@ def test_week_status_names_prs_blockers_and_merge_order():
     assert "merge **#6**" in text
     assert "merge **#7**" in text
     assert "merge **#8**" in text
-    assert "Do not implement" in text or "Do not add RevenueCat" in text
+    assert "Do not commit keys" in text or "Do not add RevenueCat" in text
     assert "shipaton-demo-script.md" in text
     assert "shipaton-devpost.md" in text
     # Linear stack appears in the merge-order section as 5 then 6 then 7 then 8

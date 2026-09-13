@@ -45,6 +45,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.revenuecat.purchases)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

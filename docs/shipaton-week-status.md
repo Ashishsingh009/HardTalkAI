@@ -13,7 +13,7 @@
 | --- | --- | --- | --- |
 | D1 | Android practice loop vs FastAPI | **Done** (open PR) | [#5](https://github.com/Ashishsingh009/HardTalkAI/pull/5) `cursor/android-practice-loop-021a` |
 | D2 | Richer coaching + end-of-round recap | **Done** (open PR) | [#6](https://github.com/Ashishsingh009/HardTalkAI/pull/6) `cursor/android-richer-feedback-d177` |
-| D3 | RevenueCat / free-tier paywall | **Blocked** | Needs RevenueCat keys + Play products. Raise is `free: true` in the catalog only — **not** a gate. Do not implement. |
+| D3 | RevenueCat / free-tier paywall | **Android client gate** | Raise stays free. Other drills need `hardtalk_pro`. Keys stay in `local.properties`, not git. |
 | D4 | Career catalog → 10 manager drills | **Done** (open PR) | [#7](https://github.com/Ashishsingh009/HardTalkAI/pull/7) `cursor/career-scenarios-d4-00ac` |
 | D5 | Play listing + privacy | **Partial** (open PR) | [#8](https://github.com/Ashishsingh009/HardTalkAI/pull/8) `cursor/play-listing-d5-d562` — docs + in-app Privacy. **No** Console, **no** AAB upload. |
 | D6 | Demo video | **Script ready; Ashish films** | `docs/shipaton-demo-script.md` (≤2 min, Android preferred). Docs PR [#9](https://github.com/Ashishsingh009/HardTalkAI/pull/9) |
@@ -48,11 +48,11 @@ Do **not** merge #8 or **#9** onto `main` until #5–#7 are in — #8’s base i
 
 ## Blocked on Ashish (human / keys)
 
-Nothing here should be “fixed” by writing SDK code this week.
+Nothing here should wait on Play Console access. Real Play sandbox purchases still need Ashish’s RevenueCat public key and a Play product.
 
 | Blocker | Why it matters | Workaround in repo |
 | --- | --- | --- |
-| **RevenueCat keys** + Play IAP products | D3 paywall / entitlement. | Raise marked `free` in `/api/scenarios`. All 10 drills stay playable. **Do not add RevenueCat.** |
+| **RevenueCat public Google SDK key** + Play IAP product | Real sandbox/store purchases. | Android gates paid drills. Empty debug key stays ungated. **Do not commit keys.** |
 | **Play Console** (account, app, signing keystore, tester list) | D5 store upload, internal track, hosted privacy URL. | Paste-ready `docs/privacy-policy.md`, `docs/play-store-listing.md`, `docs/play-console-checklist.md`. In-app Privacy on web + Android. |
 | **OpenAI key** | Live in-character replies. | Builtin canned replies. Scores/tips always local. Demo script timed against `engine: builtin`. |
 | **Device recording** | D6 video. Cloud agents cannot shoot Ashish’s phone. | Camera brief in `docs/shipaton-demo-script.md`. One sitting, paste-ready lines. |
@@ -89,7 +89,7 @@ Production HTTPS API base URL and a 512×512 icon / 1024×500 feature graphic ar
 | Local demo (builtin engine, raise + Sam, recap on Android) | Yes, after #5–#7 are on the branch you run |
 | Reproducible camera script + Devpost copy | Yes (this docs drop) |
 | Live LLM counterpart | No — needs `OPENAI_API_KEY` |
-| Paywall / free-tier enforcement | No — blocked on RevenueCat |
+| Paywall / free-tier enforcement | Android catalog gate (`hardtalk_pro`). Real Play purchase still needs keys + product. |
 | Play internal testing | No — blocked on Console + signed AAB |
 
 Shipaton judging can use the local Android (or web) demo. Store and billing are explicitly out of scope until keys exist.

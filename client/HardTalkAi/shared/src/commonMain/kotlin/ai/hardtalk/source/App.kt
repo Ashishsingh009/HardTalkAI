@@ -2,6 +2,8 @@ package ai.hardtalk.source
 
 import ai.hardtalk.source.data.api.defaultApiBaseUrl
 import ai.hardtalk.source.domain.model.Scenario
+import ai.hardtalk.source.domain.repository.BillingRepository
+import ai.hardtalk.source.domain.repository.createBillingRepository
 import ai.hardtalk.source.presentation.about.PrivacyPolicyScreen
 import ai.hardtalk.source.presentation.chat.ChatScreen
 import ai.hardtalk.source.presentation.chat.ChatViewModel
@@ -28,8 +30,13 @@ private sealed interface PracticeRoute {
 
 @Composable
 @Preview
-fun App(apiBaseUrl: String = defaultApiBaseUrl()) {
-    val container = remember(apiBaseUrl) { AppContainer(apiBaseUrl) }
+fun App(
+    apiBaseUrl: String = defaultApiBaseUrl(),
+    billingRepository: BillingRepository = createBillingRepository(),
+) {
+    val container = remember(apiBaseUrl, billingRepository) {
+        AppContainer(apiBaseUrl, billingRepository)
+    }
     HardTalkTheme {
         var route by remember { mutableStateOf<PracticeRoute>(PracticeRoute.Splash) }
         var chatSession by remember { mutableStateOf(0) }
@@ -47,7 +54,10 @@ fun App(apiBaseUrl: String = defaultApiBaseUrl()) {
                 }
                 PracticeRoute.Scenarios -> {
                     val listViewModel = viewModel(key = "scenarios-$apiBaseUrl") {
-                        ScenarioListViewModel(container.practiceRepository)
+                        ScenarioListViewModel(
+                            container.practiceRepository,
+                            container.billingRepository,
+                        )
                     }
                     ScenarioListScreen(
                         apiBaseUrl = container.apiBaseUrl,
@@ -66,7 +76,11 @@ fun App(apiBaseUrl: String = defaultApiBaseUrl()) {
                 }
                 is PracticeRoute.Chat -> {
                     val chatViewModel = viewModel(key = "chat-${current.scenario.id}-$chatSession") {
-                        ChatViewModel(current.scenario, container.practiceRepository)
+                        ChatViewModel(
+                            current.scenario,
+                            container.practiceRepository,
+                            container.billingRepository,
+                        )
                     }
                     ChatScreen(
                         viewModel = chatViewModel,

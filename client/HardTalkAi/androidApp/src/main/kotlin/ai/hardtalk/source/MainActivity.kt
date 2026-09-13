@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import ai.hardtalk.source.data.billing.AndroidBillingRepository
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,8 +18,21 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
 
+        val apiKey = BuildConfig.REVENUECAT_GOOGLE_API_KEY.trim()
+        val debugUngated = BuildConfig.DEBUG && apiKey.isEmpty()
+        if (apiKey.isNotEmpty()) {
+            AndroidBillingRepository.configure(this, apiKey)
+        }
+        val billing = AndroidBillingRepository(
+            ungated = debugUngated,
+            activityProvider = { this },
+        )
+
         setContent {
-            App(apiBaseUrl = BuildConfig.API_BASE_URL)
+            App(
+                apiBaseUrl = BuildConfig.API_BASE_URL,
+                billingRepository = billing,
+            )
         }
     }
 }

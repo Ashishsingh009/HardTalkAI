@@ -1,6 +1,6 @@
 # Privacy policy — HardTalkAI
 
-**Last updated:** 10 September 2026
+**Last updated:** 13 September 2026
 
 This is a short, honest policy for a **prototype**. It is not legal advice and it does not claim GDPR/CCPA certification, a Data Protection Officer, or a production-grade retention program. If something here is wrong for how you run the app, fix the app or fix this page before you ship.
 
@@ -37,7 +37,7 @@ OpenAI’s handling of that data is governed by [OpenAI’s privacy policy](http
 - We **do not sell** personal information.
 - We **do not** run ads, attribution SDKs, or analytics packages in this build.
 - We **do not** ask for your name, email, phone, location, contacts, photos, or microphone (no voice in this lane).
-- We **do not** take payments in this build. There is **no RevenueCat** (or other IAP) integration yet. A later free-tier gate is catalog-only (`free` on the raise drill); it is not a paywall.
+- Android may take a **Play** payment to unlock HardTalk Pro (the paid catalog). That purchase is processed by Google Play and RevenueCat. We do not create an account for you. The raise drill stays free. Web and the public Static Space demo are not paywalled.
 - Practice messages are **not** posted publicly and are **not** shown to other users.
 - Children: this is a workplace-coaching prototype aimed at adults. Do not use it if you are under 13. We do not knowingly collect data from children.
 
@@ -51,7 +51,7 @@ If OpenAI was enabled for that session, we cannot erase copies that may exist in
 
 ## Changes
 
-This is a stub for Play Console and in-app disclosure. We will update this file when the product persists data, adds accounts, payments, analytics, or a production host. The “last updated” date will change.
+This is a stub for Play Console and in-app disclosure. We will update this file when the product persists data, adds accounts, analytics, or a production FastAPI host. The “last updated” date will change.
 
 ## Play Console URL
 

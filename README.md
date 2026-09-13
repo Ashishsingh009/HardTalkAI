@@ -20,11 +20,14 @@ catalog is ~10 career scenarios from the same FastAPI backend for web and Androi
 3. **Get live coaching** — each message is scored on clarity, empathy, and assertiveness, with specific tips.
 4. **Refine & retry** — adjust your wording, watch the counterpart warm up, and run the round again.
 
-The **ask-for-raise** drill is marked `free` in the catalog (the later free-tier gate). Every scenario stays playable in this build — no paywall, no RevenueCat.
+The **ask-for-raise** drill is marked `free` in the catalog. On Android, the other
+drills require HardTalk Pro (Play Billing via RevenueCat). Web and the Hugging Face
+Static Space stay ungated. Do not put RevenueCat keys in git — use
+`client/HardTalkAi/local.properties` (`hardtalk.revenuecatGoogleApiKey`).
 
 Play Console is not wired in this repo. Privacy stub, store listing draft, screenshot shot list, and an internal-testing checklist live in `docs/` (`privacy-policy.md`, `play-store-listing.md`, `play-console-checklist.md`). Web and Android expose a **Privacy** link; the HTML policy is also served at FastAPI `/privacy`.
 
-Shipaton D6/D7 paste-ready assets (no RevenueCat, no Play upload):
+Shipaton D6/D7 paste-ready assets (no Play upload from the agent):
 
 - Demo camera brief (≤2 min, Android preferred): [`docs/shipaton-demo-script.md`](docs/shipaton-demo-script.md)
 - Devpost draft (Career Coaching lane): [`docs/shipaton-devpost.md`](docs/shipaton-devpost.md)
