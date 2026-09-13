@@ -2,12 +2,13 @@ package ai.hardtalk.source.presentation.chat
 
 import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
+import ai.hardtalk.source.domain.model.CounterpartTone
 import ai.hardtalk.source.domain.model.Feedback
 import ai.hardtalk.source.domain.model.PracticeLoop
+import ai.hardtalk.source.presentation.theme.DifficultyBadge
 import ai.hardtalk.source.presentation.theme.HardTalkColors
-import ai.hardtalk.source.presentation.theme.difficultyColor
-import ai.hardtalk.source.presentation.theme.scoreColor
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -28,7 +30,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -41,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -51,11 +53,14 @@ fun ChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    val summary = uiState.roundSummary
 
     LaunchedEffect(uiState.messages.size, uiState.sending, uiState.roundComplete) {
-        val lastIndex = uiState.messages.lastIndex
-        if (lastIndex >= 0) {
-            listState.animateScrollToItem(lastIndex)
+        if (summary != null) return@LaunchedEffect
+        val extra = if (uiState.sending) 1 else 0
+        val target = uiState.messages.size + extra
+        if (target >= 0) {
+            listState.animateScrollToItem(target)
         }
     }
 
@@ -72,62 +77,85 @@ fun ChatScreen(
             difficulty = uiState.scenario.difficulty,
             personaName = uiState.scenario.persona.name,
             mood = uiState.mood,
+            tone = uiState.counterpartTone,
             scoredTurns = uiState.scoredUserTurns,
             canRetry = uiState.canRetry,
+            roundComplete = uiState.roundComplete,
             onBack = onBack,
             onRetry = viewModel::retryScenario,
         )
 
-        GoalsStrip(goals = uiState.scenario.goals)
-
-        uiState.error?.let { message ->
-            Text(
-                text = message,
-                color = HardTalkColors.Error,
-                fontSize = 13.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-        }
-
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            state = listState,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            itemsIndexed(uiState.messages) { _, message ->
-                MessageBubble(
-                    message = message,
-                    counterpartName = uiState.scenario.persona.name,
-                )
-            }
-            if (uiState.sending) {
-                item {
-                    Text(
-                        text = "${uiState.scenario.persona.name} is scoring your reply…",
-                        color = HardTalkColors.TextMuted,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
-                }
-            }
-        }
-
-        if (uiState.roundComplete) {
-            RoundCompleteBar(
-                feedback = uiState.lastFeedback,
+        if (summary != null) {
+            RoundSummaryScreen(
+                scenarioTitle = uiState.scenario.title,
+                personaName = uiState.scenario.persona.name,
+                mood = uiState.mood,
+                tone = uiState.counterpartTone,
+                summary = summary,
                 onRetry = viewModel::retryScenario,
                 onPickAnother = onBack,
             )
         } else {
+            uiState.error?.let { message ->
+                Text(
+                    text = message,
+                    color = HardTalkColors.Error,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                state = listState,
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item {
+                    CoachPanel(
+                        personaName = uiState.scenario.persona.name,
+                        personaRole = uiState.scenario.persona.role,
+                        goals = uiState.scenario.goals,
+                        mood = uiState.mood,
+                        tone = uiState.counterpartTone,
+                        progress = uiState.roundProgress,
+                        scoredTurns = uiState.scoredUserTurns,
+                    )
+                }
+                itemsIndexed(uiState.messages) { index, message ->
+                    val historyThroughHere = uiState.messages
+                        .take(index + 1)
+                        .mapNotNull { turn ->
+                            turn.feedback.takeIf { turn.role == ChatRole.USER }
+                        }
+                    MessageBubble(
+                        message = message,
+                        counterpartName = uiState.scenario.persona.name,
+                        turnNumber = historyThroughHere.size,
+                        previous = historyThroughHere.dropLast(1).lastOrNull(),
+                        overallHistory = historyThroughHere.map { it.overall },
+                    )
+                }
+                if (uiState.sending) {
+                    item {
+                        Text(
+                            text = "${uiState.scenario.persona.name} is scoring your reply…",
+                            color = HardTalkColors.TextMuted,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp),
+                        )
+                    }
+                }
+            }
+
             Composer(
                 value = uiState.input,
                 enabled = uiState.canSend,
-                placeholder = "Practice your reply to ${uiState.scenario.persona.name}…",
+                placeholder = "Reply to ${uiState.scenario.persona.name}…",
                 onValueChange = viewModel::onInputChange,
                 onSend = viewModel::send,
             )
@@ -141,80 +169,80 @@ private fun ChatHeader(
     difficulty: String,
     personaName: String,
     mood: String,
+    tone: CounterpartTone,
     scoredTurns: Int,
     canRetry: Boolean,
+    roundComplete: Boolean,
     onBack: () -> Unit,
     onRetry: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) {
-                Text("← Scenarios", color = HardTalkColors.AccentMuted)
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            if (canRetry) {
-                TextButton(onClick = onRetry) {
-                    Text("Try again", color = HardTalkColors.AccentMuted)
-                }
-            }
-            Text(
-                text = difficulty,
-                color = difficultyColor(difficulty),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(end = 12.dp),
-            )
-        }
-        Text(
-            text = title,
-            color = HardTalkColors.TextPrimary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 12.dp),
-        )
-        Text(
-            text = "$personaName · Mood: $mood",
-            color = HardTalkColors.TextSecondary,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
-        )
-        Text(
-            text = "Turn ${scoredTurns.coerceAtMost(PracticeLoop.MAX_USER_TURNS)} of ${PracticeLoop.MAX_USER_TURNS} · practice → score → retry",
-            color = HardTalkColors.TextMuted,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
-        )
+    val turnLabel = scoredTurns.coerceAtMost(PracticeLoop.MAX_USER_TURNS)
+    val meta = if (roundComplete) {
+        "Recap · retry with intent"
+    } else {
+        "$personaName · ${tone.shortLabel} · $turnLabel/${PracticeLoop.MAX_USER_TURNS}"
     }
-}
 
-@Composable
-private fun GoalsStrip(goals: List<String>) {
-    if (goals.isEmpty()) return
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(HardTalkColors.Surface)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Text(
-            text = "This round's goals",
-            color = HardTalkColors.TextSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-        goals.forEach { goal ->
+        TextButton(
+            onClick = onBack,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.heightIn(min = 36.dp),
+        ) {
+            Text("← Scenarios", color = HardTalkColors.AccentMuted, fontSize = 13.sp)
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(top = 6.dp, end = 8.dp),
+        ) {
             Text(
-                text = "• $goal",
+                text = title,
+                color = HardTalkColors.TextPrimary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 20.sp,
+            )
+            Text(
+                text = meta,
                 color = HardTalkColors.TextMuted,
                 fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp),
             )
+            if (!roundComplete && mood.isNotBlank()) {
+                Text(
+                    text = mood,
+                    color = HardTalkColors.TextSecondary,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 1.dp),
+                )
+            }
+        }
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier.padding(top = 8.dp),
+        ) {
+            DifficultyBadge(difficulty)
+            if (canRetry) {
+                TextButton(
+                    onClick = onRetry,
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                    modifier = Modifier.heightIn(min = 32.dp),
+                ) {
+                    Text("Try again", color = HardTalkColors.AccentMuted, fontSize = 12.sp)
+                }
+            }
         }
     }
 }
@@ -223,157 +251,55 @@ private fun GoalsStrip(goals: List<String>) {
 private fun MessageBubble(
     message: ChatMessage,
     counterpartName: String,
+    turnNumber: Int,
+    previous: Feedback?,
+    overallHistory: List<Int>,
 ) {
     val isUser = message.role == ChatRole.USER
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
-    ) {
-        Text(
-            text = if (isUser) "You" else counterpartName,
-            color = HardTalkColors.TextMuted,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-        )
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(if (isUser) HardTalkColors.Accent else HardTalkColors.Surface)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(0.88f).align(
+                if (isUser) Alignment.End else Alignment.Start,
+            ),
+            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
         ) {
             Text(
-                text = message.content,
-                color = HardTalkColors.TextPrimary,
-                fontSize = 15.sp,
+                text = if (isUser) "You" else counterpartName,
+                color = HardTalkColors.TextMuted,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
             )
-        }
-        message.feedback?.let { FeedbackCard(it) }
-    }
-}
-
-@Composable
-private fun FeedbackCard(feedback: Feedback) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(HardTalkColors.SurfaceAlt)
-            .padding(12.dp),
-    ) {
-        Text(
-            text = "Score · overall ${feedback.overall}",
-            color = HardTalkColors.TextSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        ScoreRow("Clarity", feedback.clarity)
-        ScoreRow("Empathy", feedback.empathy)
-        ScoreRow("Assertiveness", feedback.assertiveness)
-        if (feedback.tips.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            feedback.tips.forEach { tip ->
+            Box(
+                modifier = Modifier
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                            bottomStart = if (isUser) 16.dp else 4.dp,
+                            bottomEnd = if (isUser) 4.dp else 16.dp,
+                        ),
+                    )
+                    .background(if (isUser) HardTalkColors.UserBubble else HardTalkColors.Surface)
+                    .then(
+                        if (isUser) Modifier else Modifier.border(1.dp, HardTalkColors.Border)
+                    )
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+            ) {
                 Text(
-                    text = "• $tip",
-                    color = HardTalkColors.TextMuted,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(bottom = 4.dp),
+                    text = message.content,
+                    color = if (isUser) HardTalkColors.OnAccent else HardTalkColors.TextPrimary,
+                    fontSize = 15.sp,
+                    lineHeight = 21.sp,
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun ScoreRow(label: String, value: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            color = HardTalkColors.TextMuted,
-            fontSize = 12.sp,
-            modifier = Modifier.width(110.dp),
-        )
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(HardTalkColors.Background),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(value.coerceIn(0, 100) / 100f)
-                    .height(8.dp)
-                    .background(scoreColor(value)),
+        message.feedback?.let { feedback ->
+            FeedbackCard(
+                feedback = feedback,
+                turnNumber = turnNumber,
+                previous = previous,
+                overallHistory = overallHistory,
             )
-        }
-        Text(
-            text = value.toString(),
-            color = HardTalkColors.TextPrimary,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(start = 8.dp),
-        )
-    }
-}
-
-@Composable
-private fun RoundCompleteBar(
-    feedback: Feedback?,
-    onRetry: () -> Unit,
-    onPickAnother: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(HardTalkColors.Surface)
-            .padding(16.dp),
-    ) {
-        Text(
-            text = "Round complete",
-            color = HardTalkColors.TextPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = "Refine your wording and retry this drill — this is not an open chat.",
-            color = HardTalkColors.TextMuted,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
-        )
-        if (feedback != null) {
-            Text(
-                text = "Latest: Clarity ${feedback.clarity} · Empathy ${feedback.empathy} · Assertiveness ${feedback.assertiveness}",
-                color = HardTalkColors.TextSecondary,
-                fontSize = 13.sp,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-        Button(
-            onClick = onRetry,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = HardTalkColors.Accent,
-                contentColor = HardTalkColors.TextPrimary,
-            ),
-            shape = RoundedCornerShape(12.dp),
-        ) {
-            Text("Try this scenario again")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedButton(
-            onClick = onPickAnother,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-        ) {
-            Text("Choose another scenario", color = HardTalkColors.AccentMuted)
         }
     }
 }
@@ -386,45 +312,64 @@ private fun Composer(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.Bottom,
+            .background(HardTalkColors.Background.copy(alpha = 0.92f)),
     ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.weight(1f),
-            enabled = enabled,
-            placeholder = {
-                Text(placeholder, color = HardTalkColors.TextMuted, fontSize = 14.sp)
-            },
-            minLines = 2,
-            maxLines = 4,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = HardTalkColors.TextPrimary,
-                unfocusedTextColor = HardTalkColors.TextPrimary,
-                focusedBorderColor = HardTalkColors.Accent,
-                unfocusedBorderColor = HardTalkColors.SurfaceAlt,
-                cursorColor = HardTalkColors.AccentMuted,
-                focusedContainerColor = HardTalkColors.Surface,
-                unfocusedContainerColor = HardTalkColors.Surface,
-            ),
-            shape = RoundedCornerShape(12.dp),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(HardTalkColors.Border),
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Button(
-            onClick = onSend,
-            enabled = enabled && value.isNotBlank(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = HardTalkColors.Accent,
-                contentColor = HardTalkColors.TextPrimary,
-                disabledContainerColor = HardTalkColors.SurfaceAlt,
-            ),
-            shape = RoundedCornerShape(12.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.Bottom,
         ) {
-            Text(if (enabled) "Send" else "…")
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
+                enabled = enabled,
+                placeholder = {
+                    Text(placeholder, color = HardTalkColors.TextMuted, fontSize = 14.sp, maxLines = 1)
+                },
+                minLines = 1,
+                maxLines = 4,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = HardTalkColors.TextPrimary,
+                    unfocusedTextColor = HardTalkColors.TextPrimary,
+                    disabledTextColor = HardTalkColors.TextMuted,
+                    focusedBorderColor = HardTalkColors.AccentMuted,
+                    unfocusedBorderColor = HardTalkColors.Border,
+                    cursorColor = HardTalkColors.AccentMuted,
+                    focusedContainerColor = HardTalkColors.Surface,
+                    unfocusedContainerColor = HardTalkColors.Surface,
+                    disabledContainerColor = HardTalkColors.Surface,
+                ),
+                shape = RoundedCornerShape(14.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = onSend,
+                enabled = enabled && value.isNotBlank(),
+                modifier = Modifier.height(48.dp),
+                contentPadding = PaddingValues(horizontal = 18.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = HardTalkColors.Accent,
+                    contentColor = HardTalkColors.OnAccent,
+                    disabledContainerColor = HardTalkColors.SurfaceAlt,
+                    disabledContentColor = HardTalkColors.TextMuted,
+                ),
+                shape = RoundedCornerShape(14.dp),
+            ) {
+                Text(if (enabled) "Send" else "…", fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

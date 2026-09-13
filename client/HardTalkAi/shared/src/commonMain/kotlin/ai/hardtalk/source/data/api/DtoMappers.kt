@@ -20,6 +20,7 @@ fun ScenarioDto.toDomain(): Scenario = Scenario(
     persona = persona.toDomain(),
     opening = opening,
     goals = goals,
+    free = free,
 )
 
 fun PersonaDto.toDomain(): Persona = Persona(

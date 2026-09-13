@@ -2,14 +2,15 @@ package ai.hardtalk.source
 
 import ai.hardtalk.source.data.api.defaultApiBaseUrl
 import ai.hardtalk.source.domain.model.Scenario
+import ai.hardtalk.source.presentation.about.PrivacyPolicyScreen
 import ai.hardtalk.source.presentation.chat.ChatScreen
 import ai.hardtalk.source.presentation.chat.ChatViewModel
 import ai.hardtalk.source.presentation.scenarios.ScenarioListScreen
 import ai.hardtalk.source.presentation.scenarios.ScenarioListViewModel
 import ai.hardtalk.source.presentation.splash.SplashScreen
+import ai.hardtalk.source.presentation.theme.HardTalkTheme
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 private sealed interface PracticeRoute {
     data object Splash : PracticeRoute
     data object Scenarios : PracticeRoute
+    data object Privacy : PracticeRoute
     data class Chat(val scenario: Scenario) : PracticeRoute
 }
 
@@ -28,7 +30,7 @@ private sealed interface PracticeRoute {
 @Preview
 fun App(apiBaseUrl: String = defaultApiBaseUrl()) {
     val container = remember(apiBaseUrl) { AppContainer(apiBaseUrl) }
-    MaterialTheme {
+    HardTalkTheme {
         var route by remember { mutableStateOf<PracticeRoute>(PracticeRoute.Splash) }
         var chatSession by remember { mutableStateOf(0) }
 
@@ -54,6 +56,12 @@ fun App(apiBaseUrl: String = defaultApiBaseUrl()) {
                             chatSession += 1
                             route = PracticeRoute.Chat(it)
                         },
+                        onPrivacyClick = { route = PracticeRoute.Privacy },
+                    )
+                }
+                PracticeRoute.Privacy -> {
+                    PrivacyPolicyScreen(
+                        onBack = { route = PracticeRoute.Scenarios },
                     )
                 }
                 is PracticeRoute.Chat -> {

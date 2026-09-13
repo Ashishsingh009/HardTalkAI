@@ -14,6 +14,7 @@ data class Scenario(
     val persona: Persona,
     val opening: String,
     val goals: List<String>,
+    val free: Boolean = false,
 )
 
 data class Feedback(

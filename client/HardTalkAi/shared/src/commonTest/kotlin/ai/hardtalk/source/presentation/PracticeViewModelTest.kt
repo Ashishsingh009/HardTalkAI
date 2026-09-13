@@ -5,6 +5,8 @@ import ai.hardtalk.source.domain.model.ChatRole
 import ai.hardtalk.source.domain.model.Feedback
 import ai.hardtalk.source.domain.model.Persona
 import ai.hardtalk.source.domain.model.PracticeLoop
+import ai.hardtalk.source.domain.model.CoachingDimension
+import ai.hardtalk.source.domain.model.CounterpartTone
 import ai.hardtalk.source.domain.model.ReplyResult
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.repository.PracticeRepository
@@ -22,6 +24,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -76,10 +80,17 @@ class PracticeViewModelTest {
         assertEquals(75, userTurn.feedback?.assertiveness)
         assertEquals("Walk me through the number.", after.messages[2].content)
         assertEquals("curious", after.mood)
+        assertEquals(CounterpartTone.NEUTRAL, after.counterpartTone)
         assertEquals("", after.input)
         assertEquals(1, after.scoredUserTurns)
         assertTrue(after.canRetry)
         assertFalse(after.roundComplete)
+        assertEquals(1, after.scoreHistory.size)
+        assertEquals(80, after.scoreHistory[0].feedback.clarity)
+        assertNotNull(after.roundProgress)
+        assertFalse(after.roundProgress!!.roundComplete)
+        assertEquals("Watch empathy on the next reply.", after.roundProgress!!.takeaway)
+        assertNull(after.roundSummary)
     }
 
     @Test
@@ -99,6 +110,9 @@ class PracticeViewModelTest {
         assertFalse(reset.roundComplete)
         assertEquals("", reset.input)
         assertEquals(null, reset.error)
+        assertNull(reset.roundProgress)
+        assertNull(reset.roundSummary)
+        assertTrue(reset.scoreHistory.isEmpty())
     }
 
     @Test
@@ -113,12 +127,25 @@ class PracticeViewModelTest {
         assertTrue(complete.roundComplete)
         assertEquals(PracticeLoop.MAX_USER_TURNS, complete.scoredUserTurns)
         assertFalse(complete.canSend)
+        val summary = complete.roundSummary
+        assertNotNull(summary)
+        assertEquals(listOf(75, 74, 73), summary.overallScores)
+        assertEquals(CoachingDimension.EMPATHY, summary.weakest.dimension)
+        assertEquals(52, summary.weakest.last)
+        assertTrue(summary.takeaway.contains("Empathy", ignoreCase = true))
+        assertTrue(summary.takeaway.contains("acknowledgment", ignoreCase = true))
+        assertEquals(CounterpartTone.GUARDED, complete.counterpartTone)
         val sizeAfterRound = complete.messages.size
 
         viewModel.onInputChange("This should not send.")
         viewModel.send()
         assertEquals(sizeAfterRound, viewModel.uiState.value.messages.size)
         assertTrue(viewModel.uiState.value.roundComplete)
+
+        viewModel.retryScenario()
+        assertNull(viewModel.uiState.value.roundSummary)
+        assertFalse(viewModel.uiState.value.roundComplete)
+        assertTrue(viewModel.uiState.value.canSend)
     }
 
     @Test
@@ -156,16 +183,16 @@ class PracticeViewModelTest {
             if (failSend) error("boom")
             assertEquals("ask-for-raise", scenarioId)
             assertTrue(history.isNotEmpty())
+            val turnNumber = history.count { it.role == ChatRole.USER } + 1
+            val feedback = when (turnNumber) {
+                1 -> Feedback(80, 70, 75, 75, listOf("Cite a metric."))
+                2 -> Feedback(72, 82, 68, 74, listOf("Lead with the ask."))
+                else -> Feedback(88, 52, 80, 73, listOf("Acknowledge them first."))
+            }
             return ReplyResult(
                 reply = "Walk me through the number.",
-                feedback = Feedback(
-                    clarity = 80,
-                    empathy = 70,
-                    assertiveness = 75,
-                    overall = 75,
-                    tips = listOf("Cite a metric."),
-                ),
-                mood = "curious",
+                feedback = feedback,
+                mood = if (turnNumber >= 3) "defensive and cautious" else "curious",
             )
         }
     }

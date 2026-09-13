@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HardTalkAI</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #818cf8;
+        --border: #334155;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: radial-gradient(1200px 600px at 10% -10%, #1e293b 0%, var(--bg) 55%);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      main {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+      a { color: var(--accent); }
+      h1 { font-size: 1.75rem; margin: 0 0 8px; }
+      p { color: var(--text); }
+      .muted { color: var(--muted); font-size: 0.95rem; }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin: 16px 0;
+      }
+      nav { margin-top: 20px; }
+      nav a { margin-right: 1.1rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>HardTalkAI</h1>
+      <p class="muted">Career coaching practice · Coach Heather</p>
+      <div class="card">
+        <p>
+          Practice high-stakes manager talks. Coach Heather scores clarity,
+          empathy, and assertiveness. This is <strong>practice → score → retry</strong>,
+          not an open-ended chatbot.
+        </p>
+        <p>
+          This host is the coaching API. The practice UI lives in the web app
+          and the Android client.
+        </p>
+      </div>
+      <nav>
+        <a href="/privacy">Privacy policy</a>
+        <a href="/api/health">API health</a>
+        <a href="https://github.com/Ashishsingh009/HardTalkAI">GitHub</a>
+      </nav>
+    </main>
+  </body>
+</html>

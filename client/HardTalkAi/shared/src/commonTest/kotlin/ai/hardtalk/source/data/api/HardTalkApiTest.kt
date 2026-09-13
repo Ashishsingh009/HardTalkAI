@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class HardTalkApiTest {
@@ -33,6 +34,7 @@ class HardTalkApiTest {
         assertEquals(1, scenarios.size)
         assertEquals("decline-request", scenarios[0].id)
         assertEquals("Priya", scenarios[0].persona.name)
+        assertFalse(scenarios[0].free)
     }
 
     @Test
