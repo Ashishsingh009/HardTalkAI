@@ -1,37 +1,50 @@
-# Host FastAPI on Hugging Face Spaces (free)
+# Host HardTalkAI on Hugging Face Spaces
 
-Yes. This repo’s coaching API is a **Docker Space**: one container, no database, HTTPS included. Free **CPU basic** hardware is enough (no GPU).
+Hugging Face **2026 hardware policy:** Static Spaces are free for everyone.
+**Gradio and Docker Spaces on `cpu-basic` require PRO.** A new personal account
+also cannot create ZeroGPU Gradio Spaces until it is verified and older than
+30 days (or you subscribe). Creating those SDKs as `BhaiAshish` currently
+returns HTTP **402**.
 
-The Space iframe opens `/`, which already serves the HardTalkAI HTML home. Android/web call `/api/health`, `/api/scenarios`, and `/api/chat`. Privacy is at `/privacy`.
+## Live Static Space (this account)
 
-## 1. Create the Space
+Public demo + privacy page, scoring in the browser (same builtin engine as FastAPI):
 
-1. Open [huggingface.co/new-space](https://huggingface.co/new-space) (sign in with Hugging Face).
-2. **Space name:** `HardTalkAI` (or similar).
-3. **SDK:** **Docker** (not Gradio / Streamlit).
-4. **Hardware:** CPU basic (free).
-5. **Visibility:** Public (needed for Play privacy URL and the Android app).
-6. Create the Space.
-
-## 2. Put this repo in the Space
-
-**Option A — GitHub (simplest)**  
-Space **Settings → Connected GitHub repository** → `Ashishsingh009/HardTalkAI` → pick the branch that has this `Dockerfile` → save. HF rebuilds on push.
-
-**Option B — push from this clone**
-
-```bash
-git remote add hf https://huggingface.co/spaces/YOUR_HF_USER/HardTalkAI
-git push hf HEAD:main
+```text
+https://huggingface.co/spaces/BhaiAshish/HardTalkAI
+https://bhaiashish-hardtalkai.static.hf.space
+https://bhaiashish-hardtalkai.static.hf.space/privacy.html
 ```
 
-Use a [Hugging Face access token](https://huggingface.co/settings/tokens) with **Write** if Git asks for a password.
+Source for that Space lives in `spaces/hardtalkai-static/`. Re-upload:
 
-If the Space README has no Docker YAML yet, paste this at the **top** of the Space `README.md`:
+```bash
+hf upload BhaiAshish/HardTalkAI spaces/hardtalkai-static --repo-type space \
+  --exclude "**/__pycache__/**" --exclude "score_message.py"
+```
+
+This Static Space **cannot** serve `/api/health`, `/api/scenarios`, or `/api/chat`.
+Android still needs a FastAPI origin.
+
+Play privacy URL while FastAPI is unhosted:
+
+```text
+https://bhaiashish-hardtalkai.static.hf.space/privacy.html
+```
+
+## Docker Space (FastAPI) — needs PRO
+
+The repo root `Dockerfile` is the FastAPI host: Python 3.12, uid 1000, uvicorn
+on port **7860**, copies `server/` + `docs/`. Use this when the Hugging Face
+account can pay for `cpu-basic`.
+
+1. Create a **new** Space (do not overwrite the Static demo), e.g. `HardTalkAI-api`.
+2. SDK: **Docker**. Hardware: CPU basic. Public.
+3. Upload this git repo (or connect GitHub). Space README frontmatter:
 
 ```yaml
 ---
-title: HardTalkAI
+title: HardTalkAI API
 emoji: ✈️
 colorFrom: blue
 colorTo: indigo
@@ -41,67 +54,33 @@ pinned: false
 ---
 ```
 
-`app_port: 7860` must match the Dockerfile `EXPOSE` / uvicorn port.
-
-## 3. Optional OpenAI secret
-
-Space **Settings → Variables and secrets → New secret**:
-
-- Name: `OPENAI_API_KEY`
-- Value: your key
-
-Do **not** bake the key into the Dockerfile. Runtime secrets become env vars; FastAPI already reads `OPENAI_API_KEY`. Without it, builtin replies still work.
-
-## 4. Wait for the build
-
-Logs should end with `Uvicorn running on http://0.0.0.0:7860`.
-
-Public app host (not the huggingface.co/spaces page):
-
-```text
-https://YOUR_HF_USER-HardTalkAI.hf.space
-```
-
-HF also serves the same app at:
-
-```text
-https://huggingface.co/spaces/YOUR_HF_USER/HardTalkAI
-```
-
-Check:
+4. Optional secret: `OPENAI_API_KEY`. Without it, builtin replies still work.
+5. Check:
 
 ```bash
-curl -s https://YOUR_HF_USER-HardTalkAI.hf.space/api/health
-curl -sI https://YOUR_HF_USER-HardTalkAI.hf.space/privacy
+curl -s https://BhaiAshish-HardTalkAI-api.hf.space/api/health
+curl -sI https://BhaiAshish-HardTalkAI-api.hf.space/privacy
 ```
 
 Expect `"status":"ok"` and HTML for privacy.
 
-## 5. Point Android at the Space
+Point Android at the Docker host (no trailing slash, must be `https://`):
 
 ```bash
 cd client/HardTalkAi
 ./gradlew :androidApp:installDebug \
-  -Phardtalk.apiBaseUrl=https://YOUR_HF_USER-HardTalkAI.hf.space
-```
-
-No trailing slash. Must be `https://`.
-
-Play privacy URL:
-
-```text
-https://YOUR_HF_USER-HardTalkAI.hf.space/privacy
+  -Phardtalk.apiBaseUrl=https://BhaiAshish-HardTalkAI-api.hf.space
 ```
 
 Web (dev, proxy API to the Space):
 
 ```bash
-VITE_API_TARGET=https://YOUR_HF_USER-HardTalkAI.hf.space pnpm --filter @hardtalkai/web dev
+VITE_API_TARGET=https://BhaiAshish-HardTalkAI-api.hf.space pnpm --filter @hardtalkai/web dev
 ```
 
 ## Notes
 
-- Free Spaces **sleep** after idle; the first request can take ~30–60s.
-- CORS is already `*` on this API, so the web app can call the Space origin.
-- Rebuild after Dockerfile or `server/` changes. Secrets can be changed without a rebuild.
-- Do not use Gradio/Streamlit SDK for this app; it is FastAPI, not a Gradio demo.
+- Paid Spaces **sleep** after idle; the first request can take ~30–60s.
+- CORS is already `*` on the FastAPI app.
+- Rebuild Docker after `Dockerfile` or `server/` changes. Secrets can change without a rebuild.
+- Gradio/Streamlit SDKs are the wrong shape for this FastAPI API. The Static Space is the free public demo.
