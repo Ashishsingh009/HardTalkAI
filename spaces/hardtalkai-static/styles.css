@@ -314,7 +314,10 @@ a { color: var(--accent); }
   border-radius: 10px;
   padding: 0 16px;
   min-height: 48px;
+  min-width: 72px;
   font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
