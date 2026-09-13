@@ -42,39 +42,40 @@ fun FeedbackCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .padding(top = 10.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(HardTalkColors.SurfaceAlt)
-            .padding(12.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Turn $turnNumber coaching",
                     color = HardTalkColors.Coach,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
                     text = "Overall ${feedback.overall}",
                     color = HardTalkColors.TextPrimary,
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
             ScoreSparkline(
                 scores = overallHistory,
                 modifier = Modifier
-                    .width(96.dp)
-                    .height(28.dp),
+                    .width(88.dp)
+                    .height(28.dp)
+                    .clip(RoundedCornerShape(6.dp)),
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         ScoreRow("Clarity", feedback.clarity, previous?.clarity)
         ScoreRow("Empathy", feedback.empathy, previous?.empathy)
         ScoreRow("Assertiveness", feedback.assertiveness, previous?.assertiveness)
         if (feedback.tips.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Try this",
                 color = HardTalkColors.TextSecondary,
@@ -84,8 +85,9 @@ fun FeedbackCard(
             feedback.tips.forEach { tip ->
                 Text(
                     text = "• $tip",
-                    color = HardTalkColors.TextMuted,
-                    fontSize = 12.sp,
+                    color = HardTalkColors.TextPrimary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
@@ -106,19 +108,20 @@ fun ScoreRow(label: String, value: Int, previous: Int? = null) {
             text = label,
             color = HardTalkColors.TextMuted,
             fontSize = 12.sp,
-            modifier = Modifier.width(110.dp),
+            maxLines = 1,
+            modifier = Modifier.width(88.dp),
         )
         Box(
             modifier = Modifier
                 .weight(1f)
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .height(7.dp)
+                .clip(RoundedCornerShape(999.dp))
                 .background(HardTalkColors.Background),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(value.coerceIn(0, 100) / 100f)
-                    .height(8.dp)
+                    .height(7.dp)
                     .background(scoreColor(value)),
             )
         }
