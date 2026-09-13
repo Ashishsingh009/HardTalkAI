@@ -5,26 +5,27 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 object HardTalkColors {
-    val Background = Color(0xFF0F172A)
-    val BackgroundMid = Color(0xFF1E1B4B)
-    val Surface = Color(0xFF1E293B)
-    val SurfaceAlt = Color(0xFF273449)
-    val Accent = Color(0xFF6366F1)
-    val AccentMuted = Color(0xFF818CF8)
-    val UserBubble = Color(0xFF4F46E5)
-    val Border = Color(0xFF334155)
-    val TextPrimary = Color.White
-    val TextSecondary = Color(0xFFA5B4FC)
-    val TextMuted = Color(0xFF94A3B8)
-    val Error = Color(0xFFFCA5A5)
-    val WarmUp = Color(0xFF34D399)
-    val Moderate = Color(0xFFFBBF24)
-    val Hard = Color(0xFFF87171)
-    val Coach = Color(0xFFC4B5FD)
-    val TakeawaySurface = Color(0xFF312E81)
+    val Background = Color(0xFFFFFFFF)
+    val BackgroundMid = Color(0xFFFFFFFF)
+    val Surface = Color(0xFFFFFFFF)
+    val SurfaceAlt = Color(0xFFF8FAFC)
+    val Accent = Color(0xFF2563EB)
+    val AccentMuted = Color(0xFF3B82F6)
+    val UserBubble = Color(0xFF2563EB)
+    val OnAccent = Color(0xFFFFFFFF)
+    val Border = Color(0xFFE2E8F0)
+    val TextPrimary = Color(0xFF0F172A)
+    val TextSecondary = Color(0xFF1D4ED8)
+    val TextMuted = Color(0xFF475569)
+    val Error = Color(0xFFDC2626)
+    val WarmUp = Color(0xFF047857)
+    val Moderate = Color(0xFFB45309)
+    val Hard = Color(0xFFB91C1C)
+    val Coach = Color(0xFF2563EB)
+    val TakeawaySurface = Color(0xFFEFF6FF)
 
     val ScreenGradient = Brush.verticalGradient(
-        colors = listOf(Background, BackgroundMid, Background),
+        colors = listOf(Background, Background, Background),
     )
 }
 
@@ -32,23 +33,23 @@ fun difficultyColor(difficulty: String): Color = when (difficulty.lowercase()) {
     "warm-up" -> HardTalkColors.WarmUp
     "moderate" -> HardTalkColors.Moderate
     "hard" -> HardTalkColors.Hard
-    else -> HardTalkColors.AccentMuted
+    else -> HardTalkColors.Accent
 }
 
 fun difficultyBadgeBackground(difficulty: String): Color = when (difficulty.lowercase()) {
-    "warm-up" -> Color(0xFF064E3B)
-    "moderate" -> Color(0xFF78350F)
-    "hard" -> Color(0xFF7F1D1D)
+    "warm-up" -> Color(0xFFECFDF5)
+    "moderate" -> Color(0xFFFFFBEB)
+    "hard" -> Color(0xFFFEF2F2)
     else -> HardTalkColors.TakeawaySurface
 }
 
 fun scoreColor(value: Int): Color {
     val hue = (value.coerceIn(0, 100) / 100f) * 120f
-    return Color.hsv(hue, 0.70f, 0.55f)
+    return Color.hsv(hue, 0.72f, 0.72f)
 }
 
 fun moodColor(tone: CounterpartTone): Color = when (tone) {
     CounterpartTone.WARMING -> HardTalkColors.WarmUp
     CounterpartTone.GUARDED -> HardTalkColors.Hard
-    CounterpartTone.NEUTRAL -> HardTalkColors.Moderate
+    CounterpartTone.NEUTRAL -> HardTalkColors.Accent
 }
