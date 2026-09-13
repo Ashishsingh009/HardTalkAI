@@ -1,8 +1,8 @@
 package ai.hardtalk.source.presentation.scenarios
 
 import ai.hardtalk.source.domain.model.Scenario
+import ai.hardtalk.source.presentation.theme.DifficultyBadge
 import ai.hardtalk.source.presentation.theme.HardTalkColors
-import ai.hardtalk.source.presentation.theme.difficultyColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -76,7 +76,10 @@ fun ScenarioListScreen(
                         fontSize = 16.sp,
                     )
                 }
-                TextButton(onClick = onPrivacyClick) {
+                TextButton(
+                    onClick = onPrivacyClick,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                ) {
                     Text("Privacy", color = HardTalkColors.AccentMuted, fontSize = 14.sp)
                 }
             }
@@ -176,12 +179,7 @@ private fun ScenarioCard(
             .padding(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = scenario.difficulty,
-                color = difficultyColor(scenario.difficulty),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
+            DifficultyBadge(scenario.difficulty)
             if (scenario.free) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(

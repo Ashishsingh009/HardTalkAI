@@ -11,6 +11,8 @@ object HardTalkColors {
     val SurfaceAlt = Color(0xFF273449)
     val Accent = Color(0xFF6366F1)
     val AccentMuted = Color(0xFF818CF8)
+    val UserBubble = Color(0xFF4F46E5)
+    val Border = Color(0xFF334155)
     val TextPrimary = Color.White
     val TextSecondary = Color(0xFFA5B4FC)
     val TextMuted = Color(0xFF94A3B8)
@@ -31,6 +33,13 @@ fun difficultyColor(difficulty: String): Color = when (difficulty.lowercase()) {
     "moderate" -> HardTalkColors.Moderate
     "hard" -> HardTalkColors.Hard
     else -> HardTalkColors.AccentMuted
+}
+
+fun difficultyBadgeBackground(difficulty: String): Color = when (difficulty.lowercase()) {
+    "warm-up" -> Color(0xFF064E3B)
+    "moderate" -> Color(0xFF78350F)
+    "hard" -> Color(0xFF7F1D1D)
+    else -> HardTalkColors.TakeawaySurface
 }
 
 fun scoreColor(value: Int): Color {

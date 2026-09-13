@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -42,7 +43,7 @@ fun CoachPanel(
     progress: RoundProgress?,
     scoredTurns: Int,
 ) {
-    var goalsExpanded by remember { mutableStateOf(true) }
+    var goalsExpanded by remember { mutableStateOf(scoredTurns == 0) }
     LaunchedEffect(scoredTurns) {
         if (scoredTurns > 0) goalsExpanded = false
     }
@@ -50,23 +51,29 @@ fun CoachPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(HardTalkColors.Surface)
-            .padding(12.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Text(
-            text = "Coach Heather",
-            color = HardTalkColors.Coach,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = "Career drill with $personaName · $personaRole",
-            color = HardTalkColors.TextMuted,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 2.dp),
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Coach Heather",
+                    color = HardTalkColors.Coach,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = "$personaName · $personaRole",
+                    color = HardTalkColors.TextMuted,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 1.dp),
+                )
+            }
+            MoodChip(personaName = personaName, mood = mood, tone = tone, compact = true)
+        }
 
         if (goals.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -75,11 +82,11 @@ fun CoachPanel(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
                     .clickable { goalsExpanded = !goalsExpanded }
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "What to practice",
+                    text = "This round's goals",
                     color = HardTalkColors.TextSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -100,38 +107,13 @@ fun CoachPanel(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        MoodChip(personaName = personaName, mood = mood, tone = tone)
-
-        if (progress != null) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = "Scores this round",
-                color = HardTalkColors.TextSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            ScoreSparkline(
-                scores = progress.overallScores,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(32.dp),
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            ScorePills(scores = progress.overallScores)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = progress.takeaway,
-                color = HardTalkColors.TextMuted,
-                fontSize = 12.sp,
-            )
-        } else {
+        if (progress == null) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "After each reply: clarity, empathy, and assertiveness — plus one thing to try next. ${PracticeLoop.MAX_USER_TURNS} turns, then a recap.",
+                text = "${PracticeLoop.MAX_USER_TURNS} scored turns, then a recap. Practice → score → retry.",
                 color = HardTalkColors.TextMuted,
                 fontSize = 12.sp,
+                lineHeight = 16.sp,
             )
         }
     }
@@ -140,24 +122,29 @@ fun CoachPanel(
 @Composable
 private fun GoalRow(number: Int, text: String) {
     Row(
-        modifier = Modifier.padding(top = 6.dp),
+        modifier = Modifier.padding(top = 8.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        Text(
-            text = number.toString(),
-            color = HardTalkColors.TextPrimary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
+        Box(
             modifier = Modifier
+                .size(20.dp)
                 .clip(CircleShape)
-                .background(HardTalkColors.Accent)
-                .padding(horizontal = 7.dp, vertical = 2.dp),
-        )
+                .background(HardTalkColors.Accent),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = number.toString(),
+                color = HardTalkColors.TextPrimary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = text,
             color = HardTalkColors.TextPrimary,
             fontSize = 13.sp,
+            lineHeight = 18.sp,
             modifier = Modifier.padding(top = 1.dp),
         )
     }
@@ -168,6 +155,7 @@ fun MoodChip(
     personaName: String,
     mood: String,
     tone: CounterpartTone,
+    compact: Boolean = false,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
@@ -176,19 +164,29 @@ fun MoodChip(
                 .clip(CircleShape)
                 .background(moodColor(tone)),
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
+        Spacer(modifier = Modifier.width(6.dp))
+        if (compact) {
             Text(
-                text = "$personaName is ${tone.shortLabel.lowercase()}",
+                text = tone.shortLabel,
                 color = moodColor(tone),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = mood,
-                color = HardTalkColors.TextMuted,
                 fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
             )
+        } else {
+            Column {
+                Text(
+                    text = "$personaName is ${tone.shortLabel.lowercase()}",
+                    color = moodColor(tone),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = mood,
+                    color = HardTalkColors.TextMuted,
+                    fontSize = 11.sp,
+                )
+            }
         }
     }
 }
