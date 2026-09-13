@@ -208,10 +208,14 @@ function renderRound() {
           <div class="persona-role">${escapeHtml(s.persona.role)}</div>
           <div class="persona-mood">${escapeHtml(s.persona.name)} · ${escapeHtml(state.mood)} · ${turnLabel}</div>
         </div>
-        <h4>Your goals</h4>
-        <ul class="goals${goalsHidden ? " collapsed" : ""}">
+        ${
+          goalsHidden
+            ? ""
+            : `<h4>Your goals</h4>
+        <ul class="goals">
           ${s.goals.map((g) => `<li>${escapeHtml(g)}</li>`).join("")}
-        </ul>
+        </ul>`
+        }
       </aside>
       <div class="chat">
         <div class="messages">${messages}${recap}</div>
