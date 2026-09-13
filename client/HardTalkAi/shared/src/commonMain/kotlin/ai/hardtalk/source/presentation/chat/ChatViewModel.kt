@@ -3,6 +3,7 @@ package ai.hardtalk.source.presentation.chat
 import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
 import ai.hardtalk.source.domain.model.Scenario
+import ai.hardtalk.source.domain.repository.BillingRepository
 import ai.hardtalk.source.domain.repository.PracticeRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 class ChatViewModel(
     private val scenario: Scenario,
     private val practiceRepository: PracticeRepository,
+    private val billingRepository: BillingRepository,
 ) : ViewModel() {
 
     private var attemptId = 0
@@ -35,6 +37,12 @@ class ChatViewModel(
         val current = _uiState.value
         val message = current.input.trim()
         if (message.isEmpty() || !current.canSend) return
+        if (!billingRepository.canPlay(scenario)) {
+            _uiState.update {
+                it.copy(error = "Unlock HardTalk Pro to practice this drill.")
+            }
+            return
+        }
 
         val history = current.messages
         val userTurn = ChatMessage(role = ChatRole.USER, content = message)

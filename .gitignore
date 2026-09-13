@@ -7,9 +7,7 @@ dist/
 coverage/
 .vite/
 
-# Gradle / Kotlin / JVM
-.gradle/
-build/
+**/local.properties
 !gradle/wrapper/gradle-wrapper.jar
 *.class
 .kotlin/
