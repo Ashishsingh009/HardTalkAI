@@ -67,3 +67,38 @@ class HealthResponse(BaseModel):
     status: str
     engine: str
     scenarios: int
+    # True when the server can mint an OpenAI Realtime client secret.
+    # Typed POST /api/chat stays available either way.
+    voice: bool = False
+
+
+class VoiceSessionRequest(BaseModel):
+    scenarioId: str | None = None
+
+
+class VoiceSessionResponse(BaseModel):
+    clientSecret: str
+    realtimeUrl: str
+    model: str
+    voice: str
+    opening: str
+    instructions: str
+    personaName: str
+    maxUserTurns: int
+    maxDurationSeconds: int
+
+
+class VoiceCompleteRequest(BaseModel):
+    scenarioId: str | None = None
+    turns: list[ChatTurn] = Field(default_factory=list)
+
+
+class ScoredVoiceTurn(BaseModel):
+    role: Role
+    content: str
+    feedback: Feedback | None = None
+
+
+class VoiceCompleteResponse(BaseModel):
+    messages: list[ScoredVoiceTurn]
+    mood: str
