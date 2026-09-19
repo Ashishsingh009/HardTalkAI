@@ -109,7 +109,7 @@ fun CounterpartCallScreen(
                     onClick = onHangUp,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = HardTalkColors.Hard,
-                        contentColor = HardTalkColors.TextPrimary,
+                        contentColor = HardTalkColors.OnAccent,
                     ),
                 ) {
                     Text("Hang up", fontWeight = FontWeight.SemiBold)

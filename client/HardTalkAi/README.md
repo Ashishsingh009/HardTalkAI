@@ -37,6 +37,7 @@ Then use the run configurations in your IDE's toolbar, or:
 - Android app: `./gradlew :androidApp:installDebug`
   - Emulator default API URL: `http://10.0.2.2:3001` (`10.0.2.2` = host loopback).
   - Physical device: `./gradlew :androidApp:installDebug -Phardtalk.apiBaseUrl=http://<lan-ip>:3001`
+  - Paid catalog (Android): put the public Google SDK key in `local.properties` as `hardtalk.revenuecatGoogleApiKey`. Debug builds with an empty key stay ungated. Release builds lock non-free drills until HardTalk Pro is entitled.
 - iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there
   (simulator default API URL: `http://127.0.0.1:3001`).
 

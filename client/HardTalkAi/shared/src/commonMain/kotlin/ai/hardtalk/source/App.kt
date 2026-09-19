@@ -10,11 +10,11 @@ import ai.hardtalk.source.presentation.chat.ChatViewModel
 import ai.hardtalk.source.presentation.scenarios.ScenarioListScreen
 import ai.hardtalk.source.presentation.scenarios.ScenarioListViewModel
 import ai.hardtalk.source.presentation.splash.SplashScreen
+import ai.hardtalk.source.presentation.theme.HardTalkTheme
 import ai.hardtalk.source.voice.createVoiceCallSession
 import ai.hardtalk.source.voice.isVoiceCallSupported
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +39,7 @@ fun App(
     val container = remember(apiBaseUrl, billingRepository) {
         AppContainer(apiBaseUrl, billingRepository)
     }
-    MaterialTheme {
+    HardTalkTheme {
         var route by remember { mutableStateOf<PracticeRoute>(PracticeRoute.Splash) }
         var chatSession by remember { mutableStateOf(0) }
 

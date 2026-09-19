@@ -137,6 +137,12 @@ pnpm --filter @hardtalkai/web build
 curl -s http://localhost:3001/privacy | head  # privacy stub (needs FastAPI)
 ```
 
+### Host on Hugging Face Spaces
+
+**Live Static demo** (browser scoring, no FastAPI): [spaces/BhaiAshish/HardTalkAI](https://huggingface.co/spaces/BhaiAshish/HardTalkAI) — privacy at `https://bhaiashish-hardtalkai.static.hf.space/privacy.html`.
+
+Docker FastAPI (`cpu-basic`) and Gradio currently **402** on this free account (PRO, or wait 30 days for ZeroGPU). Root `Dockerfile` is ready for a `HardTalkAI-api` Docker Space when that lifts. Full steps: [`docs/huggingface-space.md`](docs/huggingface-space.md).
+
 ## Cloud Agent environment
 
 `.cursor/environment.json` installs `python3-venv`, web dependencies

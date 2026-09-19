@@ -132,7 +132,7 @@ fun ScenarioListScreen(
                             onClick = { viewModel.loadScenarios() },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = HardTalkColors.Accent,
-                                contentColor = HardTalkColors.TextPrimary,
+                                contentColor = HardTalkColors.OnAccent,
                             ),
                             shape = RoundedCornerShape(12.dp),
                         ) {
@@ -309,7 +309,7 @@ private fun PaywallScrim(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = HardTalkColors.Accent,
-                    contentColor = HardTalkColors.TextPrimary,
+                    contentColor = HardTalkColors.OnAccent,
                 ),
                 shape = RoundedCornerShape(12.dp),
             ) {

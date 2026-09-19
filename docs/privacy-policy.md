@@ -72,7 +72,8 @@ This is a stub for Play Console and in-app disclosure. We will update this file 
 
 Paste a **public HTTPS** URL to this policy into Play Console (Data safety + store listing). Options once this file is on the default branch:
 
-1. GitHub: `https://github.com/Ashishsingh009/HardTalkAI/blob/main/docs/privacy-policy.md`
-2. This HTML: `docs/privacy-policy.html` (host via GitHub Pages or the FastAPI `/privacy` route on a public server)
+1. Hugging Face Static Space: `https://bhaiashish-hardtalkai.static.hf.space/privacy.html`
+2. GitHub: `https://github.com/Ashishsingh009/HardTalkAI/blob/main/docs/privacy-policy.md`
+3. This HTML: `docs/privacy-policy.html` (host via GitHub Pages or FastAPI `/privacy` on a public Docker/API host)
 
 GitHub blob URLs work as a stopgap. GitHub Pages or your own host is cleaner for review.

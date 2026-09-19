@@ -78,7 +78,7 @@ fun PrivacyPolicyScreen(
                 onClick = { uriHandler.openUri(LegalLinks.PRIVACY_POLICY_URL) },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = HardTalkColors.Accent,
-                    contentColor = HardTalkColors.TextPrimary,
+                    contentColor = HardTalkColors.OnAccent,
                 ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),

@@ -8,6 +8,7 @@ import ai.hardtalk.source.domain.model.PracticeLoop
 import ai.hardtalk.source.presentation.theme.DifficultyBadge
 import ai.hardtalk.source.presentation.theme.HardTalkColors
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -295,11 +296,14 @@ private fun MessageBubble(
                         ),
                     )
                     .background(if (isUser) HardTalkColors.UserBubble else HardTalkColors.Surface)
+                    .then(
+                        if (isUser) Modifier else Modifier.border(1.dp, HardTalkColors.Border)
+                    )
                     .padding(horizontal = 14.dp, vertical = 10.dp),
             ) {
                 Text(
                     text = message.content,
-                    color = HardTalkColors.TextPrimary,
+                    color = if (isUser) HardTalkColors.OnAccent else HardTalkColors.TextPrimary,
                     fontSize = 15.sp,
                     lineHeight = 21.sp,
                 )
@@ -377,7 +381,7 @@ private fun Composer(
                     contentPadding = PaddingValues(horizontal = 14.dp),
                     shape = RoundedCornerShape(14.dp),
                 ) {
-                    Text("Call", fontWeight = FontWeight.SemiBold, color = HardTalkColors.TextPrimary)
+                    Text("Call", fontWeight = FontWeight.SemiBold, color = HardTalkColors.Accent)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
             }
@@ -388,7 +392,7 @@ private fun Composer(
                 contentPadding = PaddingValues(horizontal = 18.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = HardTalkColors.Accent,
-                    contentColor = HardTalkColors.TextPrimary,
+                    contentColor = HardTalkColors.OnAccent,
                     disabledContainerColor = HardTalkColors.SurfaceAlt,
                     disabledContentColor = HardTalkColors.TextMuted,
                 ),
