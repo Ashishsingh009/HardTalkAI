@@ -97,12 +97,6 @@ fun ScenarioListScreen(
                 color = HardTalkColors.TextMuted,
                 fontSize = 13.sp,
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "API: $apiBaseUrl",
-                color = HardTalkColors.TextMuted,
-                fontSize = 12.sp,
-            )
             Spacer(modifier = Modifier.height(20.dp))
 
             when (val state = uiState) {
@@ -128,7 +122,7 @@ fun ScenarioListScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Is FastAPI running on this host? Emulator default is http://10.0.2.2:3001",
+                            text = "Is FastAPI running on this host? This build talks to $apiBaseUrl",
                             color = HardTalkColors.TextMuted,
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center,

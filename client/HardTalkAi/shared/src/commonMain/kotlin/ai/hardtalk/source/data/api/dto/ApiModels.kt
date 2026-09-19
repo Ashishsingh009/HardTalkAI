@@ -59,3 +59,48 @@ data class ReplyResultDto(
 data class ApiErrorDto(
     val error: String,
 )
+
+@Serializable
+data class HealthResponseDto(
+    val status: String,
+    val engine: String,
+    val scenarios: Int,
+    val voice: Boolean = false,
+)
+
+@Serializable
+data class VoiceSessionRequestDto(
+    val scenarioId: String,
+)
+
+@Serializable
+data class VoiceSessionResponseDto(
+    val clientSecret: String,
+    val realtimeUrl: String,
+    val model: String,
+    val voice: String,
+    val opening: String,
+    val instructions: String,
+    val personaName: String,
+    val maxUserTurns: Int = 3,
+    val maxDurationSeconds: Int = 90,
+)
+
+@Serializable
+data class VoiceCompleteRequestDto(
+    val scenarioId: String,
+    val turns: List<ChatTurnDto> = emptyList(),
+)
+
+@Serializable
+data class ScoredVoiceTurnDto(
+    val role: String,
+    val content: String,
+    val feedback: FeedbackDto? = null,
+)
+
+@Serializable
+data class VoiceCompleteResponseDto(
+    val messages: List<ScoredVoiceTurnDto> = emptyList(),
+    val mood: String,
+)

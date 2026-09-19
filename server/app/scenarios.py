@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .models import Persona, Scenario
 
-# Android catalog gate (HardTalk Pro / RevenueCat) keeps this id playable and locks the rest.
+# Android HardTalk Pro (`hardtalk_pro`) keeps this id playable and locks the rest.
 # Do not enforce that gate in this catalog — FastAPI stays ungated.
 FREE_SCENARIO_ID = "ask-for-raise"
 

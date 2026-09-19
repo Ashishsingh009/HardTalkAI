@@ -12,15 +12,17 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
     Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
     folder is the appropriate location.
 
-`:shared` talks to the FastAPI backend (`GET /api/scenarios`, `POST /api/chat`). There is no
+`:shared` talks to the FastAPI backend (`GET /api/scenarios`, `POST /api/chat`,
+`POST /api/voice/session`, `POST /api/voice/complete`). There is no
 on-device coaching engine — scores and counterpart replies come from the server. The Android
 loop is practice → score → retry (career catalog from FastAPI, three scored turns per round),
-not an open-ended chat. After each turn, shared UI presents the existing feedback payload
+not an open-ended chat. Type a reply, or call the counterpart when OpenAI is configured
+on the server. After each turn (or after hang-up), shared UI presents the existing feedback payload
 (clarity / empathy / assertiveness, tips, mood) with score history; after three turns a
-recap names how scores moved and what to try next. The raise drill is free. On Android,
-other drills require HardTalk Pro (Play Billing via RevenueCat). Debug builds with no
-SDK key stay ungated. Do not commit the key; set `hardtalk.revenuecatGoogleApiKey` in
-`local.properties`.
+recap names how scores moved and what to try next. The raise drill is free. Other
+Android catalog drills need HardTalk Pro (`hardtalk_pro` via RevenueCat). Put the
+public Google SDK key in `local.properties` as `hardtalk.revenuecatGoogleApiKey` —
+never in git. Debug installs with no key still show the paywall. iOS stays ungated.
 
 ### Running the apps
 

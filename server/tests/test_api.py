@@ -19,6 +19,8 @@ def test_health_reports_ok():
     assert body["status"] == "ok"
     assert 8 <= body["scenarios"] <= 10
     assert body["scenarios"] == len(SCENARIOS)
+    assert "voice" in body
+    assert body["voice"] in (True, False)
 
 
 def test_scenarios_returns_career_catalog():

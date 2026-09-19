@@ -3,7 +3,7 @@
 **Lane:** Career Coaching / Leadership (Coach Heather)  
 **Who films:** Ashish, one sitting, phone or emulator.  
 **Product to show:** practice → score → retry (not a chatbot).  
-**This file is the camera brief.** Do not improvise new scenarios. Do not wait for RevenueCat, Play, or OpenAI.
+**This file is the camera brief.** Do not improvise new scenarios. Do not wait for Play Console or a live purchase. **Do** film HardTalk Pro: tap a locked drill, show the paywall, dismiss, then run the free raise.
 
 Record **Android** if you have an emulator or device. Recap (`Round complete`) only exists there. Fall back to **web** at `http://localhost:5173` only if Android is down — see [Web fallback](#web-fallback-if-android-is-down).
 
@@ -38,9 +38,9 @@ Do this once, then record. Target: setup 5–8 min, take 1–2.
 
 4. Paste the [clipboard pack](#clipboard-pack-paste-do-not-type-live) into three notes / a doc, in order. Recording time is lost to typing.
 
-5. Do Not Disturb. Portrait **9:16** (phone) or landscape **16:9** (emulator window). Start *after* the splash spinner. Crop or ignore the catalog debug line `API: http://…`.
+5. Do Not Disturb. Portrait **9:16** (phone) or landscape **16:9** (emulator window). Start *after* the splash spinner. The catalog no longer shows `API: http://…` — if you still see it, you are on an old build.
 
-6. **30-second dry run (no camera):** open raise → paste Line 1 → confirm Dana **guarded** and Assertiveness near **0**. If that fails, FastAPI is the wrong catalog or the line got edited.
+6. **30-second dry run (no camera):** catalog should show **Free practice** on raise and **Pro** on Sam. Tap Sam → **Unlock HardTalk Pro** sheet. Dismiss **Not now**. Open raise → paste Line 1 → confirm Dana **guarded** and Assertiveness near **0**. If that fails, FastAPI is the wrong catalog or the line got edited.
 
 ---
 
@@ -86,20 +86,20 @@ Voiceover is optional. If you skip VO, the UI still tells the story — just pau
 
 | Time | You do | Say (VO) | Must be on screen |
 | --- | --- | --- | --- |
-| 0:00–0:08 | Catalog is already open. Do not scroll yet. | “HardTalkAI is career coaching with Coach Heather. Practice the talk before the 1:1.” | Title **HardTalk AI**, subtitle **Career coaching · Coach Heather**, lede about scored drills. |
-| 0:08–0:18 | Hold the first card. Finger or cursor on **Free practice**. Briefly show the next 1–2 titles (Sam, Priya) without opening them. | “Ten manager drills. Raise is free practice.” | **Ask your manager for a raise** · **Free practice** chip · **You'll talk to Dana**. Second card **Give a teammate critical feedback**. |
-| 0:18–0:26 | Tap raise. Stop on Dana’s opening + Coach Heather. | “Dana has ten minutes and a freeze.” | Opening: *I've got to jump to the staffing review in ten minutes…* Coach Heather **What to practice** (name a number, tie to impact, stay collaborative). Header: **Dana · Guarded · Turn 0 of 3** (or Turn 0/3 equivalent). |
+| 0:00–0:08 | Catalog is already open. Do not scroll yet. | “HardTalkAI is career coaching with Coach Heather. Practice the talk before the 1:1.” | Title **HardTalk AI**, subtitle **Career coaching · Coach Heather**, lede **Raise is free; unlock the rest with HardTalk Pro.** |
+| 0:08–0:18 | Tap **Give a teammate critical feedback**. Hold the sheet. Tap **Not now**. | “Ten manager drills. Raise is free. The rest is HardTalk Pro.” | **Pro** chip on Sam. Sheet title **Unlock HardTalk Pro**. Copy that the raise stays free. Buttons **Unlock HardTalk Pro**, **Restore purchase**, **Not now**. |
+| 0:18–0:26 | Tap raise. Stop on Dana’s opening + Coach Heather. | “Dana has ten minutes and a freeze.” | Opening: *I've got to jump to the staffing review in ten minutes…* Coach Heather **What to practice** (name a number, tie to impact, stay collaborative). Header: **Dana · Guarded · Turn 0 of 3** (or Turn 0/3 equivalent). **Free practice** already proven on the catalog. |
 | 0:26–0:42 | Paste **Line 1**. Send. Hold the feedback card. | “If you hedge, the room closes.” | **Turn 1 coaching**. Overall about **31**. Assertiveness **0**. Tips about *I'd like…* and hedging. Mood: **Dana is guarded** / *defensive and cautious*. Dana: *Look, everyone thinks they deserve a raise… packet as no-change…* |
 | 0:42–1:00 | Paste **Line 2**. Send. Hold scores + mood change. | “Retry with impact and a clear ask.” | **Turn 2 coaching**. Overall about **63**. Clarity **80**, Empathy **57**, Assertiveness **52**, green deltas. Mood: **Dana is opening up**. Dana: *That's a case I can take upstairs… freeze on the packet…* Sparkline T1 → T2. |
 | 1:00–1:16 | Paste **Line 3**. Send. Wait for recap — do not tap anything. | “Third turn ends the round.” | Composer gone. Screen title **Round complete**. **How scores moved** **31 → 67** (overall **+36**). Sparkline T1·31 / T2·63 / T3·67. **Biggest lift: Assertiveness +52**. **Still to practice: Assertiveness**. |
 | 1:16–1:28 | Scroll the recap once. Stop on takeaway + CTAs. | “Practice, score, retry — not a chatbot.” | **What to try next:** *Assertiveness improved (0 → 52) but is still the limiter. Lead with a clear "I'd like…" so the ask cannot be missed.* Buttons **Try this scenario again** and **Choose another scenario**. |
-| 1:28–1:36 | Tap **Choose another scenario**. Tap **Give a teammate critical feedback**. | “Same loop for critical feedback.” | Catalog, then Sam’s opening: *If this is about checkout, I already told Dana the payments API was late…* |
-| 1:36–1:52 | Paste **Line 4**. Send. Hold Sam’s reply + scores. | “Name the misses, acknowledge the constraint, land a next step.” | **Turn 1 coaching** overall about **60** (Clarity **70** / Empathy **57** / Assertiveness **52**). Sam **opening up**. Reply about the last two dates and a weekly check. |
-| 1:52–2:00 | Freeze on Sam’s scores. Stop recording. | “HardTalkAI — rehearse the 1:1 before you’re in it.” | Feedback bars still readable. |
+| 1:28–1:36 | Tap **Choose another scenario**. Hold the catalog on Sam’s **Pro** chip. Do **not** open Sam unless HardTalk Pro is already unlocked. | “Same catalog, paid drills stay behind Pro.” | Catalog with **Free practice** on raise and **Pro** on Sam / Priya. |
+| 1:36–1:52 | Freeze on the catalog. Optional: if Pro is unlocked, tap Sam, paste **Line 4**, send. | “Name the misses, acknowledge the constraint, land a next step.” | Default: Pro chips readable. If unlocked: **Turn 1 coaching** overall about **60** (Clarity **70** / Empathy **57** / Assertiveness **52**). Sam **opening up**. |
+| 1:52–2:00 | Stop recording. | “HardTalkAI — rehearse the 1:1 before you’re in it.” | Catalog (or Sam scores if Pro was unlocked). |
 
-**If you are under 1:50 after Sam’s reply:** tap **← Scenarios**, open **Say no to extra work**, paste **Line 5**, send, freeze on Priya **opening up** (overall about **67**). Cut by 2:15. This is extra; judges already saw the loop.
+**If you are under 1:50 and Pro is unlocked:** tap **Say no to extra work**, paste **Line 5**, send, freeze on Priya **opening up** (overall about **67**). Cut by 2:15. This is extra; judges already saw the loop and the paywall.
 
-**If you are over time:** skip Priya. Recap + Sam is the product.
+**If you are over time:** skip Priya. Recap + Pro catalog is the product.
 
 ---
 
@@ -132,8 +132,7 @@ Overall **67**, warming. Builtin: “Ah — I hear you that payments is already 
 Web is the same catalog and the same scores. It is **not** the same loop:
 
 - No 3-turn cap, no **Round complete**, no **Try this scenario again**.
-- After Line 3, VO: “That’s a three-turn round. On Android you get a recap here.” Then click **← Choose another scenario** and do Sam.
-- Still show **Free practice** on raise, Line 1 guarded, Line 2–3 warming, then Sam.
+- Still show **Free practice** on raise. Web is **not** paywalled — say that in the description. After Line 3, VO: “That’s a three-turn round. On Android you get a recap here, and Pro drills sit behind RevenueCat.” Then click **← Choose another scenario**.
 
 Say in the video description that the judged recap UI is Android. Do not pretend web has the recap screen.
 
@@ -141,11 +140,12 @@ Say in the video description that the judged recap UI is Android. Do not pretend
 
 ## Do not film
 
-- Voice input, microphone permission, or “talking to” the phone. This build is **text rehearsal**.
+- The default camera path is **text rehearsal** (no mic). Do not film Call / microphone permission unless `OPENAI_API_KEY` is set and you explicitly want that extra shot. Call is the counterpart, not Coach Heather.
 - A free-form chat that is not one of the three demo drills.
-- Opening calibration / skip-level / stolen-credit just to flex catalog length. Ten cards in the first 18 seconds is enough.
-- RevenueCat, paywall, Play Store, settings, Privacy policy (listing shots are a different checklist).
+- Opening calibration / skip-level / stolen-credit just to flex catalog length. Ten cards plus the paywall in the first 18 seconds is enough.
+- Play Store, settings, Privacy policy (listing shots are a different checklist). **Do** film the HardTalk Pro sheet.
 - Failed “is FastAPI running?” error. Fix API, then record.
+- The debug API URL (old builds only — current catalog hides it).
 - Hedged Line 1 that accidentally includes `I'd like` or a number — that will not go guarded.
 - iOS. Android is the end-to-end path this week.
 
@@ -157,6 +157,6 @@ Say in the video description that the judged recap UI is Android. Do not pretend
 - File: `hardtalkai-shipaton-demo.mp4` (H.264).
 - Description paste for Devpost / YouTube:
 
-  > HardTalkAI — Career Coaching (Coach Heather). Rehearse asking Dana for a raise (free drill): hedge, get scored, retry with a number, recap. Then one turn of critical feedback with Sam. Practice → score → retry. Text rehearsal prototype; counterpart replies are on-device canned unless OpenAI is configured.
+  > HardTalkAI — Career Coaching (Coach Heather). Rehearse asking Dana for a raise (free drill): hedge, get scored, retry with a number, recap. HardTalk Pro unlocks the rest of the catalog (RevenueCat / Play Billing). Practice → score → retry. Default demo is typed rehearsal; Android can optionally call the counterpart when OpenAI is configured.
 
 - Still grab **Play screenshots** from `docs/play-store-listing.md` in a later sitting if needed. This recording is the **demo**, not the store shot list.

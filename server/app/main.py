@@ -8,9 +8,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
 from . import ai
+from . import voice
 from .coach import respond
-from .models import ChatRequest, HealthResponse, ScenariosResponse
+from .models import (
+    ChatRequest,
+    HealthResponse,
+    ScenariosResponse,
+    VoiceCompleteRequest,
+    VoiceSessionRequest,
+)
 from .scenarios import SCENARIOS, find_scenario
+from .voice import VoiceProviderError
 
 # repo-root/docs/*.html (this file is server/app/main.py)
 DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
@@ -54,7 +62,12 @@ def privacy_policy() -> FileResponse | JSONResponse:
 
 @app.get("/api/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-    return HealthResponse(status="ok", engine=ai.engine_name(), scenarios=len(SCENARIOS))
+    return HealthResponse(
+        status="ok",
+        engine=ai.engine_name(),
+        scenarios=len(SCENARIOS),
+        voice=voice.is_available(),
+    )
 
 
 @app.get("/api/scenarios", response_model=ScenariosResponse)
@@ -77,4 +90,39 @@ def chat(body: ChatRequest) -> JSONResponse:
         return _error(404, f"Unknown scenario: {scenario_id}")
 
     result = respond(scenario, body.history, message)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/api/voice/session")
+def voice_session(body: VoiceSessionRequest) -> JSONResponse:
+    """Mint a short-lived OpenAI Realtime client secret for the counterpart call."""
+    scenario_id = (body.scenarioId or "").strip()
+    if not scenario_id:
+        return _error(400, "scenarioId is required")
+    scenario = find_scenario(scenario_id)
+    if scenario is None:
+        return _error(404, f"Unknown scenario: {scenario_id}")
+    if not voice.is_available():
+        return _error(
+            503,
+            "Voice calls need OPENAI_API_KEY on the server. Typed practice still works.",
+        )
+    try:
+        session = voice.create_session(scenario)
+    except VoiceProviderError as exc:
+        logger.warning("Voice session mint failed: %s", exc)
+        return _error(502, str(exc))
+    return JSONResponse(content=session.model_dump())
+
+
+@app.post("/api/voice/complete")
+def voice_complete(body: VoiceCompleteRequest) -> JSONResponse:
+    """Score a counterpart-call transcript. Scores stay local; nothing goes to OpenAI."""
+    scenario_id = (body.scenarioId or "").strip()
+    if not scenario_id:
+        return _error(400, "scenarioId is required")
+    scenario = find_scenario(scenario_id)
+    if scenario is None:
+        return _error(404, f"Unknown scenario: {scenario_id}")
+    result = voice.complete_round(scenario, body.turns)
     return JSONResponse(content=result.model_dump())
