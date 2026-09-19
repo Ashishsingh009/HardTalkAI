@@ -75,7 +75,7 @@ Internal testing still needs a **package name**, **AAB**, and usually **App sign
 | --- | --- |
 | Store listing name / short / full | `docs/play-store-listing.md` |
 | Privacy policy URL | hosted `docs/privacy-policy.html` or GitHub markdown |
-| Data safety | cheat-sheet in the listing doc (messages to API; optional OpenAI; no ads/sale) |
+| Data safety | cheat-sheet in the listing doc (messages to API; optional mic for Call; optional OpenAI; no ads/sale) |
 | Content rating | IARC notes in the listing doc |
 | Category | Education (or Business) |
 | Ads declaration | **No** |

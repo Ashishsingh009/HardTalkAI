@@ -1,6 +1,6 @@
 # Devpost draft — HardTalkAI
 
-Paste into the Shipaton / Devpost form. Trim if a field is shorter than this file. Do **not** claim voice, multi-persona live coaching, a Play listing, or payments — those are not in this build.
+Paste into the Shipaton / Devpost form. Trim if a field is shorter than this file. Do **not** claim a Play listing, payments, or that Coach Heather talks on the live call. Typed rehearsal is the default demo path; Android Call needs `OPENAI_API_KEY`.
 
 **Lane (required):** Career Coaching (Leadership / Coach Heather)  
 **Repo:** https://github.com/Ashishsingh009/HardTalkAI  
@@ -47,7 +47,7 @@ The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practi
 
 **Honest about the prototype**
 
-- Rehearsal is **typed text**. There is no voice input, no live spoken multi-persona session, and no in-call interruption.
+- Rehearsal is **typed text by default**. Android can place a short **counterpart call** (interruptible, three user segments or ~90s) when `OPENAI_API_KEY` is set. Coach Heather is **not** on that call — she scores the transcript after hang-up, same recap as typed practice. iOS/web stay typed.
 - Coaching scores and tips are computed on our FastAPI server with a deterministic rubric (markers for hedges, “I” asks, empathy, numbers). They do not require an LLM.
 - Counterpart *replies* are canned in-character lines unless the operator sets `OPENAI_API_KEY`. Without a key the app still runs fully offline. We did not enable OpenAI for the default demo so the video is reproducible.
 - Web (`localhost:5173`) shares the catalog and scores. The finite round + recap is the **Android / Compose Multiplatform** loop.
@@ -59,7 +59,7 @@ The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practi
 
 Three clients, one coaching API.
 
-- **FastAPI (Python)** on `:3001` — `GET /api/scenarios`, `POST /api/chat`, `/api/health`, privacy HTML at `/privacy`. The engine scores the latest user message, picks a tone, and either returns a canned reply or calls OpenAI (`gpt-4o-mini` by default) in character. Scores never go to OpenAI.
+- **FastAPI (Python)** on `:3001` — `GET /api/scenarios`, `POST /api/chat`, `POST /api/voice/session`, `POST /api/voice/complete`, `/api/health`, privacy HTML at `/privacy`. The engine scores the latest user message (or a call transcript), picks a tone, and either returns a canned reply or calls OpenAI (`gpt-4o-mini` by default) in character. Live calls mint an OpenAI Realtime client secret; scores never go to OpenAI.
 - **React + Vite + TypeScript** web app on `:5173` — scenario grid, conversation, live score bars. Dev proxy to the API.
 - **Kotlin Multiplatform / Compose Multiplatform** (`client/HardTalkAi`) — shared UI, Ktor Client, kotlinx.serialization DTOs that match the FastAPI models. Android is the judged path: catalog with a Free badge, Coach Heather panel, per-turn bars + sparkline, three-turn recap. iOS uses the same shared UI; we did not cut an iOS store build this week.
 
@@ -98,8 +98,8 @@ Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `d
 
 - **RevenueCat** free-tier gate: keep raise playable, lock the rest (needs SDK keys + Play products). Not started on purpose.
 - **Play Console** internal testing: signed AAB, hosted privacy URL, screenshots from `docs/play-store-listing.md`. Blocked on account access.
-- **OpenAI replies** in the demo environment so Dana/Sam are less canned, with the same local scores.
-- Later, not this submission: voice rehearsal, iOS store, real persistence. We will not pretend those shipped.
+- **OpenAI replies** in the demo environment so Dana/Sam are less canned, with the same local scores. Android **Call** needs that key; the judged camera script stays typed so it is reproducible without it.
+- Later: iOS store, real persistence, web voice. We will not pretend those shipped.
 
 ---
 

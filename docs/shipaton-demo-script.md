@@ -141,7 +141,7 @@ Say in the video description that the judged recap UI is Android. Do not pretend
 
 ## Do not film
 
-- Voice input, microphone permission, or “talking to” the phone. This build is **text rehearsal**.
+- The default camera path is **text rehearsal** (no mic). Do not film Call / microphone permission unless `OPENAI_API_KEY` is set and you explicitly want that extra shot. Call is the counterpart, not Coach Heather.
 - A free-form chat that is not one of the three demo drills.
 - Opening calibration / skip-level / stolen-credit just to flex catalog length. Ten cards in the first 18 seconds is enough.
 - RevenueCat, paywall, Play Store, settings, Privacy policy (listing shots are a different checklist).
@@ -157,6 +157,6 @@ Say in the video description that the judged recap UI is Android. Do not pretend
 - File: `hardtalkai-shipaton-demo.mp4` (H.264).
 - Description paste for Devpost / YouTube:
 
-  > HardTalkAI — Career Coaching (Coach Heather). Rehearse asking Dana for a raise (free drill): hedge, get scored, retry with a number, recap. Then one turn of critical feedback with Sam. Practice → score → retry. Text rehearsal prototype; counterpart replies are on-device canned unless OpenAI is configured.
+  > HardTalkAI — Career Coaching (Coach Heather). Rehearse asking Dana for a raise (free drill): hedge, get scored, retry with a number, recap. Then one turn of critical feedback with Sam. Practice → score → retry. Default demo is typed rehearsal; Android can optionally call the counterpart when OpenAI is configured.
 
 - Still grab **Play screenshots** from `docs/play-store-listing.md` in a later sitting if needed. This recording is the **demo**, not the store shot list.
