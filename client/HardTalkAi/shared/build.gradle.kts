@@ -45,6 +45,9 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.stream.webrtc.android)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

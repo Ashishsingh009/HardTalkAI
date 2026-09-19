@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -106,6 +107,18 @@ fun ChatScreen(
                 )
             }
 
+            if (uiState.inCall) {
+                CounterpartCallScreen(
+                    personaName = uiState.scenario.persona.name,
+                    personaRole = uiState.scenario.persona.role,
+                    status = uiState.callStatus,
+                    userTurns = uiState.liveUserTurns,
+                    muted = uiState.callMuted,
+                    onMuteToggle = { viewModel.setCallMuted(!uiState.callMuted) },
+                    onHangUp = viewModel::hangUpCall,
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
@@ -157,7 +170,10 @@ fun ChatScreen(
                 placeholder = "Reply to ${uiState.scenario.persona.name}…",
                 onValueChange = viewModel::onInputChange,
                 onSend = viewModel::send,
+                callEnabled = uiState.callAvailable,
+                onCall = viewModel::startCall,
             )
+            }
         }
     }
 }
@@ -307,6 +323,8 @@ private fun Composer(
     placeholder: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
+    callEnabled: Boolean,
+    onCall: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -351,6 +369,18 @@ private fun Composer(
                 shape = RoundedCornerShape(14.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
+            if (callEnabled) {
+                OutlinedButton(
+                    onClick = onCall,
+                    enabled = enabled,
+                    modifier = Modifier.height(48.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text("Call", fontWeight = FontWeight.SemiBold, color = HardTalkColors.TextPrimary)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Button(
                 onClick = onSend,
                 enabled = enabled && value.isNotBlank(),

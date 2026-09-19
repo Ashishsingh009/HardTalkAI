@@ -8,6 +8,8 @@ import ai.hardtalk.source.presentation.chat.ChatViewModel
 import ai.hardtalk.source.presentation.scenarios.ScenarioListScreen
 import ai.hardtalk.source.presentation.scenarios.ScenarioListViewModel
 import ai.hardtalk.source.presentation.splash.SplashScreen
+import ai.hardtalk.source.voice.createVoiceCallSession
+import ai.hardtalk.source.voice.isVoiceCallSupported
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +68,12 @@ fun App(apiBaseUrl: String = defaultApiBaseUrl()) {
                 }
                 is PracticeRoute.Chat -> {
                     val chatViewModel = viewModel(key = "chat-${current.scenario.id}-$chatSession") {
-                        ChatViewModel(current.scenario, container.practiceRepository)
+                        ChatViewModel(
+                            current.scenario,
+                            container.practiceRepository,
+                            voiceSupported = isVoiceCallSupported(),
+                            voiceCallFactory = { createVoiceCallSession() },
+                        )
                     }
                     ChatScreen(
                         viewModel = chatViewModel,
