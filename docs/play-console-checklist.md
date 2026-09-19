@@ -1,6 +1,6 @@
 # Play Console checklist (when access lands)
 
-Play Console is **not** available yet. Nothing here requires Play credentials in the repo. Do **not** add RevenueCat for this drop.
+Play Console is **not** available yet. Nothing here requires Play credentials in the repo. Keep RevenueCat **public** SDK keys in `local.properties`, never in git.
 
 Privacy text, listing copy, and the screenshot shot list already live in:
 
@@ -60,7 +60,7 @@ Min SDK is whatever the version catalog says (API 24+). No separate iOS store bu
 4. Release notes (internal):
 
    ```
-   First internal build: career catalog, scored practice round, recap. Prototype — no IAP.
+   First internal build: career catalog, scored practice round, recap, HardTalk Pro gate. Prototype.
    ```
 
 5. **Testers** tab → email list (or Google Group) → add Ashish + whoever should install
@@ -75,7 +75,7 @@ Internal testing still needs a **package name**, **AAB**, and usually **App sign
 | --- | --- |
 | Store listing name / short / full | `docs/play-store-listing.md` |
 | Privacy policy URL | hosted `docs/privacy-policy.html` or GitHub markdown |
-| Data safety | cheat-sheet in the listing doc (messages to API; optional mic for Call; optional OpenAI; no ads/sale) |
+| Data safety | cheat-sheet in the listing doc (messages to API; optional mic for Call; purchase history via Play/RevenueCat; optional OpenAI; no ads/sale) |
 | Content rating | IARC notes in the listing doc |
 | Category | Education (or Business) |
 | Ads declaration | **No** |
@@ -87,14 +87,16 @@ In-app **Privacy** (web header + Android catalog) already points at this policy.
 
 ## 4. Explicitly out of scope
 
-- **RevenueCat** / Play Billing / paywall — do not implement for this drop. Raise stays `free: true` as a catalog badge only.
-- **Play API keys, service accounts, `google-services.json`, keystores** — do not put them in the repo.
+- **Play API keys, service accounts, `google-services.json`, keystores, RevenueCat secret keys** — do not put them in the repo. Public Google SDK key only, in `client/HardTalkAi/local.properties` as `hardtalk.revenuecatGoogleApiKey`.
 - Production rollout / closed–open testing — after internal testers can install.
+
+HardTalk Pro is a client-side catalog gate (`hardtalk_pro`). Create the Play product and RevenueCat entitlement on the dashboards. FastAPI is **not** gated.
 
 ## 5. Smoke the internal build
 
 - Install from the internal-track link (not sideload)
-- Catalog shows ~10 career drills and **Free practice** on the raise
-- Complete one 3-turn round → recap
+- Catalog shows ~10 career drills, **Free practice** on the raise, **Pro** on the rest
+- Tap a Pro drill → **Unlock HardTalk Pro** sheet (purchase / restore / not now)
+- Complete one 3-turn **raise** round → recap
 - Open **Privacy** from the catalog; policy loads
 - Confirm the binary talks to the **HTTPS** API, not `10.0.2.2`

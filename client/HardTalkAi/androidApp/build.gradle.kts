@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -17,6 +18,7 @@ dependencies {
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+    implementation(libs.revenuecat.purchases)
 }
 
 android {
@@ -33,6 +35,18 @@ android {
         val apiBaseUrl = providers.gradleProperty("hardtalk.apiBaseUrl")
             .getOrElse("http://10.0.2.2:3001")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        val revenueCatKey = revenueCatGoogleApiKey()
+        buildConfigField(
+            "String",
+            "REVENUECAT_GOOGLE_API_KEY",
+            "\"${revenueCatKey.replace("\\", "\\\\").replace("\"", "\\\"")}\"",
+        )
+        // Default false so debug installs show the HardTalk Pro paywall for Shipaton.
+        // Opt in to walk the full catalog without Play: -Phardtalk.ungatedCatalog=true
+        val ungatedCatalog = providers.gradleProperty("hardtalk.ungatedCatalog")
+            .orNull
+            ?.equals("true", ignoreCase = true) == true
+        buildConfigField("boolean", "UNGATED_CATALOG", ungatedCatalog.toString())
     }
     packaging {
         resources {
@@ -56,4 +70,17 @@ android {
         compose = true
         buildConfig = true
     }
+}
+
+private fun revenueCatGoogleApiKey(): String {
+    val fromProperty = providers.gradleProperty("hardtalk.revenuecatGoogleApiKey")
+        .orNull
+        ?.trim()
+        .orEmpty()
+    if (fromProperty.isNotEmpty()) return fromProperty
+    val localFile = rootProject.file("local.properties")
+    if (!localFile.isFile) return ""
+    val properties = Properties()
+    localFile.inputStream().use { stream -> properties.load(stream) }
+    return properties.getProperty("hardtalk.revenuecatGoogleApiKey")?.trim().orEmpty()
 }

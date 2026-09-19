@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from .models import Persona, Scenario
 
-# Later free-tier gating (D3 / RevenueCat) should keep this id playable and lock the rest.
-# Do not enforce that gate in this catalog — every scenario stays callable.
+# Android HardTalk Pro (`hardtalk_pro`) keeps this id playable and locks the rest.
+# FastAPI itself does not enforce the gate — every scenario stays callable on the API.
 FREE_SCENARIO_ID = "ask-for-raise"
 
 # Original three ids are stable: ask-for-raise, give-feedback, decline-request.

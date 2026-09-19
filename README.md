@@ -20,11 +20,16 @@ catalog is ~10 career scenarios from the same FastAPI backend for web and Androi
 3. **Get live coaching** — each message is scored on clarity, empathy, and assertiveness, with specific tips.
 4. **Refine & retry** — adjust your wording, watch the counterpart warm up, and run the round again.
 
-The **ask-for-raise** drill is marked `free` in the catalog (the later free-tier gate). Every scenario stays playable in this build — no paywall, no RevenueCat.
+The **ask-for-raise** drill is marked `free` in the catalog. On Android, the other
+drills require HardTalk Pro (Play Billing via RevenueCat). Web and the Hugging Face
+Static Space stay ungated. Do not put RevenueCat keys in git — use
+`client/HardTalkAi/local.properties` (`hardtalk.revenuecatGoogleApiKey`). A debug
+install with no key **shows the paywall** so the Shipaton demo can film it. To walk
+the full catalog without Play: `-Phardtalk.ungatedCatalog=true`.
 
 Play Console is not wired in this repo. Privacy stub, store listing draft, screenshot shot list, and an internal-testing checklist live in `docs/` (`privacy-policy.md`, `play-store-listing.md`, `play-console-checklist.md`). Web and Android expose a **Privacy** link; the HTML policy is also served at FastAPI `/privacy`.
 
-Shipaton D6/D7 paste-ready assets (no RevenueCat, no Play upload):
+Shipaton D6/D7 paste-ready assets (Play upload still Ashish-only):
 
 - Demo camera brief (≤2 min, Android preferred): [`docs/shipaton-demo-script.md`](docs/shipaton-demo-script.md)
 - Devpost draft (Career Coaching lane): [`docs/shipaton-devpost.md`](docs/shipaton-devpost.md)
@@ -98,15 +103,16 @@ itself. Use **`http://10.0.2.2:3001`**, which is Android's alias for the host lo
    ./gradlew :androidApp:installDebug
    ```
 
-   Debug builds already point at `http://10.0.2.2:3001` (`BuildConfig.API_BASE_URL`).
-   The scenario list shows the active base URL at the top.
+  Debug builds already point at `http://10.0.2.2:3001` (`BuildConfig.API_BASE_URL`).
+  Catalog errors still mention the active base URL; the happy-path list does not.
 
-3. Complete a practice round: pick a scenario → send a reply → confirm clarity / empathy /
-   assertiveness, tips, and a score sparkline under your turn. Coach Heather's panel
+3. Complete a practice round: pick the **free raise** → send a reply → confirm clarity / empathy /
+   assertiveness, tips, and a score sparkline under your turn. Tap a **Pro** card first to
+   show **Unlock HardTalk Pro**. Coach Heather's panel
    frames the drill goals and how the counterpart is showing up. After three scored
    turns the composer closes on a **round recap** (how scores moved + one takeaway);
    **Try this scenario again** resets to the opening line. **Choose another scenario**
-   returns to the scrolling career catalog (raise is marked free practice).
+   returns to the scrolling career catalog.
 
 **Physical device:** the phone cannot see `10.0.2.2`. Pass your machine's LAN IP (and keep
 uvicorn on `--host 0.0.0.0`):

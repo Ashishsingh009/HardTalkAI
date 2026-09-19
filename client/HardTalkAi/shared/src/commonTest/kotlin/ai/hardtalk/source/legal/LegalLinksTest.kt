@@ -17,6 +17,7 @@ class LegalLinksTest {
         assertTrue(LegalLinks.SUMMARY.contains(LegalLinks.CONTACT_EMAIL))
         assertTrue(LegalLinks.SUMMARY.contains("prototype", ignoreCase = true))
         assertTrue(LegalLinks.SUMMARY.contains("RevenueCat"))
+        assertTrue(LegalLinks.SUMMARY.contains("HardTalk Pro"))
         assertTrue(LegalLinks.SUMMARY.contains("microphone", ignoreCase = true) || LegalLinks.SUMMARY.contains("Realtime"))
     }
 }

@@ -3,6 +3,7 @@ package ai.hardtalk.source.presentation.chat
 import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
 import ai.hardtalk.source.domain.model.Scenario
+import ai.hardtalk.source.domain.repository.BillingRepository
 import ai.hardtalk.source.domain.repository.PracticeRepository
 import ai.hardtalk.source.voice.VoiceCallEvent
 import ai.hardtalk.source.voice.VoiceCallFactory
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 class ChatViewModel(
     private val scenario: Scenario,
     private val practiceRepository: PracticeRepository,
+    private val billingRepository: BillingRepository,
     private val voiceSupported: Boolean = false,
     private val voiceCallFactory: VoiceCallFactory? = null,
 ) : ViewModel() {
@@ -65,6 +67,12 @@ class ChatViewModel(
     fun startCall() {
         val current = _uiState.value
         if (!current.callAvailable) return
+        if (!billingRepository.canPlay(scenario)) {
+            _uiState.update {
+                it.copy(error = "Unlock HardTalk Pro to practice this drill.")
+            }
+            return
+        }
         val factory = voiceCallFactory ?: return
         val capturedAttempt = attemptId
         _uiState.update {
@@ -132,6 +140,12 @@ class ChatViewModel(
         val current = _uiState.value
         val message = current.input.trim()
         if (message.isEmpty() || !current.canSend) return
+        if (!billingRepository.canPlay(scenario)) {
+            _uiState.update {
+                it.copy(error = "Unlock HardTalk Pro to practice this drill.")
+            }
+            return
+        }
 
         val history = current.messages
         val userTurn = ChatMessage(role = ChatRole.USER, content = message)

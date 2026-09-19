@@ -26,6 +26,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,6 +46,13 @@ fun ScenarioListScreen(
     onPrivacyClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState) {
+        val ready = uiState as? ScenarioListUiState.Ready ?: return@LaunchedEffect
+        val open = ready.openScenario ?: return@LaunchedEffect
+        viewModel.consumeOpenScenario()
+        onScenarioSelected(open)
+    }
 
     Box(
         modifier = Modifier
@@ -89,12 +97,6 @@ fun ScenarioListScreen(
                 color = HardTalkColors.TextMuted,
                 fontSize = 13.sp,
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "API: $apiBaseUrl",
-                color = HardTalkColors.TextMuted,
-                fontSize = 12.sp,
-            )
             Spacer(modifier = Modifier.height(20.dp))
 
             when (val state = uiState) {
@@ -120,7 +122,7 @@ fun ScenarioListScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Is FastAPI running on this host? Emulator default is http://10.0.2.2:3001",
+                            text = "Is FastAPI running on this host? This build talks to $apiBaseUrl",
                             color = HardTalkColors.TextMuted,
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center,
@@ -145,8 +147,13 @@ fun ScenarioListScreen(
                         contentPadding = PaddingValues(bottom = 24.dp),
                     ) {
                         item {
+                            val lede = if (state.hasPro || state.ungated) {
+                                "${state.scenarios.size} manager conversations. Raise is the free practice."
+                            } else {
+                                "${state.scenarios.size} manager conversations. Raise is free; unlock the rest with HardTalk Pro."
+                            }
                             Text(
-                                text = "${state.scenarios.size} manager conversations. Raise is the free practice.",
+                                text = lede,
                                 color = HardTalkColors.TextMuted,
                                 fontSize = 13.sp,
                                 modifier = Modifier.padding(bottom = 4.dp),
@@ -155,12 +162,27 @@ fun ScenarioListScreen(
                         items(state.scenarios, key = { it.id }) { scenario ->
                             ScenarioCard(
                                 scenario = scenario,
-                                onClick = { onScenarioSelected(scenario) },
+                                locked = state.isLocked(scenario),
+                                onClick = { viewModel.onScenarioTapped(scenario) },
                             )
                         }
                     }
                 }
             }
+        }
+
+        val ready = uiState as? ScenarioListUiState.Ready
+        val paywallScenario = ready?.paywallScenario
+        if (ready != null && paywallScenario != null) {
+            PaywallScrim(
+                scenario = paywallScenario,
+                priceLabel = ready.priceLabel,
+                purchasing = ready.paywallPurchasing,
+                error = ready.paywallError,
+                onDismiss = viewModel::dismissPaywall,
+                onPurchase = viewModel::purchaseSelected,
+                onRestore = viewModel::restorePurchases,
+            )
         }
     }
 }
@@ -168,6 +190,7 @@ fun ScenarioListScreen(
 @Composable
 private fun ScenarioCard(
     scenario: Scenario,
+    locked: Boolean,
     onClick: () -> Unit,
 ) {
     Column(
@@ -190,6 +213,18 @@ private fun ScenarioCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(999.dp))
                         .background(HardTalkColors.TakeawaySurface)
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                )
+            } else if (locked) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Pro",
+                    color = HardTalkColors.TextMuted,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(HardTalkColors.SurfaceAlt)
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
@@ -219,5 +254,88 @@ private fun ScenarioCard(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Composable
+private fun PaywallScrim(
+    scenario: Scenario,
+    priceLabel: String?,
+    purchasing: Boolean,
+    error: String?,
+    onDismiss: () -> Unit,
+    onPurchase: () -> Unit,
+    onRestore: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(HardTalkColors.TextPrimary.copy(alpha = 0.32f))
+            .clickable(enabled = !purchasing, onClick = onDismiss),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .background(HardTalkColors.Surface)
+                .clickable(enabled = false, onClick = {})
+                .padding(20.dp),
+        ) {
+            Text(
+                text = "Unlock HardTalk Pro",
+                color = HardTalkColors.TextPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "\"${scenario.title}\" is a Pro drill. The raise stays free. Unlock the rest of the catalog with a one-time Play purchase.",
+                color = HardTalkColors.TextMuted,
+                fontSize = 14.sp,
+            )
+            if (!error.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = error,
+                    color = HardTalkColors.Error,
+                    fontSize = 13.sp,
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onPurchase,
+                enabled = !purchasing,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = HardTalkColors.Accent,
+                    contentColor = HardTalkColors.TextPrimary,
+                ),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(
+                    if (purchasing) {
+                        "Working…"
+                    } else {
+                        val price = priceLabel?.takeIf { it.isNotBlank() }
+                        if (price != null) "Unlock for $price" else "Unlock HardTalk Pro"
+                    },
+                )
+            }
+            TextButton(
+                onClick = onRestore,
+                enabled = !purchasing,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Restore purchase", color = HardTalkColors.TextSecondary)
+            }
+            TextButton(
+                onClick = onDismiss,
+                enabled = !purchasing,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Not now", color = HardTalkColors.TextMuted)
+            }
+        }
     }
 }

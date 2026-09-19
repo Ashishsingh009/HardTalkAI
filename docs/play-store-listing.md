@@ -5,7 +5,7 @@ Copy-paste into Play Console when access exists. Character limits are Google’s
 **Lane:** Career Coaching / Leadership (Coach Heather)  
 **Package name in this repo:** `ai.hardtalk.source` — **confirm before the first upload**; it cannot change later. It still looks like the KMP template default.
 
-No store upload, Play credentials, or RevenueCat are required to use this file.
+No store upload or Play credentials are required to use this file. IAP product IDs stay in Play / RevenueCat dashboards, not this repo.
 
 ---
 
@@ -48,7 +48,7 @@ WHO IT’S FOR
 ICs and managers who want a private place to rehearse the talk before the real 1:1.
 
 WHAT THIS BUILD IS
-A Shipaton prototype. Every catalog scenario is playable; there is no paywall and no account. Coaching scores are computed by our server. If the operator has configured OpenAI, typed counterpart lines and optional Android live calls use that model; otherwise you still get a deterministic in-character typed reply and Call stays hidden.
+A Shipaton prototype. The raise drill is free practice. On Android, other catalog drills unlock with HardTalk Pro (Play Billing via RevenueCat). There is no account. Coaching scores are computed by our server. If the operator has configured OpenAI, typed counterpart lines and optional Android live calls use that model; otherwise you still get a deterministic in-character typed reply and Call stays hidden.
 
 WHAT IT IS NOT
 Not a therapist, not HR, not legal advice, and not a live coach. Do not put secrets, customer data, or real personnel files into the chat.
@@ -75,14 +75,14 @@ One-liner for a promo video voiceover or description:
 
 ## Content rating notes (IARC questionnaire)
 
-Answer for **this prototype**, not a future social/IAP product. Re-open the questionnaire if you add public UGC or payments. Microphone use for the optional counterpart call is disclosed in Data safety.
+Answer for **this build**, including Android IAP. Re-open the questionnaire if you add UGC. Microphone use for the optional counterpart call is disclosed in Data safety.
 
 | Topic | Suggested answer | Why |
 | --- | --- | --- |
 | User interaction | No users interact (no social, no public chat, no UGC feed) | Practice stays in the session |
 | Share location | No | |
 | Share personal info | No | No accounts |
-| Digital purchases | **No** | No IAP / no RevenueCat in this build |
+| Digital purchases | **Yes** | One-time HardTalk Pro unlock via Play Billing / RevenueCat. Raise stays free. |
 | Ads | No | |
 | Violence | No | Workplace roleplay only |
 | Sexual content | No | |
@@ -101,8 +101,9 @@ Collects:
 
 - **Messages** — practice replies + round history, sent to the HardTalkAI API to provide the coaching feature. Optionally forwarded to OpenAI when `OPENAI_API_KEY` is set on the server. Not sold. Not used for ads. Not shared with other users.
 - **Microphone** — only if the user starts an Android counterpart call. Audio is streamed to OpenAI Realtime for the live 1:1; the transcript is scored on our server. Not sold. Not used for ads.
+- **Purchase history** — handled by Google Play. RevenueCat sees the Play purchase token to unlock HardTalk Pro. We do not store card numbers.
 
-Does not collect (this build): location, financial info, name/email in-app, photos, contacts, app-activity analytics.
+Does not collect (this build): location, name/email in-app, photos, contacts, app-activity analytics.
 
 Encryption in transit: **yes on production HTTPS**. Debug/emulator builds may use cleartext HTTP to a local FastAPI — do not ship that as the store default.
 
@@ -117,10 +118,16 @@ Aim for **4 screenshots** in this order. Show real coaching UI, not empty states
 ### 1. Catalog with Free badge (and 2–3 scenario cards)
 
 - Screen: scenario list (`HardTalk AI` / Career coaching · Coach Heather).
-- Must show the **Free practice** chip on **Ask your manager for a raise**.
-- Frame **2–3 cards** in the shot: raise (Dana), **Give a teammate critical feedback** (Sam), and if it fits **Say no to extra work** (Priya). Crop so titles and the free badge are readable — do not show a huge empty gradient.
-- Optional lede in frame: “Pick a drill, get scored, retry”.
-- Hide or crop the debug `API: http://10.0.2.2:3001` line if it is in the shot (status bar crop or a later release that tucks debug URL). If it must stay, that is fine for internal testing; swap for production screenshots before production.
+- Must show the **Free practice** chip on **Ask your manager for a raise**, and a **Pro** chip on a locked drill (Sam / Priya).
+- Frame **2–3 cards** in the shot: raise (Dana), **Give a teammate critical feedback** (Sam), and if it fits **Say no to extra work** (Priya). Crop so titles and the badges are readable — do not show a huge empty gradient.
+- Optional lede in frame: “Raise is free; unlock the rest with HardTalk Pro”.
+- The debug API URL is no longer on the catalog. Do **not** capture the error retry screen (`Is FastAPI running…`).
+
+### 1b. HardTalk Pro paywall
+
+- From the catalog, tap **Give a teammate critical feedback** (Sam) while Pro is locked.
+- Capture the **Unlock HardTalk Pro** sheet: title, “the raise stays free”, **Unlock HardTalk Pro** / **Restore purchase** / **Not now**.
+- Dismiss with **Not now** before the raise drill screenshots.
 
 ### 2. In-round scores
 

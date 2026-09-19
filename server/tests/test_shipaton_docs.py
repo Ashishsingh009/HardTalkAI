@@ -57,6 +57,7 @@ def test_demo_script_is_a_one_sitting_brief():
     assert "Dana" in text and "Sam" in text and "Priya" in text
     assert "OPENAI_API_KEY" in text
     assert "RevenueCat" in text
+    assert "Unlock HardTalk Pro" in text
     assert "do not type live" in text.lower() or "Paste, do not type" in text
 
 
@@ -116,6 +117,7 @@ def test_devpost_draft_is_paste_ready_and_honest():
     assert "text" in text.lower()
     assert "voice" in text.lower()
     assert "RevenueCat" in text
+    assert "hardtalk_pro" in text or "HardTalk Pro" in text
     assert "OpenAI" in text
     assert "not a chatbot" in text.lower() or "not open-ended" in text.lower()
 
@@ -132,7 +134,7 @@ def test_week_status_names_prs_blockers_and_merge_order():
     assert "merge **#6**" in text
     assert "merge **#7**" in text
     assert "merge **#8**" in text
-    assert "Do not implement" in text or "Do not add RevenueCat" in text
+    assert "Do not commit keys" in text or "Do not add RevenueCat" in text
     assert "shipaton-demo-script.md" in text
     assert "shipaton-devpost.md" in text
     # Linear stack appears in the merge-order section as 5 then 6 then 7 then 8

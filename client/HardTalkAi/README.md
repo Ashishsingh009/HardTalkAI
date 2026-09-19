@@ -19,8 +19,10 @@ loop is practice → score → retry (career catalog from FastAPI, three scored 
 not an open-ended chat. Type a reply, or call the counterpart when OpenAI is configured
 on the server. After each turn (or after hang-up), shared UI presents the existing feedback payload
 (clarity / empathy / assertiveness, tips, mood) with score history; after three turns a
-recap names how scores moved and what to try next. The raise drill is marked free in the
-catalog for a later gate; every scenario stays playable in this build.
+recap names how scores moved and what to try next. The raise drill is free. Other
+Android catalog drills need HardTalk Pro (`hardtalk_pro` via RevenueCat). Put the
+public Google SDK key in `local.properties` as `hardtalk.revenuecatGoogleApiKey` —
+never in git. Debug installs with no key still show the paywall. iOS stays ungated.
 
 ### Running the apps
 

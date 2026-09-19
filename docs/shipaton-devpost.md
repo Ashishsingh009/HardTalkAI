@@ -1,6 +1,6 @@
 # Devpost draft — HardTalkAI
 
-Paste into the Shipaton / Devpost form. Trim if a field is shorter than this file. Do **not** claim a Play listing, payments, or that Coach Heather talks on the live call. Typed rehearsal is the default demo path; Android Call needs `OPENAI_API_KEY`.
+Paste into the Shipaton / Devpost form. Trim if a field is shorter than this file. Do **not** claim a Play listing or that Coach Heather talks on the live call. Typed rehearsal is the default demo path; Android Call needs `OPENAI_API_KEY`. **Do** claim HardTalk Pro: Android catalog gate via RevenueCat (`hardtalk_pro`), raise stays free.
 
 **Lane (required):** Career Coaching (Leadership / Coach Heather)  
 **Repo:** https://github.com/Ashishsingh009/HardTalkAI  
@@ -43,7 +43,7 @@ HardTalkAI is **career coaching**, not open-ended chat.
 3. **Get scored every turn** on clarity, empathy, and assertiveness, plus specific tips (“lead with *I'd like…*”, stop hedging, add a number).
 4. **Retry.** On Android the round is three scored turns, then a **recap**: how overall moved (e.g. 31 → 67), biggest lift, one thing to try next, **Try this scenario again** / **Choose another scenario**.
 
-The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practice** in the catalog. Every scenario is playable in this build — there is no paywall.
+The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practice** in the catalog. On Android, the other drills sit behind **HardTalk Pro** (Play Billing via RevenueCat, entitlement `hardtalk_pro`). Web and the Hugging Face Static Space stay ungated. FastAPI is not paywalled.
 
 **Honest about the prototype**
 
@@ -51,7 +51,7 @@ The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practi
 - Coaching scores and tips are computed on our FastAPI server with a deterministic rubric (markers for hedges, “I” asks, empathy, numbers). They do not require an LLM.
 - Counterpart *replies* are canned in-character lines unless the operator sets `OPENAI_API_KEY`. Without a key the app still runs fully offline. We did not enable OpenAI for the default demo so the video is reproducible.
 - Web (`localhost:5173`) shares the catalog and scores. The finite round + recap is the **Android / Compose Multiplatform** loop.
-- No accounts, no analytics SDK, no RevenueCat, no Play upload in this submission.
+- No accounts, no analytics SDK, no Play upload in this submission. Android HardTalk Pro is a real RevenueCat catalog gate; a live Play sandbox purchase still needs Ashish’s public SDK key and a Play product.
 
 ---
 
@@ -61,9 +61,9 @@ Three clients, one coaching API.
 
 - **FastAPI (Python)** on `:3001` — `GET /api/scenarios`, `POST /api/chat`, `POST /api/voice/session`, `POST /api/voice/complete`, `/api/health`, privacy HTML at `/privacy`. The engine scores the latest user message (or a call transcript), picks a tone, and either returns a canned reply or calls OpenAI (`gpt-4o-mini` by default) in character. Live calls mint an OpenAI Realtime client secret; scores never go to OpenAI.
 - **React + Vite + TypeScript** web app on `:5173` — scenario grid, conversation, live score bars. Dev proxy to the API.
-- **Kotlin Multiplatform / Compose Multiplatform** (`client/HardTalkAi`) — shared UI, Ktor Client, kotlinx.serialization DTOs that match the FastAPI models. Android is the judged path: catalog with a Free badge, Coach Heather panel, per-turn bars + sparkline, three-turn recap. iOS uses the same shared UI; we did not cut an iOS store build this week.
+- **Kotlin Multiplatform / Compose Multiplatform** (`client/HardTalkAi`) — shared UI, Ktor Client, kotlinx.serialization DTOs that match the FastAPI models. Android is the judged path: catalog with a Free badge and Pro lock, Coach Heather panel, per-turn bars + sparkline, three-turn recap, **Unlock HardTalk Pro** sheet (RevenueCat Purchases 9). iOS uses the same shared UI with an ungated billing stub; we did not cut an iOS store build this week.
 
-Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `docs/` so a Console upload is paste, not invention. We did not implement billing or upload an AAB.
+Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `docs/` so a Console upload is paste, not invention. We did not upload an AAB.
 
 ---
 
@@ -71,14 +71,14 @@ Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `d
 
 - **Keep it a drill, not a chatbot.** The web UI will happily keep scoring turn 4+. Android had to close the composer after three turns and invent a recap from the *existing* feedback payload (no extra API fields). That tension is still visible if you demo web.
 - **Stacking a week of PRs.** D1–D5 landed as stacked branches (`#5` → `#6` → `#7` → `#8`). Catalog size, recap UI, and privacy all assume that merge order. Landing them out of order would drop the Free badge or the recap.
-- **Keys we do not have.** RevenueCat, Play Console, and OpenAI are blocked on Ashish’s accounts. We refused to fake a paywall or a store listing URL. Raise is `free: true` as a catalog hint only.
+- **Keys we do not have in git.** RevenueCat public Google SDK key and Play products live on Ashish’s dashboards. The Android client still ships the paywall: empty key locks paid drills so the demo can show **Unlock HardTalk Pro**. We refused to commit secrets or fake a store listing URL.
 - **Scoring that is demoable without an LLM.** A rubric that punishes “maybe / just / if that's okay” and rewards “I'd like” + a number is easy to game and easy to show. We accepted that honesty: it is a coaching *gym*, not a judge of real performance reviews.
 
 ---
 
 ## Accomplishments that we're proud of
 
-- A **two-minute story** you can film in one sitting: Free raise → hedged ask (Dana guarded, assertiveness 0) → numbered retry (Dana opens up) → recap 31 → 67 → one turn of Sam.
+- A **two-minute story** you can film in one sitting: Pro paywall on Sam → Free raise → hedged ask (Dana guarded, assertiveness 0) → numbered retry (Dana opens up) → recap 31 → 67.
 - **10 career drills** with distinct openings and canned pushback (warming / neutral / guarded), not three cloned templates.
 - **Android recap** that names one limiter (“assertiveness improved 0 → 52 but is still the limiter”) instead of a vanity overall score.
 - Same FastAPI catalog on web and Android. Privacy stub + Play listing draft ready when Console exists.
@@ -90,13 +90,13 @@ Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `d
 
 - Finite rounds photograph better than “chat with an AI manager.” The recap is the product shot.
 - Counterpart mood has to *move* on camera. One hedged line and one strong line is the whole trick.
-- Store and billing work is mostly human: keys, screenshots, a signing keystore. Code can only leave paste-ready docs.
+- Store and billing work is mostly human: keys, screenshots, a signing keystore. The paywall UI can ship without a live purchase; a sandbox buy still needs Play.
 
 ---
 
 ## What's next
 
-- **RevenueCat** free-tier gate: keep raise playable, lock the rest (needs SDK keys + Play products). Not started on purpose.
+- **RevenueCat** is in the Android client (`hardtalk_pro`). Remaining: Play product + public SDK key in `local.properties` for a live sandbox purchase. Raise stays free. Web stays ungated.
 - **Play Console** internal testing: signed AAB, hosted privacy URL, screenshots from `docs/play-store-listing.md`. Blocked on account access.
 - **OpenAI replies** in the demo environment so Dana/Sam are less canned, with the same local scores. Android **Call** needs that key; the judged camera script stays typed so it is reproducible without it.
 - Later: iOS store, real persistence, web voice. We will not pretend those shipped.
@@ -105,11 +105,11 @@ Play-facing copy (privacy stub, listing, internal-testing checklist) lives in `d
 
 ## Built with
 
-Python, FastAPI, Uvicorn, Pydantic, OpenAI API (optional), React, TypeScript, Vite, Kotlin, Kotlin Multiplatform, Compose Multiplatform, Ktor, kotlinx.serialization, Android, Material 3, pytest, Gradle
+Python, FastAPI, Uvicorn, Pydantic, OpenAI API (optional), React, TypeScript, Vite, Kotlin, Kotlin Multiplatform, Compose Multiplatform, Ktor, kotlinx.serialization, Android, Material 3, RevenueCat, pytest, Gradle
 
 *(Devpost tag list — tick what the form offers, paste the rest into “other”:)*
 
-`python` · `fastapi` · `react` · `typescript` · `vite` · `kotlin` · `kotlin-multiplatform` · `jetpack-compose` · `android` · `ktor` · `openai` · `career-coaching`
+`python` · `fastapi` · `react` · `typescript` · `vite` · `kotlin` · `kotlin-multiplatform` · `jetpack-compose` · `android` · `ktor` · `openai` · `revenuecat` · `career-coaching`
 
 ---
 
@@ -127,7 +127,7 @@ Python, FastAPI, Uvicorn, Pydantic, OpenAI API (optional), React, TypeScript, Vi
 
 Use Android screenshots, not browser chrome:
 
-1. Catalog with **Free practice** on the raise, plus Sam/Priya cards.
+1. Catalog with **Free practice** on the raise, **Pro** on Sam, plus the **Unlock HardTalk Pro** sheet.
 2. Hedged raise: Turn 1 coaching, assertiveness 0, Dana guarded.
 3. **Round complete** recap (31 → 67).
 4. Optional: Sam warming after the critical-feedback line.

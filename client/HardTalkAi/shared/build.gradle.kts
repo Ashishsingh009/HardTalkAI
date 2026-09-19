@@ -48,6 +48,7 @@ kotlin {
             implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.activity.compose)
             implementation(libs.stream.webrtc.android)
+            implementation(libs.revenuecat.purchases)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
