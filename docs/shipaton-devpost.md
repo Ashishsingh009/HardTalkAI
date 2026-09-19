@@ -43,7 +43,7 @@ HardTalkAI is **career coaching**, not open-ended chat.
 3. **Get scored every turn** on clarity, empathy, and assertiveness, plus specific tips (“lead with *I'd like…*”, stop hedging, add a number).
 4. **Retry.** On Android the round is three scored turns, then a **recap**: how overall moved (e.g. 31 → 67), biggest lift, one thing to try next, **Try this scenario again** / **Choose another scenario**.
 
-The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practice** in the catalog. Every scenario is playable in this build — there is no paywall.
+The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practice** in the catalog. Other Android drills show a **Pro** chip and unlock with HardTalk Pro (`hardtalk_pro`) via RevenueCat.
 
 **Honest about the prototype**
 
