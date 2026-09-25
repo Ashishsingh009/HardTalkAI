@@ -41,7 +41,7 @@ Do this once, then record. Target: setup 5–8 min, take 1–2.
 
 4. Paste the [clipboard pack](#clipboard-pack-paste-do-not-type-live) into notes / a doc, in order. Recording time is lost to typing. Path A needs Line 4; Line 5 is extra.
 
-5. Do Not Disturb. Portrait **9:16** (phone) or landscape **16:9** (emulator window). Start *after* the splash spinner. Crop or ignore the catalog debug line `API: http://…` (still in `ScenarioListScreen`).
+5. Do Not Disturb. Portrait **9:16** (phone) or landscape **16:9** (emulator window). Start *after* the splash spinner. The catalog header no longer shows `API: http://…` — that URL only appears on the FastAPI error state, so you do not need to crop it.
 
 6. **Dry run (no camera):**
    - Open raise → paste Line 1 → confirm Dana **guarded** and Assertiveness near **0**. If that fails, FastAPI is the wrong catalog or the line got edited.
