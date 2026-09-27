@@ -127,6 +127,13 @@ fun ScenarioListScreen(
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center,
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "This build is calling $apiBaseUrl",
+                            color = HardTalkColors.TextMuted,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center,
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { viewModel.loadScenarios() },
