@@ -31,6 +31,29 @@ data class ReplyResult(
     val mood: String,
 )
 
+data class HealthStatus(
+    val engine: String,
+    val voice: Boolean,
+    val scenarios: Int,
+)
+
+data class VoiceSession(
+    val clientSecret: String,
+    val realtimeUrl: String,
+    val model: String,
+    val voice: String,
+    val opening: String,
+    val instructions: String,
+    val personaName: String,
+    val maxUserTurns: Int,
+    val maxDurationSeconds: Int,
+)
+
+data class VoiceCompleteResult(
+    val messages: List<ChatMessage>,
+    val mood: String,
+)
+
 enum class ChatRole {
     USER,
     COUNTERPART,
@@ -45,4 +68,9 @@ data class ChatMessage(
 fun ChatRole.toApiRole(): String = when (this) {
     ChatRole.USER -> "user"
     ChatRole.COUNTERPART -> "counterpart"
+}
+
+fun String.toChatRole(): ChatRole = when (this) {
+    "user" -> ChatRole.USER
+    else -> ChatRole.COUNTERPART
 }

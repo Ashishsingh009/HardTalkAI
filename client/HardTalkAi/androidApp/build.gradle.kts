@@ -41,6 +41,12 @@ android {
             "REVENUECAT_GOOGLE_API_KEY",
             "\"${revenueCatKey.replace("\\", "\\\\").replace("\"", "\\\"")}\"",
         )
+        // Default false so debug installs show the HardTalk Pro paywall for Shipaton.
+        // Opt in to walk the full catalog without Play: -Phardtalk.ungatedCatalog=true
+        val ungatedCatalog = providers.gradleProperty("hardtalk.ungatedCatalog")
+            .orNull
+            ?.equals("true", ignoreCase = true) == true
+        buildConfigField("boolean", "UNGATED_CATALOG", ungatedCatalog.toString())
     }
     packaging {
         resources {

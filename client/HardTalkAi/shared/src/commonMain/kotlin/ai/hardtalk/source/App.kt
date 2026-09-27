@@ -11,6 +11,8 @@ import ai.hardtalk.source.presentation.scenarios.ScenarioListScreen
 import ai.hardtalk.source.presentation.scenarios.ScenarioListViewModel
 import ai.hardtalk.source.presentation.splash.SplashScreen
 import ai.hardtalk.source.presentation.theme.HardTalkTheme
+import ai.hardtalk.source.voice.createVoiceCallSession
+import ai.hardtalk.source.voice.isVoiceCallSupported
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
@@ -80,6 +82,8 @@ fun App(
                             current.scenario,
                             container.practiceRepository,
                             container.billingRepository,
+                            voiceSupported = isVoiceCallSupported(),
+                            voiceCallFactory = { createVoiceCallSession() },
                         )
                     }
                     ChatScreen(
