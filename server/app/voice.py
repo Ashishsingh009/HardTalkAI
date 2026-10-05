@@ -149,7 +149,6 @@ def create_session(scenario: Scenario) -> VoiceSessionResponse:
         model=REALTIME_MODEL,
         voice=voice,
         opening=scenario.opening,
-        instructions=instructions,
         personaName=scenario.persona.name,
         maxUserTurns=MAX_USER_TURNS,
         maxDurationSeconds=MAX_CALL_DURATION_SECONDS,

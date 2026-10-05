@@ -43,7 +43,6 @@ data class VoiceSession(
     val model: String,
     val voice: String,
     val opening: String,
-    val instructions: String,
     val personaName: String,
     val maxUserTurns: Int,
     val maxDurationSeconds: Int,

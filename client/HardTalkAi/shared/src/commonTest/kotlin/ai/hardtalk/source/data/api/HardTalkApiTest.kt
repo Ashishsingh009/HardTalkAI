@@ -108,10 +108,11 @@ class HardTalkApiTest {
             MockEngine { request ->
                 assertEquals(HttpMethod.Post, request.method)
                 assertTrue(request.url.toString().endsWith("/api/voice/session"))
+                assertEquals(HARDTALK_CLIENT_VALUE, request.headers[HARDTALK_CLIENT_HEADER])
                 val body = (request.body as TextContent).text
                 assertTrue("ask-for-raise" in body)
                 respond(
-                    content = """{"clientSecret":"ek_test","realtimeUrl":"https://api.openai.com/v1/realtime/calls","model":"gpt-realtime","voice":"coral","opening":"What's going on?","instructions":"You are Dana.","personaName":"Dana","maxUserTurns":3,"maxDurationSeconds":90}""",
+                    content = """{"clientSecret":"ek_test","realtimeUrl":"https://api.openai.com/v1/realtime/calls","model":"gpt-realtime","voice":"coral","opening":"What's going on?","personaName":"Dana","maxUserTurns":3,"maxDurationSeconds":90}""",
                     status = HttpStatusCode.OK,
                     headers = jsonHeaders,
                 )
@@ -121,6 +122,22 @@ class HardTalkApiTest {
         assertEquals("ek_test", session.clientSecret)
         assertEquals("Dana", session.personaName)
         assertEquals(90, session.maxDurationSeconds)
+    }
+
+    @Test
+    fun `createVoiceSession ignores leftover instructions from older servers`() = runTest {
+        val api = apiWith(
+            MockEngine {
+                respond(
+                    content = """{"clientSecret":"ek_test","realtimeUrl":"https://api.openai.com/v1/realtime/calls","model":"gpt-realtime","voice":"coral","opening":"What's going on?","instructions":"You are Dana. Stay in character.","personaName":"Dana","maxUserTurns":3,"maxDurationSeconds":90}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        val session = api.createVoiceSession("ask-for-raise").toDomain()
+        assertEquals("ek_test", session.clientSecret)
+        assertEquals("Dana", session.personaName)
     }
 
     @Test

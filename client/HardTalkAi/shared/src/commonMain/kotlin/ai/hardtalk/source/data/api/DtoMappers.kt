@@ -68,7 +68,6 @@ fun VoiceSessionResponseDto.toDomain(): VoiceSession = VoiceSession(
     model = model,
     voice = voice,
     opening = opening,
-    instructions = instructions,
     personaName = personaName,
     maxUserTurns = maxUserTurns,
     maxDurationSeconds = maxDurationSeconds,

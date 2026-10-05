@@ -82,7 +82,6 @@ class VoiceSessionResponse(BaseModel):
     model: str
     voice: str
     opening: str
-    instructions: str
     personaName: str
     maxUserTurns: int
     maxDurationSeconds: int

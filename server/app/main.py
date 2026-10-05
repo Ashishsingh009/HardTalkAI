@@ -3,12 +3,13 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
 from . import ai
 from . import voice
+from .abuse import authorize_voice_session
 from .coach import respond
 from .models import (
     ChatRequest,
@@ -94,8 +95,11 @@ def chat(body: ChatRequest) -> JSONResponse:
 
 
 @app.post("/api/voice/session")
-def voice_session(body: VoiceSessionRequest) -> JSONResponse:
+def voice_session(body: VoiceSessionRequest, request: Request) -> JSONResponse:
     """Mint a short-lived OpenAI Realtime client secret for the counterpart call."""
+    denied = authorize_voice_session(request)
+    if denied is not None:
+        return denied
     scenario_id = (body.scenarioId or "").strip()
     if not scenario_id:
         return _error(400, "scenarioId is required")
