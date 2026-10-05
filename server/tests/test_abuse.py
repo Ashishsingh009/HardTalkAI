@@ -89,12 +89,20 @@ def test_rate_limit_key_uses_socket_peer_not_client_xff():
     request = _request("203.0.113.9", xff="198.51.100.1, 10.0.0.1")
     assert socket_peer(request) == "203.0.113.9"
     assert first_forwarded_for(request) == "198.51.100.1"
-    assert client_key(request, INSTALL) == f"203.0.113.9|{INSTALL}"
+    assert client_key(request) == "203.0.113.9"
 
 
 def test_rate_limit_key_uses_xff_only_from_trusted_proxy(monkeypatch):
     monkeypatch.setenv("HARDTALK_TRUSTED_PROXIES", "10.0.0.5, 10.0.0.6")
     trusted = _request("10.0.0.5", xff="198.51.100.7")
-    assert client_key(trusted, INSTALL) == f"198.51.100.7|{INSTALL}"
+    assert client_key(trusted) == "198.51.100.7"
     untrusted = _request("203.0.113.9", xff="198.51.100.7")
-    assert client_key(untrusted, INSTALL) == f"203.0.113.9|{INSTALL}"
+    assert client_key(untrusted) == "203.0.113.9"
+
+
+def test_rate_limit_key_is_ip_only_not_install_id():
+    request = _request("203.0.113.9")
+    key = client_key(request)
+    assert key == "203.0.113.9"
+    assert INSTALL not in key
+    assert "|" not in key

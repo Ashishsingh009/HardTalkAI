@@ -26,7 +26,7 @@ We use that payload only to score the turn and generate the next counterpart lin
 
 If you tap **Call** on Android and grant the microphone, the app:
 
-1. Asks our API (`POST /api/voice/session`) for a short-lived OpenAI Realtime client secret (never your main API key)
+1. Asks our API (`POST /api/voice/session`) for a short-lived OpenAI Realtime client secret (about 120 seconds; never your main API key)
 2. Streams **microphone audio** over WebRTC **directly to OpenAI** so the counterpart can speak and be interrupted
 3. Sends the **transcript** to our API (`POST /api/voice/complete`) so we can score up to three user utterances with the same local rubric as typed practice
 

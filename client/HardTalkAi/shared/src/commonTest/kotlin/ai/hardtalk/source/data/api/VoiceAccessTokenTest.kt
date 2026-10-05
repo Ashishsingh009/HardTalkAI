@@ -51,6 +51,18 @@ class VoiceAccessTokenTest {
     }
 
     @Test
+    fun `issued token binds install id as identity not a rate limit key`() {
+        val otherInstall = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        val token = issueVoiceAccessToken(secret, installId, now)
+        val other = issueVoiceAccessToken(secret, otherInstall, now)
+        assertEquals(installId, token.split('.')[1])
+        assertEquals(otherInstall, other.split('.')[1])
+        assertTrue(token.split('.')[3] != other.split('.')[3])
+        assertNotNull(verifyVoiceAccessToken(secret, token, now))
+        assertNotNull(verifyVoiceAccessToken(secret, other, now))
+    }
+
+    @Test
     fun `short secret cannot issue or verify`() {
         assertTrue(
             runCatching { issueVoiceAccessToken("short-secret", installId, now) }.isFailure,

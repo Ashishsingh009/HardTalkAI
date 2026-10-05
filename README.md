@@ -46,6 +46,9 @@ Shipaton D6/D7 paste-ready assets (Play upload still Ashish-only):
     `hardtalk.voiceSecret`). Without those, typed practice still works, Call stays hidden,
     and `/api/health` reports `voice: false`. Coaching scores/tips are always computed
     locally. Live-call audio goes to OpenAI; scores do not. Do not commit the voice secret.
+    Minted Realtime client secrets expire after 120s (90s drill + 30s connect). OpenAI still
+    allows one secret to start multiple sessions until that cutoff, and a started session
+    may continue after secret expiry unless `session.expires_at` is honored.
 - **`packages/web/`** — React + Vite + TypeScript UI on `:5173`. Scenario picker, chat, and
   a live feedback panel; proxies `/api` to the backend in development.
 - **`client/HardTalkAi/`** — Compose Multiplatform app. Shared UI and networking live in
@@ -84,9 +87,11 @@ Then open http://localhost:5173. To enable AI typed replies: `export OPENAI_API_
 Android **Call** is fail-closed: also `export HARDTALK_VOICE_SECRET='…'` (16+ chars) and put the
 same value in `client/HardTalkAi/local.properties` as `hardtalk.voiceSecret`. The app sends a
 short-lived HMAC token signed with that secret, not the secret itself. Typed `/api/chat` does
-not use it. If the API sits behind a reverse proxy, set `HARDTALK_TRUSTED_PROXIES` to the
-proxy socket addresses so rate limits can honor `X-Forwarded-For`; otherwise the limiter
-uses the TCP peer only.
+not use it. Voice minting is rate-limited by TCP peer (or `X-Forwarded-For` only when the
+peer is listed in `HARDTALK_TRUSTED_PROXIES`). The install ID is HMAC token identity, not
+the rate-limit bucket. Native Android does not use browser CORS; FastAPI allows
+`http://localhost:5173` / `:3001` (and extras in `HARDTALK_CORS_ORIGINS`). Vite proxies
+`/api` same-origin so the local typed demo does not need open CORS.
 
 ### Android emulator against local FastAPI
 
@@ -137,6 +142,7 @@ HTTP (`NSAllowsLocalNetworking`).
 .venv/bin/uvicorn app.main:app --app-dir server --host 0.0.0.0 --port 3001 --reload
 pnpm --filter @hardtalkai/web dev
 cd server && ../.venv/bin/python -m pytest
+cd client/HardTalkAi && ./gradlew :shared:jvmTest
 cd client/HardTalkAi && ./gradlew :shared:testAndroidHostTest
 cd client/HardTalkAi && ./gradlew :androidApp:assembleDebug
 pnpm --filter @hardtalkai/web build

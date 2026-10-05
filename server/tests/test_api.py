@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import DEFAULT_CORS_ORIGINS, app, cors_allow_origins
 from app.scenarios import FREE_SCENARIO_ID, SCENARIOS
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -150,3 +150,77 @@ def test_play_docs_exist_and_stay_honest():
     assert "bundleRelease" in checklist
     assert "RevenueCat" in checklist
     assert "Play credentials" in checklist or "credentials" in checklist.lower()
+
+
+def test_cors_allowlist_defaults_to_local_demo_origins(monkeypatch):
+    monkeypatch.delenv("HARDTALK_CORS_ORIGINS", raising=False)
+    origins = cors_allow_origins()
+    assert origins == list(DEFAULT_CORS_ORIGINS)
+    assert "*" not in origins
+    assert "http://localhost:5173" in origins
+    assert "http://localhost:3001" in origins
+
+
+def test_cors_allowlist_appends_configured_origins(monkeypatch):
+    monkeypatch.setenv("HARDTALK_CORS_ORIGINS", "https://example.com, https://app.hardtalk.ai")
+    origins = cors_allow_origins()
+    assert "https://example.com" in origins
+    assert "https://app.hardtalk.ai" in origins
+    assert origins.count("http://localhost:5173") == 1
+
+
+def test_chat_works_without_browser_origin():
+    res = client.post(
+        "/api/chat",
+        json={
+            "scenarioId": "ask-for-raise",
+            "message": "I shipped the rewrite and cut latency 40%. What's possible?",
+            "history": [],
+        },
+    )
+    assert res.status_code == 200
+    assert "reply" in res.json()
+    assert "access-control-allow-origin" not in {k.lower() for k in res.headers}
+
+
+def test_chat_allows_configured_demo_origin():
+    res = client.post(
+        "/api/chat",
+        json={
+            "scenarioId": "ask-for-raise",
+            "message": "I shipped the rewrite and cut latency 40%. What's possible?",
+            "history": [],
+        },
+        headers={"Origin": "http://localhost:5173"},
+    )
+    assert res.status_code == 200
+    assert res.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+def test_cors_preflight_allows_demo_origin_and_voice_headers():
+    res = client.options(
+        "/api/voice/session",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type,x-hardtalk-client,x-hardtalk-voice-token",
+        },
+    )
+    assert res.status_code in {200, 204}
+    assert res.headers.get("access-control-allow-origin") == "http://localhost:5173"
+    allowed = (res.headers.get("access-control-allow-headers") or "").lower()
+    assert "x-hardtalk-client" in allowed
+    assert "x-hardtalk-voice-token" in allowed
+
+
+def test_cors_preflight_rejects_unknown_origin():
+    res = client.options(
+        "/api/voice/session",
+        headers={
+            "Origin": "https://evil.example",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    assert res.headers.get("access-control-allow-origin") != "https://evil.example"
+    assert res.headers.get("access-control-allow-origin") in {None, ""}

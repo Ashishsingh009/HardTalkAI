@@ -113,6 +113,7 @@ class HardTalkApiTest {
                 assertEquals(HARDTALK_CLIENT_VALUE, request.headers[HARDTALK_CLIENT_HEADER])
                 val token = request.headers[HARDTALK_VOICE_TOKEN_HEADER]
                 assertNotNull(token)
+                assertTrue(token.startsWith("v1.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."))
                 assertNotNull(verifyVoiceAccessToken(VOICE_SECRET, token, currentEpochSeconds()))
                 val body = (request.body as TextContent).text
                 assertTrue("ask-for-raise" in body)

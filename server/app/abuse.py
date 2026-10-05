@@ -111,15 +111,13 @@ def first_forwarded_for(request: Request) -> str:
     return raw.split(",")[0].strip()
 
 
-def client_key(request: Request, install_id: str = "") -> str:
-    """Rate-limit key: socket peer, or XFF only when that peer is a trusted proxy."""
+def client_key(request: Request) -> str:
+    """Rate-limit by TCP peer only. Install IDs are HMAC identity, not buckets."""
     peer = socket_peer(request)
     if peer in trusted_proxy_hosts():
         forwarded = first_forwarded_for(request)
         if forwarded:
-            peer = forwarded
-    if install_id:
-        return f"{peer}|{install_id}"
+            return forwarded
     return peer
 
 
@@ -205,7 +203,7 @@ def authorize_voice_session(request: Request) -> JSONResponse | None:
             status_code=403,
             content={"error": "Voice sessions require a valid signed access token."},
         )
-    key = client_key(request, str(claims["installId"]))
+    key = client_key(request)
     if not _voice_session_limiter.allow(key):
         return JSONResponse(
             status_code=429,

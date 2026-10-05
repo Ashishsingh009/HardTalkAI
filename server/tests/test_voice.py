@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from app.abuse import (
     VOICE_CLIENT_HEADER,
@@ -11,7 +13,14 @@ from app.abuse import (
 from app.engine import score_message
 from app.models import ChatTurn
 from app.scenarios import find_scenario
-from app.voice import clean_speech, complete_round, persona_voice, realtime_instructions
+from app.voice import (
+    CLIENT_SECRET_TTL_SECONDS,
+    MAX_CALL_DURATION_SECONDS,
+    clean_speech,
+    complete_round,
+    persona_voice,
+    realtime_instructions,
+)
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -30,7 +39,7 @@ def _reset_voice_limits():
 
 
 def signed_voice_headers(secret: str = VOICE_SECRET, install_id: str = VOICE_INSTALL) -> dict:
-    token = issue_voice_access_token(secret, install_id, now=int(__import__("time").time()))
+    token = issue_voice_access_token(secret, install_id, now=int(time.time()))
     return {
         VOICE_CLIENT_HEADER: VOICE_CLIENT_VALUE,
         VOICE_TOKEN_HEADER: token,
@@ -143,6 +152,11 @@ def test_voice_session_mints_ephemeral_secret(monkeypatch):
         assert session["instructions"]
         assert "Coach Heather" not in session["instructions"]
         assert session["audio"]["output"]["voice"] == "coral"
+        assert payload["expires_after"]["anchor"] == "created_at"
+        assert payload["expires_after"]["seconds"] == CLIENT_SECRET_TTL_SECONDS
+        assert CLIENT_SECRET_TTL_SECONDS == MAX_CALL_DURATION_SECONDS + 30
+        assert CLIENT_SECRET_TTL_SECONDS == 120
+        assert abs(session["expires_at"] - (int(time.time()) + CLIENT_SECRET_TTL_SECONDS)) <= 5
         return {"value": "ek_test_secret"}
 
     monkeypatch.setattr("app.voice.mint_client_secret", fake_mint)
@@ -203,6 +217,19 @@ def test_voice_session_rate_limit_ignores_spoofed_xff(monkeypatch):
     assert post_voice_session(payload, headers={"X-Forwarded-For": "198.51.100.1"}).status_code == 200
     assert post_voice_session(payload, headers={"X-Forwarded-For": "198.51.100.2"}).status_code == 200
     limited = post_voice_session(payload, headers={"X-Forwarded-For": "198.51.100.3"})
+    assert limited.status_code == 429
+
+
+def test_voice_session_rate_limit_ignores_rotated_install_id(monkeypatch):
+    enable_voice(monkeypatch)
+    reset_voice_session_limiter(SlidingWindowLimiter(max_requests=2, window_seconds=60))
+    payload = {"scenarioId": "ask-for-raise"}
+    first = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    second = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    third = "cccccccccccccccccccccccccccccccc"
+    assert post_voice_session(payload, headers=signed_voice_headers(install_id=first)).status_code == 200
+    assert post_voice_session(payload, headers=signed_voice_headers(install_id=second)).status_code == 200
+    limited = post_voice_session(payload, headers=signed_voice_headers(install_id=third))
     assert limited.status_code == 429
 
 

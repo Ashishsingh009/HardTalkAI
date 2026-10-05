@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+import time
 import urllib.error
 import urllib.request
 
@@ -30,7 +31,12 @@ logger = logging.getLogger("hardtalkai.voice")
 # Keep in lockstep with PracticeLoop.MAX_USER_TURNS / MAX_CALL_DURATION_SECONDS.
 MAX_USER_TURNS = 3
 MAX_CALL_DURATION_SECONDS = 90
-CLIENT_SECRET_TTL_SECONDS = 600
+# OpenAI client secrets accept expires_after.seconds in [10, 7200]. We match the
+# 90s drill plus a short ICE/connect buffer. OpenAI still allows one secret to
+# create multiple sessions until it expires, and a started session may continue
+# after that time — we cannot change those provider rules.
+CLIENT_SECRET_CONNECT_BUFFER_SECONDS = 30
+CLIENT_SECRET_TTL_SECONDS = MAX_CALL_DURATION_SECONDS + CLIENT_SECRET_CONNECT_BUFFER_SECONDS
 REALTIME_MODEL = os.getenv("OPENAI_REALTIME_MODEL", "gpt-realtime")
 CLIENT_SECRETS_URL = "https://api.openai.com/v1/realtime/client_secrets"
 REALTIME_CALLS_URL = "https://api.openai.com/v1/realtime/calls"
@@ -127,12 +133,17 @@ def create_session(scenario: Scenario) -> VoiceSessionResponse:
 
     instructions = realtime_instructions(scenario)
     voice = persona_voice(scenario.id)
+    # expires_after stops new sessions after TTL. session.expires_at is the
+    # server-side cap we can set; OpenAI still allows one secret to start
+    # several sessions until that cutoff.
+    session_expires_at = int(time.time()) + CLIENT_SECRET_TTL_SECONDS
     payload = {
         "expires_after": {"anchor": "created_at", "seconds": CLIENT_SECRET_TTL_SECONDS},
         "session": {
             "type": "realtime",
             "model": REALTIME_MODEL,
             "instructions": instructions,
+            "expires_at": session_expires_at,
             "audio": {
                 "input": {
                     "transcription": {"model": "gpt-4o-mini-transcribe"},

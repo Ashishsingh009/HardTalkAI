@@ -81,6 +81,7 @@ VITE_API_TARGET=https://BhaiAshish-HardTalkAI-api.hf.space pnpm --filter @hardta
 ## Notes
 
 - Paid Spaces **sleep** after idle; the first request can take ~30–60s.
-- CORS is already `*` on the FastAPI app.
+- CORS is an allowlist (`localhost:5173` / `:3001`, plus `HARDTALK_CORS_ORIGINS`). Native
+  Android Call does not need browser CORS; set the env var if a browser origin must call the API.
 - Rebuild Docker after `Dockerfile` or `server/` changes. Secrets can change without a rebuild.
 - Gradio/Streamlit SDKs are the wrong shape for this FastAPI API. The Static Space is the free public demo.

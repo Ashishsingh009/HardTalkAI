@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -31,11 +32,36 @@ logger = logging.getLogger("hardtalkai")
 
 app = FastAPI(title="HardTalkAI", version="0.1.0")
 
+# Native Android does not use browser CORS. The Vite demo proxies /api same-origin.
+# Keep a tight allowlist so a random webpage cannot mint voice sessions.
+DEFAULT_CORS_ORIGINS = (
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+)
+
+
+def cors_allow_origins() -> list[str]:
+    origins = list(DEFAULT_CORS_ORIGINS)
+    extra = os.getenv("HARDTALK_CORS_ORIGINS", "")
+    for part in extra.split(","):
+        origin = part.strip()
+        if origin and origin not in origins:
+            origins.append(origin)
+    return origins
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_allow_origins(),
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-HardTalk-Client",
+        "X-HardTalk-Voice-Token",
+    ],
 )
 
 

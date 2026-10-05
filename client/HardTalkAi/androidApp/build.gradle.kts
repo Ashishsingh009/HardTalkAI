@@ -41,6 +41,9 @@ android {
             "REVENUECAT_GOOGLE_API_KEY",
             "\"${escapeBuildConfig(revenueCatKey)}\"",
         )
+        // HMAC signing secret for Call mint tokens. Recoverable from the APK until
+        // user accounts exist; server minting still fails closed, is IP-rate-limited,
+        // and uses a 120s Realtime client-secret TTL.
         val voiceSecret = localProperty("hardtalk.voiceSecret")
         buildConfigField(
             "String",

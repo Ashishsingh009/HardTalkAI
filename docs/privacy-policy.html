@@ -80,7 +80,8 @@
       <h2>Optional Android counterpart call</h2>
       <p>
         If you tap <strong>Call</strong> on Android and grant the microphone, the app
-        mints a short-lived OpenAI Realtime client secret (<code>POST /api/voice/session</code>),
+        mints a short-lived OpenAI Realtime client secret (about 120 seconds;
+        <code>POST /api/voice/session</code>),
         streams microphone audio over WebRTC <strong>directly to OpenAI</strong>, then
         sends the transcript to <code>POST /api/voice/complete</code> so we can score
         up to three user utterances. Coach Heather is not on the call — she recaps
