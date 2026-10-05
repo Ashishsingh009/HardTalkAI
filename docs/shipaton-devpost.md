@@ -1,6 +1,6 @@
 # Devpost draft — HardTalkAI
 
-Paste into the Shipaton / Devpost form. Trim if a field is shorter than this file. Do **not** claim a Play listing or that Coach Heather talks on the live call. Typed rehearsal is the default demo path; Android Call needs `OPENAI_API_KEY`. **Do** claim HardTalk Pro: Android catalog gate via RevenueCat (`hardtalk_pro`), raise stays free.
+Paste into the Shipaton / Devpost form. Trim if a field is shorter than this file. Do **not** claim a Play listing or that Coach Heather talks on the live call. Typed rehearsal is the default demo path; Android Call needs `OPENAI_API_KEY` and `HARDTALK_VOICE_SECRET`. **Do** claim HardTalk Pro: Android catalog gate via RevenueCat (`hardtalk_pro`), raise stays free.
 
 **Lane (required):** Career Coaching (Leadership / Coach Heather)  
 **Repo:** https://github.com/Ashishsingh009/HardTalkAI  
@@ -47,7 +47,7 @@ The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practi
 
 **Honest about the prototype**
 
-- Rehearsal is **typed text by default**. Android can place a short **counterpart call** (interruptible, three user segments or ~90s) when `OPENAI_API_KEY` is set. Coach Heather is **not** on that call — she scores the transcript after hang-up, same recap as typed practice. iOS/web stay typed.
+- Rehearsal is **typed text by default**. Android can place a short **counterpart call** (interruptible, three user segments or ~90s) when `OPENAI_API_KEY` and `HARDTALK_VOICE_SECRET` are set (the app signs a short-lived per-install token; the secret stays in `local.properties`). Coach Heather is **not** on that call — she scores the transcript after hang-up, same recap as typed practice. iOS/web stay typed.
 - Coaching scores and tips are computed on our FastAPI server with a deterministic rubric (markers for hedges, “I” asks, empathy, numbers). They do not require an LLM.
 - Counterpart *replies* are canned in-character lines unless the operator sets `OPENAI_API_KEY`. Without a key the app still runs fully offline. We did not enable OpenAI for the default demo so the video is reproducible.
 - Web (`localhost:5173`) shares the catalog and scores. The finite round + recap is the **Android / Compose Multiplatform** loop.

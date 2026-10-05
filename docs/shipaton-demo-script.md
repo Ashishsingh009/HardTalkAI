@@ -160,7 +160,7 @@ Say in the video description that the judged recap **and** the HardTalk Pro beat
 
 ## Do not film
 
-- The default camera path is **text rehearsal** (no mic). Do not film Call / microphone permission unless `OPENAI_API_KEY` is set and you explicitly want that extra shot. Call is the counterpart, not Coach Heather.
+- The default camera path is **text rehearsal** (no mic). Do not film Call / microphone permission unless `OPENAI_API_KEY` and `HARDTALK_VOICE_SECRET` are set and you explicitly want that extra shot. Call is the counterpart, not Coach Heather.
 - A free-form chat that is not one of the three demo drills.
 - Opening calibration / skip-level / stolen-credit just to flex catalog length. Ten cards plus the paywall in the first 18 seconds is enough.
 - Play Store, settings, Privacy policy (listing shots are a different checklist). **Do** film the HardTalk Pro sheet.

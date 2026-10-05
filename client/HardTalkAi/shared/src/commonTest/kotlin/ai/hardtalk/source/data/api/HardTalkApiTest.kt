@@ -12,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class HardTalkApiTest {
@@ -47,6 +48,7 @@ class HardTalkApiTest {
                 assertTrue("ask-for-raise" in body)
                 assertTrue("I'd like a raise" in body)
                 assertTrue("counterpart" in body)
+                assertEquals(null, request.headers[HARDTALK_VOICE_TOKEN_HEADER])
                 respond(
                     content = """{"reply":"Tell me more.","feedback":{"clarity":82,"empathy":64,"assertiveness":71,"overall":72,"tips":["Cite a metric."]},"mood":"engaged"}""",
                     status = HttpStatusCode.OK,
@@ -109,6 +111,9 @@ class HardTalkApiTest {
                 assertEquals(HttpMethod.Post, request.method)
                 assertTrue(request.url.toString().endsWith("/api/voice/session"))
                 assertEquals(HARDTALK_CLIENT_VALUE, request.headers[HARDTALK_CLIENT_HEADER])
+                val token = request.headers[HARDTALK_VOICE_TOKEN_HEADER]
+                assertNotNull(token)
+                assertNotNull(verifyVoiceAccessToken(VOICE_SECRET, token, currentEpochSeconds()))
                 val body = (request.body as TextContent).text
                 assertTrue("ask-for-raise" in body)
                 respond(
@@ -168,7 +173,11 @@ class HardTalkApiTest {
     private fun apiWith(engine: MockEngine): HardTalkApi = HardTalkApi(
         baseUrl = "http://10.0.2.2:3001/",
         client = createHardTalkHttpClient(engine),
+        voiceSecret = VOICE_SECRET,
+        installId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     )
 
     private val jsonHeaders = headersOf(HttpHeaders.ContentType, "application/json")
 }
+
+private const val VOICE_SECRET = "test-voice-secret-16"

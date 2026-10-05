@@ -14,6 +14,7 @@ import ai.hardtalk.source.data.api.dto.VoiceSessionResponseDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -27,6 +28,8 @@ class ApiException(message: String) : Exception(message)
 class HardTalkApi(
     baseUrl: String,
     private val client: HttpClient,
+    private val voiceSecret: String = "",
+    private val installId: String = randomInstallId(),
 ) {
     private val root = normalizeApiBaseUrl(baseUrl)
 
@@ -67,6 +70,10 @@ class HardTalkApi(
         val response = client.post("$root/api/voice/session") {
             contentType(ContentType.Application.Json)
             setBody(VoiceSessionRequestDto(scenarioId = scenarioId))
+            val token = signedVoiceAccessToken()
+            if (token != null) {
+                header(HARDTALK_VOICE_TOKEN_HEADER, token)
+            }
         }
         ensureSuccess(response)
         return response.body()
@@ -87,6 +94,17 @@ class HardTalkApi(
         }
         ensureSuccess(response)
         return response.body()
+    }
+
+    private fun signedVoiceAccessToken(): String? {
+        if (voiceSecret.length < MIN_VOICE_SECRET_LENGTH) return null
+        return runCatching {
+            issueVoiceAccessToken(
+                secret = voiceSecret,
+                installId = installId,
+                nowEpochSeconds = currentEpochSeconds(),
+            )
+        }.getOrNull()
     }
 
     private suspend fun ensureSuccess(response: HttpResponse) {

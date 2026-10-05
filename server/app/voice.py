@@ -15,6 +15,7 @@ import urllib.error
 import urllib.request
 
 from . import ai
+from .abuse import voice_secret_configured
 from .engine import mood_label, reply_tone, score_message
 from .models import (
     ChatTurn,
@@ -60,7 +61,8 @@ class VoiceProviderError(RuntimeError):
 
 
 def is_available() -> bool:
-    return ai.is_ai_enabled()
+    """Voice is off unless OpenAI and a real voice secret are both configured."""
+    return ai.is_ai_enabled() and voice_secret_configured()
 
 
 def persona_voice(scenario_id: str) -> str:

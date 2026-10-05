@@ -1,13 +1,17 @@
 """Abuse controls for expensive voice-session minting.
 
 Typed POST /api/chat stays open for the Shipaton demo path. Live calls mint a
-billable OpenAI Realtime secret, so that route is gated and rate-limited.
+billable OpenAI Realtime secret, so that route fails closed unless the operator
+configures ``HARDTALK_VOICE_SECRET`` and the Android build presents a short-lived
+HMAC token signed with the same secret.
 """
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import os
-import secrets
+import re
 import threading
 import time
 from collections import defaultdict
@@ -18,6 +22,15 @@ from fastapi.responses import JSONResponse
 VOICE_CLIENT_HEADER = "X-HardTalk-Client"
 VOICE_CLIENT_VALUE = "hardtalk-app"
 VOICE_TOKEN_HEADER = "X-HardTalk-Voice-Token"
+VOICE_SECRET_ENV = "HARDTALK_VOICE_SECRET"
+TRUSTED_PROXIES_ENV = "HARDTALK_TRUSTED_PROXIES"
+MIN_VOICE_SECRET_LENGTH = 16
+VOICE_TOKEN_TTL_SECONDS = 120
+VOICE_TOKEN_SKEW_SECONDS = 30
+VOICE_TOKEN_VERSION = "v1"
+
+_INSTALL_ID = re.compile(r"^[0-9a-f]{32}$")
+_SIGNATURE = re.compile(r"^[0-9a-f]{64}$")
 
 
 class SlidingWindowLimiter:
@@ -72,49 +85,128 @@ def reset_voice_session_limiter(
     return _voice_session_limiter
 
 
-def client_key(request: Request) -> str:
-    forwarded = (request.headers.get("x-forwarded-for") or "").strip()
-    if forwarded:
-        return forwarded.split(",")[0].strip() or "unknown"
+def voice_secret() -> str:
+    return os.getenv(VOICE_SECRET_ENV, "").strip()
+
+
+def voice_secret_configured() -> bool:
+    return len(voice_secret()) >= MIN_VOICE_SECRET_LENGTH
+
+
+def trusted_proxy_hosts() -> set[str]:
+    raw = os.getenv(TRUSTED_PROXIES_ENV, "")
+    return {part.strip() for part in raw.split(",") if part.strip()}
+
+
+def socket_peer(request: Request) -> str:
     if request.client and request.client.host:
         return request.client.host
     return "unknown"
+
+
+def first_forwarded_for(request: Request) -> str:
+    raw = (request.headers.get("x-forwarded-for") or "").strip()
+    if not raw:
+        return ""
+    return raw.split(",")[0].strip()
+
+
+def client_key(request: Request, install_id: str = "") -> str:
+    """Rate-limit key: socket peer, or XFF only when that peer is a trusted proxy."""
+    peer = socket_peer(request)
+    if peer in trusted_proxy_hosts():
+        forwarded = first_forwarded_for(request)
+        if forwarded:
+            peer = forwarded
+    if install_id:
+        return f"{peer}|{install_id}"
+    return peer
 
 
 def _header(request: Request, name: str) -> str:
     return (request.headers.get(name) or "").strip()
 
 
-def _bearer(request: Request) -> str:
-    raw = _header(request, "authorization")
-    prefix = "bearer "
-    if raw.lower().startswith(prefix):
-        return raw[len(prefix) :].strip()
-    return ""
+def voice_signing_payload(install_id: str, expires_at: int) -> str:
+    return f"{VOICE_TOKEN_VERSION}\n{install_id}\n{expires_at}"
 
 
-def _tokens_match(presented: str, expected: str) -> bool:
-    if not presented or len(presented) != len(expected):
-        return False
-    return secrets.compare_digest(presented, expected)
+def issue_voice_access_token(
+    secret: str,
+    install_id: str,
+    now: int,
+    ttl_seconds: int = VOICE_TOKEN_TTL_SECONDS,
+) -> str:
+    expires_at = int(now) + int(ttl_seconds)
+    signature = hmac.new(
+        secret.encode("utf-8"),
+        voice_signing_payload(install_id, expires_at).encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"{VOICE_TOKEN_VERSION}.{install_id}.{expires_at}.{signature}"
+
+
+def verify_voice_access_token(
+    secret: str,
+    raw: str,
+    now: int | None = None,
+) -> dict[str, int | str] | None:
+    if len(secret) < MIN_VOICE_SECRET_LENGTH:
+        return None
+    parts = (raw or "").strip().split(".")
+    if len(parts) != 4:
+        return None
+    version, install_id, expires_raw, signature = parts
+    if version != VOICE_TOKEN_VERSION:
+        return None
+    if not _INSTALL_ID.fullmatch(install_id) or not _SIGNATURE.fullmatch(signature):
+        return None
+    try:
+        expires_at = int(expires_raw)
+    except ValueError:
+        return None
+    stamp = int(time.time() if now is None else now)
+    if stamp > expires_at + VOICE_TOKEN_SKEW_SECONDS:
+        return None
+    if expires_at - stamp > VOICE_TOKEN_TTL_SECONDS + VOICE_TOKEN_SKEW_SECONDS:
+        return None
+    expected = hmac.new(
+        secret.encode("utf-8"),
+        voice_signing_payload(install_id, expires_at).encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(expected, signature):
+        return None
+    return {"installId": install_id, "expiresAt": expires_at}
 
 
 def authorize_voice_session(request: Request) -> JSONResponse | None:
     """Return an error response when the mint request is not allowed."""
+    secret = voice_secret()
+    if len(secret) < MIN_VOICE_SECRET_LENGTH:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": (
+                    "Voice calls need HARDTALK_VOICE_SECRET on the server. "
+                    "Typed practice still works."
+                ),
+            },
+        )
     if _header(request, VOICE_CLIENT_HEADER) != VOICE_CLIENT_VALUE:
         return JSONResponse(
             status_code=401,
             content={"error": "Voice sessions require the official HardTalk client."},
         )
-    expected = os.getenv("HARDTALK_VOICE_TOKEN", "").strip()
-    if expected:
-        presented = _header(request, VOICE_TOKEN_HEADER) or _bearer(request)
-        if not _tokens_match(presented, expected):
-            return JSONResponse(
-                status_code=403,
-                content={"error": "Voice sessions require a valid access token."},
-            )
-    if not _voice_session_limiter.allow(client_key(request)):
+    presented = _header(request, VOICE_TOKEN_HEADER)
+    claims = verify_voice_access_token(secret, presented)
+    if claims is None:
+        return JSONResponse(
+            status_code=403,
+            content={"error": "Voice sessions require a valid signed access token."},
+        )
+    key = client_key(request, str(claims["installId"]))
+    if not _voice_session_limiter.allow(key):
         return JSONResponse(
             status_code=429,
             content={"error": "Too many voice session requests. Try again shortly."},

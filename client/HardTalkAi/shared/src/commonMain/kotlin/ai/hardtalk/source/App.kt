@@ -1,6 +1,7 @@
 package ai.hardtalk.source
 
 import ai.hardtalk.source.data.api.defaultApiBaseUrl
+import ai.hardtalk.source.data.api.persistentInstallId
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.repository.BillingRepository
 import ai.hardtalk.source.domain.repository.createBillingRepository
@@ -35,9 +36,11 @@ private sealed interface PracticeRoute {
 fun App(
     apiBaseUrl: String = defaultApiBaseUrl(),
     billingRepository: BillingRepository = createBillingRepository(),
+    voiceSecret: String = "",
+    installId: String = persistentInstallId(),
 ) {
-    val container = remember(apiBaseUrl, billingRepository) {
-        AppContainer(apiBaseUrl, billingRepository)
+    val container = remember(apiBaseUrl, billingRepository, voiceSecret, installId) {
+        AppContainer(apiBaseUrl, billingRepository, voiceSecret, installId)
     }
     HardTalkTheme {
         var route by remember { mutableStateOf<PracticeRoute>(PracticeRoute.Splash) }

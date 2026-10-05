@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
             App(
                 apiBaseUrl = BuildConfig.API_BASE_URL,
                 billingRepository = billing,
+                voiceSecret = BuildConfig.HARDTALK_VOICE_SECRET,
             )
         }
     }

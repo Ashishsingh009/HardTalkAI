@@ -2,8 +2,10 @@ import pytest
 from app.abuse import (
     VOICE_CLIENT_HEADER,
     VOICE_CLIENT_VALUE,
+    VOICE_SECRET_ENV,
     VOICE_TOKEN_HEADER,
     SlidingWindowLimiter,
+    issue_voice_access_token,
     reset_voice_session_limiter,
 )
 from app.engine import score_message
@@ -15,6 +17,8 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
+VOICE_SECRET = "test-voice-secret-16"
+VOICE_INSTALL = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 VOICE_HEADERS = {VOICE_CLIENT_HEADER: VOICE_CLIENT_VALUE}
 
 
@@ -25,9 +29,23 @@ def _reset_voice_limits():
     reset_voice_session_limiter()
 
 
+def signed_voice_headers(secret: str = VOICE_SECRET, install_id: str = VOICE_INSTALL) -> dict:
+    token = issue_voice_access_token(secret, install_id, now=int(__import__("time").time()))
+    return {
+        VOICE_CLIENT_HEADER: VOICE_CLIENT_VALUE,
+        VOICE_TOKEN_HEADER: token,
+    }
+
+
 def post_voice_session(payload: dict, headers: dict | None = None):
-    merged = {**VOICE_HEADERS, **(headers or {})}
+    merged = {**signed_voice_headers(), **(headers or {})}
     return client.post("/api/voice/session", json=payload, headers=merged)
+
+
+def enable_voice(monkeypatch, secret: str = VOICE_SECRET):
+    monkeypatch.setenv(VOICE_SECRET_ENV, secret)
+    monkeypatch.setattr("app.voice.is_available", lambda: True)
+    monkeypatch.setattr("app.voice.mint_client_secret", lambda _payload: {"value": "ek_test_secret"})
 
 RAISE_STRONG = (
     "I appreciate you making time. I'd like a raise: I shipped the payments "
@@ -38,7 +56,7 @@ RAISE_HEDGED = "Sorry to bother — maybe I just deserve more if that's okay?"
 
 def test_health_reports_voice_false_without_key(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.setattr("app.voice.is_available", lambda: False)
+    monkeypatch.delenv(VOICE_SECRET_ENV, raising=False)
     monkeypatch.setattr("app.ai.engine_name", lambda: "builtin")
     res = client.get("/api/health")
     assert res.status_code == 200
@@ -48,24 +66,68 @@ def test_health_reports_voice_false_without_key(monkeypatch):
     assert body["engine"] == "builtin"
 
 
-def test_voice_session_requires_official_client():
+def test_health_voice_false_without_secret_even_with_openai_key(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-used")
+    monkeypatch.delenv(VOICE_SECRET_ENV, raising=False)
+    res = client.get("/api/health")
+    assert res.status_code == 200
+    assert res.json()["voice"] is False
+
+
+def test_health_voice_true_when_openai_and_secret_are_set(monkeypatch):
+    monkeypatch.setattr("app.ai.is_ai_enabled", lambda: True)
+    monkeypatch.setenv(VOICE_SECRET_ENV, VOICE_SECRET)
+    res = client.get("/api/health")
+    assert res.status_code == 200
+    assert res.json()["voice"] is True
+
+
+def test_voice_session_fails_closed_without_secret(monkeypatch):
+    monkeypatch.delenv(VOICE_SECRET_ENV, raising=False)
+    monkeypatch.setattr("app.voice.is_available", lambda: True)
+    res = client.post(
+        "/api/voice/session",
+        json={"scenarioId": "ask-for-raise"},
+        headers=VOICE_HEADERS,
+    )
+    assert res.status_code == 503
+    assert "HARDTALK_VOICE_SECRET" in res.json()["error"]
+    assert "Typed practice still works" in res.json()["error"]
+
+
+def test_voice_session_requires_official_client(monkeypatch):
+    monkeypatch.setenv(VOICE_SECRET_ENV, VOICE_SECRET)
     res = client.post("/api/voice/session", json={"scenarioId": "ask-for-raise"})
     assert res.status_code == 401
     assert "official HardTalk client" in res.json()["error"]
 
 
-def test_voice_session_requires_scenario_id():
+def test_voice_session_requires_signed_token(monkeypatch):
+    monkeypatch.setenv(VOICE_SECRET_ENV, VOICE_SECRET)
+    res = client.post(
+        "/api/voice/session",
+        json={"scenarioId": "ask-for-raise"},
+        headers=VOICE_HEADERS,
+    )
+    assert res.status_code == 403
+    assert "signed access token" in res.json()["error"]
+
+
+def test_voice_session_requires_scenario_id(monkeypatch):
+    enable_voice(monkeypatch)
     res = post_voice_session({})
     assert res.status_code == 400
     assert res.json()["error"] == "scenarioId is required"
 
 
-def test_voice_session_unknown_scenario():
+def test_voice_session_unknown_scenario(monkeypatch):
+    enable_voice(monkeypatch)
     res = post_voice_session({"scenarioId": "nope"})
     assert res.status_code == 404
 
 
 def test_voice_session_503_without_openai(monkeypatch):
+    monkeypatch.setenv(VOICE_SECRET_ENV, VOICE_SECRET)
     monkeypatch.setattr("app.voice.is_available", lambda: False)
     res = post_voice_session({"scenarioId": "ask-for-raise"})
     assert res.status_code == 503
@@ -73,7 +135,7 @@ def test_voice_session_503_without_openai(monkeypatch):
 
 
 def test_voice_session_mints_ephemeral_secret(monkeypatch):
-    monkeypatch.setattr("app.voice.is_available", lambda: True)
+    enable_voice(monkeypatch)
 
     def fake_mint(payload: dict) -> dict:
         session = payload["session"]
@@ -97,7 +159,7 @@ def test_voice_session_mints_ephemeral_secret(monkeypatch):
 
 
 def test_voice_session_openai_failure_is_502(monkeypatch):
-    monkeypatch.setattr("app.voice.is_available", lambda: True)
+    enable_voice(monkeypatch)
 
     from app.voice import VoiceProviderError
 
@@ -110,31 +172,21 @@ def test_voice_session_openai_failure_is_502(monkeypatch):
     assert "401" in res.json()["error"]
 
 
-def test_voice_session_requires_token_when_configured(monkeypatch):
-    monkeypatch.setenv("HARDTALK_VOICE_TOKEN", "test-voice-token")
-    monkeypatch.setattr("app.voice.is_available", lambda: True)
-    monkeypatch.setattr("app.voice.mint_client_secret", lambda _payload: {"value": "ek_test_secret"})
-    denied = post_voice_session({"scenarioId": "ask-for-raise"})
-    assert denied.status_code == 403
-    ok = post_voice_session(
-        {"scenarioId": "ask-for-raise"},
-        headers={VOICE_TOKEN_HEADER: "test-voice-token"},
+def test_voice_session_rejects_raw_shared_secret_as_bearer(monkeypatch):
+    enable_voice(monkeypatch)
+    res = client.post(
+        "/api/voice/session",
+        json={"scenarioId": "ask-for-raise"},
+        headers={
+            VOICE_CLIENT_HEADER: VOICE_CLIENT_VALUE,
+            VOICE_TOKEN_HEADER: VOICE_SECRET,
+        },
     )
-    assert ok.status_code == 200
-    bearer = post_voice_session(
-        {"scenarioId": "ask-for-raise"},
-        headers={"Authorization": "Bearer test-voice-token"},
-    )
-    assert bearer.status_code == 200
+    assert res.status_code == 403
 
 
 def test_voice_session_rate_limited(monkeypatch):
-    monkeypatch.setattr("app.voice.is_available", lambda: True)
-
-    def fake_mint(_payload: dict) -> dict:
-        return {"value": "ek_test_secret"}
-
-    monkeypatch.setattr("app.voice.mint_client_secret", fake_mint)
+    enable_voice(monkeypatch)
     reset_voice_session_limiter(SlidingWindowLimiter(max_requests=2, window_seconds=60))
     payload = {"scenarioId": "ask-for-raise"}
     assert post_voice_session(payload).status_code == 200
@@ -142,6 +194,16 @@ def test_voice_session_rate_limited(monkeypatch):
     limited = post_voice_session(payload)
     assert limited.status_code == 429
     assert "Too many voice session requests" in limited.json()["error"]
+
+
+def test_voice_session_rate_limit_ignores_spoofed_xff(monkeypatch):
+    enable_voice(monkeypatch)
+    reset_voice_session_limiter(SlidingWindowLimiter(max_requests=2, window_seconds=60))
+    payload = {"scenarioId": "ask-for-raise"}
+    assert post_voice_session(payload, headers={"X-Forwarded-For": "198.51.100.1"}).status_code == 200
+    assert post_voice_session(payload, headers={"X-Forwarded-For": "198.51.100.2"}).status_code == 200
+    limited = post_voice_session(payload, headers={"X-Forwarded-For": "198.51.100.3"})
+    assert limited.status_code == 429
 
 
 def test_clean_speech_strips_fillers_and_adds_period():

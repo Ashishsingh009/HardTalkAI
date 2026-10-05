@@ -109,7 +109,8 @@ def voice_session(body: VoiceSessionRequest, request: Request) -> JSONResponse:
     if not voice.is_available():
         return _error(
             503,
-            "Voice calls need OPENAI_API_KEY on the server. Typed practice still works.",
+            "Voice calls need OPENAI_API_KEY and HARDTALK_VOICE_SECRET on the server. "
+            "Typed practice still works.",
         )
     try:
         session = voice.create_session(scenario)
