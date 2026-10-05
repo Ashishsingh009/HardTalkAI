@@ -27,6 +27,7 @@ class ChatViewModel(
 ) : ViewModel() {
 
     private var attemptId = 0
+    private var callEpoch = 0
     private var activeCall: VoiceCallSession? = null
     private var callEventsJob: Job? = null
 
@@ -61,7 +62,23 @@ class ChatViewModel(
     }
 
     fun hangUpCall() {
-        activeCall?.hangUp()
+        callEpoch += 1
+        val call = activeCall
+        if (call == null) {
+            _uiState.update {
+                it.copy(inCall = false, sending = false, callStatus = "")
+            }
+            return
+        }
+        call.hangUp()
+    }
+
+    fun leaveChat() {
+        callEpoch += 1
+        stopCallQuietly()
+        _uiState.update {
+            it.copy(inCall = false, sending = false, callStatus = "")
+        }
     }
 
     fun startCall() {
@@ -75,6 +92,7 @@ class ChatViewModel(
         }
         val factory = voiceCallFactory ?: return
         val capturedAttempt = attemptId
+        val epoch = ++callEpoch
         _uiState.update {
             it.copy(
                 inCall = true,
@@ -89,7 +107,7 @@ class ChatViewModel(
             val session = runCatching {
                 practiceRepository.createVoiceSession(current.scenario.id)
             }.getOrElse { error ->
-                if (capturedAttempt != attemptId) return@launch
+                if (capturedAttempt != attemptId || epoch != callEpoch) return@launch
                 _uiState.update {
                     it.copy(
                         inCall = false,
@@ -100,7 +118,7 @@ class ChatViewModel(
                 }
                 return@launch
             }
-            if (capturedAttempt != attemptId) return@launch
+            if (capturedAttempt != attemptId || epoch != callEpoch) return@launch
             val call = factory.create()
             if (call == null) {
                 _uiState.update {
@@ -113,6 +131,10 @@ class ChatViewModel(
                 }
                 return@launch
             }
+            if (epoch != callEpoch) {
+                runCatching { call.hangUp() }
+                return@launch
+            }
             activeCall = call
             callEventsJob = viewModelScope.launch {
                 call.events.collect { event ->
@@ -122,7 +144,14 @@ class ChatViewModel(
             }
             runCatching { call.connect(session.toCallConfig()) }
                 .onFailure { error ->
-                    if (capturedAttempt != attemptId) return@launch
+                    if (capturedAttempt != attemptId || epoch != callEpoch) return@launch
+                    if (error.message == "Call ended") {
+                        stopCallQuietly()
+                        _uiState.update {
+                            it.copy(inCall = false, sending = false, callStatus = "")
+                        }
+                        return@launch
+                    }
                     stopCallQuietly()
                     _uiState.update {
                         it.copy(

@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -66,15 +68,18 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
     private var dataChannel: DataChannel? = null
 
     override suspend fun connect(config: VoiceCallConfig) {
+        ensureNotFinished()
         val context = AndroidVoiceHost.applicationContext
             ?: throw IllegalStateException("Voice host is not attached")
         if (!MicrophonePermissionBridge.ensure()) {
             throw IllegalStateException("Microphone permission is required to call the counterpart")
         }
+        ensureNotFinished()
         maxUserTurns = config.maxUserTurns.coerceAtLeast(1)
         ensureFactory(context)
         configureAudio(context)
         emitStatus("Connecting to the counterpart…")
+        ensureNotFinished()
 
         val constraints = MediaConstraints().apply {
             mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
@@ -112,6 +117,7 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
             override fun onAddTrack(receiver: RtpReceiver?, streams: Array<out MediaStream>?) = Unit
         }) ?: throw IllegalStateException("Could not create a WebRTC peer connection")
         peerConnection = pc
+        ensureNotFinished()
 
         audioSource = factory?.createAudioSource(MediaConstraints())
         audioTrack = factory?.createAudioTrack("hardtalk-mic", audioSource)
@@ -135,11 +141,14 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
         }
 
         val offer = createOffer(pc, constraints)
+        ensureNotFinished()
         setLocalDescription(pc, offer)
         waitForIceGathering(pc)
+        ensureNotFinished()
         val localSdp = pc.localDescription?.description
             ?: throw IllegalStateException("Missing local SDP")
         val answerSdp = postSdpOffer(config.realtimeUrl, config.clientSecret, localSdp)
+        ensureNotFinished()
         setRemoteDescription(
             pc,
             SessionDescription(SessionDescription.Type.ANSWER, answerSdp),
@@ -148,7 +157,15 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
             delay(config.maxDurationSeconds.coerceIn(15, 180) * 1000L)
             hangUpInternal("time")
         }
-        withTimeout(20_000) { connected.await() }
+        ensureNotFinished()
+        withTimeout(20_000) {
+            while (!connected.isCompleted) {
+                ensureNotFinished()
+                delay(50)
+            }
+            connected.await()
+        }
+        ensureNotFinished()
     }
 
     override fun setMuted(muted: Boolean) {
@@ -178,9 +195,7 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
     }
 
     private fun sendOpening(opening: String) {
-        val payload =
-            """{"type":"response.create","response":{"instructions":"The 1:1 has started. Speak this opening line verbatim, then wait and listen. Opening: ${opening.jsonEscape()}"}}"""
-        sendEvent(payload)
+        sendEvent(realtimeOpeningEventJson(opening))
     }
 
     private fun sendEvent(payload: String) {
@@ -191,37 +206,17 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
 
     private fun handleRealtimeEvent(raw: String) {
         val root = runCatching { json.parseToJsonElement(raw).jsonObject }.getOrNull() ?: return
-        val type = root.string("type") ?: return
-        when (type) {
-            "conversation.item.input_audio_transcription.completed",
-            "conversation.item.input_audio_transcription.done",
-            -> {
-                val text = root.string("transcript") ?: return
-                onUserTranscript(text)
-            }
-            "response.output_audio_transcript.done",
-            "response.audio_transcript.done",
-            -> {
-                val text = root.string("transcript") ?: return
-                onCounterpartTranscript(text)
-            }
-            "conversation.item.added",
-            "conversation.item.created",
-            -> {
-                val item = root["item"] as? JsonObject ?: return
-                val role = item.string("role")
-                val transcript = item.string("transcript")
-                    ?: item["content"]?.toString()
-                if (role == "user" && !transcript.isNullOrBlank()) {
-                    onUserTranscript(transcript.trim('"'))
-                }
-            }
-            "error" -> {
-                val message = (root["error"] as? JsonObject)?.string("message")
-                    ?: root.string("message")
-                    ?: "Realtime error"
-                fail(message)
-            }
+        if (root.string("type") == "error") {
+            val message = (root["error"] as? JsonObject)?.string("message")
+                ?: root.string("message")
+                ?: "Realtime error"
+            fail(message)
+            return
+        }
+        val parsed = parseRealtimeTranscript(raw, json) ?: return
+        when (parsed.kind) {
+            RealtimeTranscriptKind.USER -> onUserTranscript(parsed.text)
+            RealtimeTranscriptKind.COUNTERPART -> onCounterpartTranscript(parsed.text)
         }
     }
 
@@ -229,6 +224,8 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
         val cleaned = text.trim()
         if (cleaned.isEmpty()) return
         synchronized(turns) {
+            val lastUser = turns.lastOrNull { it.role == ChatRole.USER }?.content
+            if (isDuplicateUserTranscript(lastUser, cleaned)) return
             if (userTurns >= maxUserTurns) return
             userTurns += 1
             turns += ChatMessage(role = ChatRole.USER, content = cleaned)
@@ -362,7 +359,21 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
         timeout.cancel()
     }
 
-    private fun postSdpOffer(realtimeUrl: String, clientSecret: String, offer: String): String {
+    private fun ensureNotFinished() {
+        if (finished.get()) {
+            release()
+            throw IllegalStateException("Call ended")
+        }
+    }
+
+    private suspend fun postSdpOffer(realtimeUrl: String, clientSecret: String, offer: String): String {
+        val safeUrl = requireAllowlistedRealtimeUrl(realtimeUrl)
+        return withContext(Dispatchers.IO) {
+            postSdpOfferBlocking(safeUrl, clientSecret, offer)
+        }
+    }
+
+    private fun postSdpOfferBlocking(realtimeUrl: String, clientSecret: String, offer: String): String {
         val connection = URL(realtimeUrl).openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
         connection.doOutput = true
@@ -418,15 +429,3 @@ class OpenAiRealtimeWebRtcSession : VoiceCallSession {
 
 private fun JsonObject.string(key: String): String? =
     runCatching { this[key]?.jsonPrimitive?.contentOrNull }.getOrNull()
-
-private fun String.jsonEscape(): String = buildString {
-    for (ch in this@jsonEscape) {
-        when (ch) {
-            '\\' -> append("\\\\")
-            '"' -> append("\\\"")
-            '\n' -> append("\\n")
-            '\r' -> append("\\r")
-            else -> append(ch)
-        }
-    }
-}

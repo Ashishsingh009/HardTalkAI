@@ -88,7 +88,10 @@ fun App(
                     }
                     ChatScreen(
                         viewModel = chatViewModel,
-                        onBack = { route = PracticeRoute.Scenarios },
+                        onBack = {
+                            chatViewModel.leaveChat()
+                            route = PracticeRoute.Scenarios
+                        },
                     )
                 }
             }

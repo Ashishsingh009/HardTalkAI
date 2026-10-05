@@ -36,6 +36,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,6 +56,10 @@ fun ChatScreen(
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     val summary = uiState.roundSummary
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.leaveChat() }
+    }
 
     LaunchedEffect(uiState.messages.size, uiState.sending, uiState.roundComplete) {
         if (summary != null) return@LaunchedEffect

@@ -9,6 +9,9 @@ plugins {
 }
 
 kotlin {
+    // Host target so commonTest can run without the Android SDK.
+    jvm()
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -52,6 +55,9 @@ kotlin {
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+        }
+        jvmMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
