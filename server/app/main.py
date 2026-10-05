@@ -1,16 +1,26 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
 from . import ai
+from . import voice
+from .abuse import authorize_voice_session
 from .coach import respond
-from .models import ChatRequest, HealthResponse, ScenariosResponse
+from .models import (
+    ChatRequest,
+    HealthResponse,
+    ScenariosResponse,
+    VoiceCompleteRequest,
+    VoiceSessionRequest,
+)
 from .scenarios import SCENARIOS, find_scenario
+from .voice import VoiceProviderError
 
 # repo-root/docs/*.html (this file is server/app/main.py)
 DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
@@ -22,11 +32,36 @@ logger = logging.getLogger("hardtalkai")
 
 app = FastAPI(title="HardTalkAI", version="0.1.0")
 
+# Native Android does not use browser CORS. The Vite demo proxies /api same-origin.
+# Keep a tight allowlist so a random webpage cannot mint voice sessions.
+DEFAULT_CORS_ORIGINS = (
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+)
+
+
+def cors_allow_origins() -> list[str]:
+    origins = list(DEFAULT_CORS_ORIGINS)
+    extra = os.getenv("HARDTALK_CORS_ORIGINS", "")
+    for part in extra.split(","):
+        origin = part.strip()
+        if origin and origin not in origins:
+            origins.append(origin)
+    return origins
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_allow_origins(),
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-HardTalk-Client",
+        "X-HardTalk-Voice-Token",
+    ],
 )
 
 
@@ -54,7 +89,12 @@ def privacy_policy() -> FileResponse | JSONResponse:
 
 @app.get("/api/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-    return HealthResponse(status="ok", engine=ai.engine_name(), scenarios=len(SCENARIOS))
+    return HealthResponse(
+        status="ok",
+        engine=ai.engine_name(),
+        scenarios=len(SCENARIOS),
+        voice=voice.is_available(),
+    )
 
 
 @app.get("/api/scenarios", response_model=ScenariosResponse)
@@ -77,4 +117,43 @@ def chat(body: ChatRequest) -> JSONResponse:
         return _error(404, f"Unknown scenario: {scenario_id}")
 
     result = respond(scenario, body.history, message)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/api/voice/session")
+def voice_session(body: VoiceSessionRequest, request: Request) -> JSONResponse:
+    """Mint a short-lived OpenAI Realtime client secret for the counterpart call."""
+    denied = authorize_voice_session(request)
+    if denied is not None:
+        return denied
+    scenario_id = (body.scenarioId or "").strip()
+    if not scenario_id:
+        return _error(400, "scenarioId is required")
+    scenario = find_scenario(scenario_id)
+    if scenario is None:
+        return _error(404, f"Unknown scenario: {scenario_id}")
+    if not voice.is_available():
+        return _error(
+            503,
+            "Voice calls need OPENAI_API_KEY and HARDTALK_VOICE_SECRET on the server. "
+            "Typed practice still works.",
+        )
+    try:
+        session = voice.create_session(scenario)
+    except VoiceProviderError as exc:
+        logger.warning("Voice session mint failed: %s", exc)
+        return _error(502, str(exc))
+    return JSONResponse(content=session.model_dump())
+
+
+@app.post("/api/voice/complete")
+def voice_complete(body: VoiceCompleteRequest) -> JSONResponse:
+    """Score a counterpart-call transcript. Scores stay local; nothing goes to OpenAI."""
+    scenario_id = (body.scenarioId or "").strip()
+    if not scenario_id:
+        return _error(400, "scenarioId is required")
+    scenario = find_scenario(scenario_id)
+    if scenario is None:
+        return _error(404, f"Unknown scenario: {scenario_id}")
+    result = voice.complete_round(scenario, body.turns)
     return JSONResponse(content=result.model_dump())

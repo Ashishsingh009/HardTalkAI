@@ -3,12 +3,18 @@ package ai.hardtalk.source.data.api
 import ai.hardtalk.source.data.api.dto.ApiErrorDto
 import ai.hardtalk.source.data.api.dto.ChatRequestDto
 import ai.hardtalk.source.data.api.dto.ChatTurnDto
+import ai.hardtalk.source.data.api.dto.HealthResponseDto
 import ai.hardtalk.source.data.api.dto.ReplyResultDto
 import ai.hardtalk.source.data.api.dto.ScenarioDto
 import ai.hardtalk.source.data.api.dto.ScenariosResponseDto
+import ai.hardtalk.source.data.api.dto.VoiceCompleteRequestDto
+import ai.hardtalk.source.data.api.dto.VoiceCompleteResponseDto
+import ai.hardtalk.source.data.api.dto.VoiceSessionRequestDto
+import ai.hardtalk.source.data.api.dto.VoiceSessionResponseDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -22,6 +28,8 @@ class ApiException(message: String) : Exception(message)
 class HardTalkApi(
     baseUrl: String,
     private val client: HttpClient,
+    private val voiceSecret: String = "",
+    private val installId: String = randomInstallId(),
 ) {
     private val root = normalizeApiBaseUrl(baseUrl)
 
@@ -50,6 +58,53 @@ class HardTalkApi(
         }
         ensureSuccess(response)
         return response.body()
+    }
+
+    suspend fun getHealth(): HealthResponseDto {
+        val response = client.get("$root/api/health")
+        ensureSuccess(response)
+        return response.body()
+    }
+
+    suspend fun createVoiceSession(scenarioId: String): VoiceSessionResponseDto {
+        val response = client.post("$root/api/voice/session") {
+            contentType(ContentType.Application.Json)
+            setBody(VoiceSessionRequestDto(scenarioId = scenarioId))
+            val token = signedVoiceAccessToken()
+            if (token != null) {
+                header(HARDTALK_VOICE_TOKEN_HEADER, token)
+            }
+        }
+        ensureSuccess(response)
+        return response.body()
+    }
+
+    suspend fun completeVoiceRound(
+        scenarioId: String,
+        turns: List<ChatTurnDto>,
+    ): VoiceCompleteResponseDto {
+        val response = client.post("$root/api/voice/complete") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                VoiceCompleteRequestDto(
+                    scenarioId = scenarioId,
+                    turns = turns,
+                ),
+            )
+        }
+        ensureSuccess(response)
+        return response.body()
+    }
+
+    private fun signedVoiceAccessToken(): String? {
+        if (voiceSecret.length < MIN_VOICE_SECRET_LENGTH) return null
+        return runCatching {
+            issueVoiceAccessToken(
+                secret = voiceSecret,
+                installId = installId,
+                nowEpochSeconds = currentEpochSeconds(),
+            )
+        }.getOrNull()
     }
 
     private suspend fun ensureSuccess(response: HttpResponse) {

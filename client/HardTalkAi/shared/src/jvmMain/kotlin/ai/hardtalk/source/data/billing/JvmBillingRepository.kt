@@ -1,0 +1,20 @@
+package ai.hardtalk.source.data.billing
+
+import ai.hardtalk.source.domain.billing.BillingState
+import ai.hardtalk.source.domain.repository.BillingRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class JvmBillingRepository : BillingRepository {
+    private val _state = MutableStateFlow(BillingState(ungated = true))
+    override val state: StateFlow<BillingState> = _state.asStateFlow()
+
+    override suspend fun refresh() = Unit
+
+    override suspend fun purchase(): Result<Unit> =
+        Result.failure(IllegalStateException("HardTalk Pro purchases are Android-only."))
+
+    override suspend fun restore(): Result<Unit> =
+        Result.failure(IllegalStateException("HardTalk Pro restore is Android-only."))
+}

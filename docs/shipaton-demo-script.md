@@ -152,9 +152,7 @@ Overall **67**, warming. Builtin: “Ah — I hear you that payments is already 
 Web is the same catalog and the same scores. It is **not** the same loop, and it is **not** the judged monetization path:
 
 - No 3-turn cap, no **Round complete**, no **Try this scenario again**.
-- After Line 3, VO: “That’s a three-turn round. On Android you get a recap here.” Then click **← Choose another scenario**.
-- **HardTalk Pro / PaywallScrim is Android + RevenueCat.** Web may not lock Sam/Priya or show **Unlock HardTalk Pro**. Do not pretend the web catalog is the Play / RevenueCat gate.
-- Still show **Free practice** on raise, Line 1 guarded, Line 2–3 warming. If web has no paywall, say so in the video description and film Android as soon as you can.
+- Still show **Free practice** on raise. Web is **not** paywalled — say that in the description. After Line 3, VO: “That’s a three-turn round. On Android you get a recap here, and Pro drills sit behind RevenueCat.” Then click **← Choose another scenario**.
 
 Say in the video description that the judged recap **and** the HardTalk Pro beat are Android. Do not pretend web has the recap screen or the RevenueCat paywall.
 
@@ -162,12 +160,12 @@ Say in the video description that the judged recap **and** the HardTalk Pro beat
 
 ## Do not film
 
-- Voice input, microphone permission, or “talking to” the phone. This build is **text rehearsal**.
-- A free-form chat that is not one of the demo drills.
-- Opening calibration / skip-level / stolen-credit just to flex catalog length. The raise card + one **Pro** chip in the first 16 seconds is enough.
-- A fake purchase: do not unlock off-camera, then cut back as if Path A happened live.
-- Settings, Privacy policy, or Play Console (listing shots are a different checklist). The **in-app** paywall *is* the monetization shot.
+- The default camera path is **text rehearsal** (no mic). Do not film Call / microphone permission unless `OPENAI_API_KEY` and `HARDTALK_VOICE_SECRET` are set and you explicitly want that extra shot. Call is the counterpart, not Coach Heather.
+- A free-form chat that is not one of the three demo drills.
+- Opening calibration / skip-level / stolen-credit just to flex catalog length. Ten cards plus the paywall in the first 18 seconds is enough.
+- Play Store, settings, Privacy policy (listing shots are a different checklist). **Do** film the HardTalk Pro sheet.
 - Failed “is FastAPI running?” error. Fix API, then record.
+- The debug API URL (old builds only — current catalog hides it).
 - Hedged Line 1 that accidentally includes `I'd like` or a number — that will not go guarded.
 - An ungated / already-Pro catalog. If every card opens, you are not filming the product judges asked for.
 - iOS. Android is the end-to-end path this week.
