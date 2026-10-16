@@ -17,6 +17,12 @@ data class ChatUiState(
     val input: String = "",
     val sending: Boolean = false,
     val error: String? = null,
+    val serverVoiceAvailable: Boolean = false,
+    val voiceSupported: Boolean = false,
+    val inCall: Boolean = false,
+    val callMuted: Boolean = false,
+    val callStatus: String = "",
+    val liveUserTurns: Int = 0,
 ) {
     val scoredUserTurns: Int
         get() = messages.count { it.role == ChatRole.USER && it.feedback != null }
@@ -31,7 +37,10 @@ data class ChatUiState(
         get() = messages.any { it.role == ChatRole.USER }
 
     val canSend: Boolean
-        get() = !sending && !roundComplete
+        get() = !sending && !roundComplete && !inCall
+
+    val callAvailable: Boolean
+        get() = voiceSupported && serverVoiceAvailable && !roundComplete && !inCall && !sending
 
     val scoreHistory: List<TurnScore>
         get() = CoachingInsights.scoredTurns(messages)

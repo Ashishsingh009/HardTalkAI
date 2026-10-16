@@ -8,12 +8,18 @@ import ai.hardtalk.source.domain.model.Persona
 import ai.hardtalk.source.domain.model.PracticeLoop
 import ai.hardtalk.source.domain.model.CoachingDimension
 import ai.hardtalk.source.domain.model.CounterpartTone
+import ai.hardtalk.source.domain.model.HealthStatus
 import ai.hardtalk.source.domain.model.ReplyResult
 import ai.hardtalk.source.domain.model.Scenario
+import ai.hardtalk.source.domain.model.VoiceCompleteResult
+import ai.hardtalk.source.domain.model.VoiceSession
 import ai.hardtalk.source.domain.repository.PracticeRepository
 import ai.hardtalk.source.presentation.chat.ChatViewModel
 import ai.hardtalk.source.presentation.scenarios.ScenarioListUiState
 import ai.hardtalk.source.presentation.scenarios.ScenarioListViewModel
+import ai.hardtalk.source.voice.VoiceCallConfig
+import ai.hardtalk.source.voice.VoiceCallEvent
+import ai.hardtalk.source.voice.VoiceCallSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -241,10 +247,159 @@ class PracticeViewModelTest {
         assertFalse(state.sending)
     }
 
+    @Test
+    fun `call button stays hidden when server voice is off`() = runTest {
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(voice = false),
+            FakeBillingRepository(),
+            voiceSupported = true,
+        )
+        val state = viewModel.uiState.value
+        assertTrue(state.voiceSupported)
+        assertFalse(state.serverVoiceAvailable)
+        assertFalse(state.callAvailable)
+    }
+
+    @Test
+    fun `counterpart call hangup scores transcript and shows recap`() = runTest {
+        val session = FakeVoiceCallSession()
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(voice = true),
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        assertTrue(viewModel.uiState.value.callAvailable)
+
+        viewModel.startCall()
+        assertTrue(viewModel.uiState.value.inCall)
+        assertFalse(viewModel.uiState.value.canSend)
+
+        session.emit(
+            VoiceCallEvent.Ended(
+                turns = listOf(
+                    ChatMessage(ChatRole.COUNTERPART, sampleScenario().opening),
+                    ChatMessage(ChatRole.USER, "I'd like a raise with three launches."),
+                    ChatMessage(ChatRole.COUNTERPART, "Walk me through the number."),
+                    ChatMessage(ChatRole.USER, "I'd like 12 percent this cycle."),
+                    ChatMessage(ChatRole.COUNTERPART, "I can take that upstairs."),
+                    ChatMessage(ChatRole.USER, "I hear the freeze. I'd like a number before Friday."),
+                ),
+                reason = "max_turns",
+            ),
+        )
+
+        val after = viewModel.uiState.value
+        assertFalse(after.inCall)
+        assertTrue(after.roundComplete)
+        assertEquals(PracticeLoop.MAX_USER_TURNS, after.scoredUserTurns)
+        assertNotNull(after.roundSummary)
+        assertEquals("defensive and cautious", after.mood)
+        assertEquals(CounterpartTone.GUARDED, after.counterpartTone)
+        assertTrue(after.messages.any { it.role == ChatRole.USER && it.feedback != null })
+    }
+
+    @Test
+    fun `typed send still works when voice is available`() = runTest {
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(voice = true),
+            FakeBillingRepository(),
+            voiceSupported = true,
+        )
+        assertTrue(viewModel.uiState.value.callAvailable)
+        viewModel.onInputChange("I shipped 3 launches and would like a raise.")
+        viewModel.send()
+        val after = viewModel.uiState.value
+        assertEquals(3, after.messages.size)
+        assertEquals(1, after.scoredUserTurns)
+        assertFalse(after.inCall)
+    }
+
+    @Test
+    fun `hang up while minting a session leaves no live call`() = runTest {
+        val hold = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val session = FakeVoiceCallSession()
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(voice = true, holdVoiceSession = hold),
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        viewModel.startCall()
+        assertTrue(viewModel.uiState.value.inCall)
+        viewModel.hangUpCall()
+        assertFalse(viewModel.uiState.value.inCall)
+        hold.complete(Unit)
+        assertFalse(viewModel.uiState.value.inCall)
+        assertNull(session.connected)
+        assertEquals(0, session.hangUpCount)
+    }
+
+    @Test
+    fun `hang up during connect stops the connecting call`() = runTest {
+        val session = FakeVoiceCallSession(blockConnect = true)
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(voice = true),
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        viewModel.startCall()
+        assertTrue(viewModel.uiState.value.inCall)
+        assertNotNull(session.connected)
+        viewModel.hangUpCall()
+        assertEquals(1, session.hangUpCount)
+        assertFalse(viewModel.uiState.value.inCall)
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `leaveChat hangs up so the microphone does not stay live`() = runTest {
+        val session = FakeVoiceCallSession()
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(voice = true),
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        viewModel.startCall()
+        assertTrue(viewModel.uiState.value.inCall)
+        viewModel.leaveChat()
+        assertEquals(1, session.hangUpCount)
+        assertFalse(viewModel.uiState.value.inCall)
+        assertFalse(viewModel.uiState.value.sending)
+    }
+
+    @Test
+    fun `call is blocked when the drill is locked`() = runTest {
+        val session = FakeVoiceCallSession()
+        val viewModel = ChatViewModel(
+            paidScenario(),
+            FakePracticeRepository(voice = true),
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        assertTrue(viewModel.uiState.value.callAvailable)
+        viewModel.startCall()
+        val state = viewModel.uiState.value
+        assertEquals("Unlock HardTalk Pro to practice this drill.", state.error)
+        assertFalse(state.inCall)
+        assertNull(session.connected)
+    }
+
     private class FakePracticeRepository(
         private val failLoad: Boolean = false,
         private val failSend: Boolean = false,
+        private val voice: Boolean = false,
         private val scenarios: List<Scenario> = listOf(sampleScenario()),
+        private val holdVoiceSession: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
     ) : PracticeRepository {
         override suspend fun getScenarios(): List<Scenario> {
             if (failLoad) error("offline")
@@ -257,7 +412,6 @@ class PracticeViewModelTest {
             history: List<ChatMessage>,
         ): ReplyResult {
             if (failSend) error("boom")
-            assertEquals("ask-for-raise", scenarioId)
             assertTrue(history.isNotEmpty())
             val turnNumber = history.count { it.role == ChatRole.USER } + 1
             val feedback = when (turnNumber) {
@@ -269,6 +423,52 @@ class PracticeViewModelTest {
                 reply = "Walk me through the number.",
                 feedback = feedback,
                 mood = if (turnNumber >= 3) "defensive and cautious" else "curious",
+            )
+        }
+
+        override suspend fun getHealth(): HealthStatus {
+            if (failLoad) error("offline")
+            return HealthStatus(engine = if (voice) "openai" else "builtin", voice = voice, scenarios = 1)
+        }
+
+        override suspend fun createVoiceSession(scenarioId: String): VoiceSession {
+            if (failSend) error("boom")
+            holdVoiceSession?.await()
+            return VoiceSession(
+                clientSecret = "ek_test",
+                realtimeUrl = "https://api.openai.com/v1/realtime/calls",
+                model = "gpt-realtime",
+                voice = "coral",
+                opening = sampleScenario().opening,
+                personaName = "Dana",
+                maxUserTurns = PracticeLoop.MAX_USER_TURNS,
+                maxDurationSeconds = PracticeLoop.MAX_CALL_DURATION_SECONDS,
+            )
+        }
+
+        override suspend fun completeVoiceRound(
+            scenarioId: String,
+            turns: List<ChatMessage>,
+        ): VoiceCompleteResult {
+            if (failSend) error("boom")
+            val scored = mutableListOf<ChatMessage>()
+            var userCount = 0
+            for (turn in turns) {
+                if (turn.role == ChatRole.USER) {
+                    userCount += 1
+                    val feedback = when (userCount) {
+                        1 -> Feedback(80, 70, 75, 75, listOf("Cite a metric."))
+                        2 -> Feedback(72, 82, 68, 74, listOf("Lead with the ask."))
+                        else -> Feedback(88, 52, 80, 73, listOf("Acknowledge them first."))
+                    }
+                    scored += turn.copy(feedback = feedback)
+                } else {
+                    scored += turn
+                }
+            }
+            return VoiceCompleteResult(
+                messages = scored,
+                mood = if (userCount >= 3) "defensive and cautious" else "curious",
             )
         }
     }
@@ -295,3 +495,38 @@ private fun paidScenario() = Scenario(
     goals = listOf("Name the specific misses"),
     free = false,
 )
+
+private class FakeVoiceCallSession(
+    private val blockConnect: Boolean = false,
+) : VoiceCallSession {
+    private val _events = kotlinx.coroutines.flow.MutableSharedFlow<VoiceCallEvent>(extraBufferCapacity = 16)
+    override val events = _events
+    var connected: VoiceCallConfig? = null
+        private set
+    var hangUpCount = 0
+        private set
+    private val connectGate = kotlinx.coroutines.CompletableDeferred<Unit>()
+
+    override suspend fun connect(config: VoiceCallConfig) {
+        connected = config
+        if (blockConnect) {
+            connectGate.await()
+            return
+        }
+        _events.emit(VoiceCallEvent.Status("Live — they can hear you"))
+    }
+
+    override fun setMuted(muted: Boolean) = Unit
+
+    override fun hangUp() {
+        hangUpCount += 1
+        if (blockConnect && !connectGate.isCompleted) {
+            connectGate.complete(Unit)
+        }
+        _events.tryEmit(VoiceCallEvent.Ended(emptyList(), "hangup"))
+    }
+
+    suspend fun emit(event: VoiceCallEvent) {
+        _events.emit(event)
+    }
+}

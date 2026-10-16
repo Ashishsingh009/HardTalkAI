@@ -1,6 +1,7 @@
 package ai.hardtalk.source
 
 import ai.hardtalk.source.data.api.defaultApiBaseUrl
+import ai.hardtalk.source.data.api.persistentInstallId
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.repository.BillingRepository
 import ai.hardtalk.source.domain.repository.createBillingRepository
@@ -11,6 +12,8 @@ import ai.hardtalk.source.presentation.scenarios.ScenarioListScreen
 import ai.hardtalk.source.presentation.scenarios.ScenarioListViewModel
 import ai.hardtalk.source.presentation.splash.SplashScreen
 import ai.hardtalk.source.presentation.theme.HardTalkTheme
+import ai.hardtalk.source.voice.createVoiceCallSession
+import ai.hardtalk.source.voice.isVoiceCallSupported
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
@@ -33,9 +36,11 @@ private sealed interface PracticeRoute {
 fun App(
     apiBaseUrl: String = defaultApiBaseUrl(),
     billingRepository: BillingRepository = createBillingRepository(),
+    voiceSecret: String = "",
+    installId: String = persistentInstallId(),
 ) {
-    val container = remember(apiBaseUrl, billingRepository) {
-        AppContainer(apiBaseUrl, billingRepository)
+    val container = remember(apiBaseUrl, billingRepository, voiceSecret, installId) {
+        AppContainer(apiBaseUrl, billingRepository, voiceSecret, installId)
     }
     HardTalkTheme {
         var route by remember { mutableStateOf<PracticeRoute>(PracticeRoute.Splash) }
@@ -80,11 +85,16 @@ fun App(
                             current.scenario,
                             container.practiceRepository,
                             container.billingRepository,
+                            voiceSupported = isVoiceCallSupported(),
+                            voiceCallFactory = { createVoiceCallSession() },
                         )
                     }
                     ChatScreen(
                         viewModel = chatViewModel,
-                        onBack = { route = PracticeRoute.Scenarios },
+                        onBack = {
+                            chatViewModel.leaveChat()
+                            route = PracticeRoute.Scenarios
+                        },
                     )
                 }
             }

@@ -3,6 +3,7 @@ package ai.hardtalk.source
 import ai.hardtalk.source.data.api.HardTalkApi
 import ai.hardtalk.source.data.api.createHardTalkHttpClient
 import ai.hardtalk.source.data.api.defaultApiBaseUrl
+import ai.hardtalk.source.data.api.persistentInstallId
 import ai.hardtalk.source.data.api.provideHttpClientEngine
 import ai.hardtalk.source.data.repository.PracticeRepositoryImpl
 import ai.hardtalk.source.domain.repository.BillingRepository
@@ -15,12 +16,16 @@ import ai.hardtalk.source.domain.repository.createBillingRepository
 class AppContainer(
     apiBaseUrl: String = defaultApiBaseUrl(),
     val billingRepository: BillingRepository = createBillingRepository(),
+    voiceSecret: String = "",
+    installId: String = persistentInstallId(),
 ) {
     val apiBaseUrl: String = apiBaseUrl
     val practiceRepository: PracticeRepository = PracticeRepositoryImpl(
         HardTalkApi(
             baseUrl = apiBaseUrl,
             client = createHardTalkHttpClient(provideHttpClientEngine()),
+            voiceSecret = voiceSecret,
+            installId = installId,
         ),
     )
 }

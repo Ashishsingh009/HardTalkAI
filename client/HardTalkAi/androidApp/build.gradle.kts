@@ -35,12 +35,27 @@ android {
         val apiBaseUrl = providers.gradleProperty("hardtalk.apiBaseUrl")
             .getOrElse("http://10.0.2.2:3001")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
-        val revenueCatKey = revenueCatGoogleApiKey()
+        val revenueCatKey = localProperty("hardtalk.revenuecatGoogleApiKey")
         buildConfigField(
             "String",
             "REVENUECAT_GOOGLE_API_KEY",
-            "\"${revenueCatKey.replace("\\", "\\\\").replace("\"", "\\\"")}\"",
+            "\"${escapeBuildConfig(revenueCatKey)}\"",
         )
+        // HMAC signing secret for Call mint tokens. Recoverable from the APK until
+        // user accounts exist; server minting still fails closed, is IP-rate-limited,
+        // and uses a 120s Realtime client-secret TTL.
+        val voiceSecret = localProperty("hardtalk.voiceSecret")
+        buildConfigField(
+            "String",
+            "HARDTALK_VOICE_SECRET",
+            "\"${escapeBuildConfig(voiceSecret)}\"",
+        )
+        // Default false so debug installs show the HardTalk Pro paywall for Shipaton.
+        // Opt in to walk the full catalog without Play: -Phardtalk.ungatedCatalog=true
+        val ungatedCatalog = providers.gradleProperty("hardtalk.ungatedCatalog")
+            .orNull
+            ?.equals("true", ignoreCase = true) == true
+        buildConfigField("boolean", "UNGATED_CATALOG", ungatedCatalog.toString())
     }
     packaging {
         resources {
@@ -66,8 +81,11 @@ android {
     }
 }
 
-private fun revenueCatGoogleApiKey(): String {
-    val fromProperty = providers.gradleProperty("hardtalk.revenuecatGoogleApiKey")
+private fun escapeBuildConfig(value: String): String =
+    value.replace("\\", "\\\\").replace("\"", "\\\"")
+
+private fun localProperty(name: String): String {
+    val fromProperty = providers.gradleProperty(name)
         .orNull
         ?.trim()
         .orEmpty()
@@ -76,5 +94,5 @@ private fun revenueCatGoogleApiKey(): String {
     if (!localFile.isFile) return ""
     val properties = Properties()
     localFile.inputStream().use { stream -> properties.load(stream) }
-    return properties.getProperty("hardtalk.revenuecatGoogleApiKey")?.trim().orEmpty()
+    return properties.getProperty(name)?.trim().orEmpty()
 }

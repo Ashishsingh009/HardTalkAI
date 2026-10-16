@@ -12,15 +12,18 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
     Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
     folder is the appropriate location.
 
-`:shared` talks to the FastAPI backend (`GET /api/scenarios`, `POST /api/chat`). There is no
+`:shared` talks to the FastAPI backend (`GET /api/scenarios`, `POST /api/chat`,
+`POST /api/voice/session`, `POST /api/voice/complete`). There is no
 on-device coaching engine — scores and counterpart replies come from the server. The Android
 loop is practice → score → retry (career catalog from FastAPI, three scored turns per round),
-not an open-ended chat. After each turn, shared UI presents the existing feedback payload
+not an open-ended chat. Type a reply, or call the counterpart when the server has both `OPENAI_API_KEY` and
+`HARDTALK_VOICE_SECRET` (Android `local.properties` `hardtalk.voiceSecret`, never git).
+After each turn (or after hang-up), shared UI presents the existing feedback payload
 (clarity / empathy / assertiveness, tips, mood) with score history; after three turns a
-recap names how scores moved and what to try next. The raise drill is free. On Android,
-other drills require HardTalk Pro (Play Billing via RevenueCat). Debug builds with no
-SDK key stay ungated. Do not commit the key; set `hardtalk.revenuecatGoogleApiKey` in
-`local.properties`.
+recap names how scores moved and what to try next. The raise drill is free. Other
+Android catalog drills need HardTalk Pro (`hardtalk_pro` via RevenueCat). Put the
+public Google SDK key in `local.properties` as `hardtalk.revenuecatGoogleApiKey` —
+never in git. Debug installs with no key still show the paywall. iOS stays ungated.
 
 ### Running the apps
 
@@ -36,6 +39,7 @@ Then use the run configurations in your IDE's toolbar, or:
   - Emulator default API URL: `http://10.0.2.2:3001` (`10.0.2.2` = host loopback).
   - Physical device: `./gradlew :androidApp:installDebug -Phardtalk.apiBaseUrl=http://<lan-ip>:3001`
   - Paid catalog (Android): put the public Google SDK key in `local.properties` as `hardtalk.revenuecatGoogleApiKey`. Debug builds with an empty key stay ungated. Release builds lock non-free drills until HardTalk Pro is entitled.
+  - Android Call: put the same `HARDTALK_VOICE_SECRET` the server uses in `local.properties` as `hardtalk.voiceSecret` (or `-Phardtalk.voiceSecret=`). Without it, `/api/health` reports `voice: false` and Call stays hidden. Never commit that value.
 - iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there
   (simulator default API URL: `http://127.0.0.1:3001`).
 
@@ -43,7 +47,8 @@ Then use the run configurations in your IDE's toolbar, or:
 
 Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 
-- Android / shared tests: `./gradlew :shared:testAndroidHostTest`
+- Android / shared tests: `./gradlew :shared:jvmTest` (commonTest without the Android SDK)
+- Android host tests: `./gradlew :shared:testAndroidHostTest`
 - iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
 
 ---

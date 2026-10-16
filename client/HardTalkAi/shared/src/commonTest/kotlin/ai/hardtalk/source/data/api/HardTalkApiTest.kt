@@ -12,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class HardTalkApiTest {
@@ -47,6 +48,7 @@ class HardTalkApiTest {
                 assertTrue("ask-for-raise" in body)
                 assertTrue("I'd like a raise" in body)
                 assertTrue("counterpart" in body)
+                assertEquals(null, request.headers[HARDTALK_VOICE_TOKEN_HEADER])
                 respond(
                     content = """{"reply":"Tell me more.","feedback":{"clarity":82,"empathy":64,"assertiveness":71,"overall":72,"tips":["Cite a metric."]},"mood":"engaged"}""",
                     status = HttpStatusCode.OK,
@@ -85,10 +87,98 @@ class HardTalkApiTest {
         assertEquals("Unknown scenario: nope", error.message)
     }
 
+    @Test
+    fun `getHealth parses voice flag`() = runTest {
+        val api = apiWith(
+            MockEngine { request ->
+                assertTrue(request.url.toString().endsWith("/api/health"))
+                respond(
+                    content = """{"status":"ok","engine":"openai","scenarios":10,"voice":true}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        val health = api.getHealth()
+        assertEquals("openai", health.engine)
+        assertTrue(health.voice)
+    }
+
+    @Test
+    fun `createVoiceSession posts scenarioId`() = runTest {
+        val api = apiWith(
+            MockEngine { request ->
+                assertEquals(HttpMethod.Post, request.method)
+                assertTrue(request.url.toString().endsWith("/api/voice/session"))
+                assertEquals(HARDTALK_CLIENT_VALUE, request.headers[HARDTALK_CLIENT_HEADER])
+                val token = request.headers[HARDTALK_VOICE_TOKEN_HEADER]
+                assertNotNull(token)
+                assertTrue(token.startsWith("v1.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."))
+                assertNotNull(verifyVoiceAccessToken(VOICE_SECRET, token, currentEpochSeconds()))
+                val body = (request.body as TextContent).text
+                assertTrue("ask-for-raise" in body)
+                respond(
+                    content = """{"clientSecret":"ek_test","realtimeUrl":"https://api.openai.com/v1/realtime/calls","model":"gpt-realtime","voice":"coral","opening":"What's going on?","personaName":"Dana","maxUserTurns":3,"maxDurationSeconds":90}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        val session = api.createVoiceSession("ask-for-raise")
+        assertEquals("ek_test", session.clientSecret)
+        assertEquals("Dana", session.personaName)
+        assertEquals(90, session.maxDurationSeconds)
+    }
+
+    @Test
+    fun `createVoiceSession ignores leftover instructions from older servers`() = runTest {
+        val api = apiWith(
+            MockEngine {
+                respond(
+                    content = """{"clientSecret":"ek_test","realtimeUrl":"https://api.openai.com/v1/realtime/calls","model":"gpt-realtime","voice":"coral","opening":"What's going on?","instructions":"You are Dana. Stay in character.","personaName":"Dana","maxUserTurns":3,"maxDurationSeconds":90}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        val session = api.createVoiceSession("ask-for-raise").toDomain()
+        assertEquals("ek_test", session.clientSecret)
+        assertEquals("Dana", session.personaName)
+    }
+
+    @Test
+    fun `completeVoiceRound posts transcript turns`() = runTest {
+        val api = apiWith(
+            MockEngine { request ->
+                assertTrue(request.url.toString().endsWith("/api/voice/complete"))
+                val body = (request.body as TextContent).text
+                assertTrue("ask-for-raise" in body)
+                assertTrue("I'd like a raise" in body)
+                respond(
+                    content = """{"messages":[{"role":"counterpart","content":"What's going on?"},{"role":"user","content":"I'd like a raise","feedback":{"clarity":80,"empathy":70,"assertiveness":75,"overall":75,"tips":["Cite a metric."]}}],"mood":"curious"}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        val result = api.completeVoiceRound(
+            "ask-for-raise",
+            listOf(
+                ai.hardtalk.source.data.api.dto.ChatTurnDto("user", "I'd like a raise"),
+            ),
+        )
+        assertEquals("curious", result.mood)
+        assertEquals(75, result.messages[1].feedback?.overall)
+    }
+
     private fun apiWith(engine: MockEngine): HardTalkApi = HardTalkApi(
         baseUrl = "http://10.0.2.2:3001/",
         client = createHardTalkHttpClient(engine),
+        voiceSecret = VOICE_SECRET,
+        installId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     )
 
     private val jsonHeaders = headersOf(HttpHeaders.ContentType, "application/json")
 }
+
+private const val VOICE_SECRET = "test-voice-secret-16"

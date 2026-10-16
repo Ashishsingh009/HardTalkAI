@@ -4,6 +4,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
 
 expect fun provideHttpClientEngine(): HttpClientEngine
@@ -11,6 +13,9 @@ expect fun provideHttpClientEngine(): HttpClientEngine
 fun createHardTalkHttpClient(engine: HttpClientEngine = provideHttpClientEngine()): HttpClient =
     HttpClient(engine) {
         expectSuccess = false
+        defaultRequest {
+            header(HARDTALK_CLIENT_HEADER, HARDTALK_CLIENT_VALUE)
+        }
         install(ContentNegotiation) {
             json(apiJson)
         }
