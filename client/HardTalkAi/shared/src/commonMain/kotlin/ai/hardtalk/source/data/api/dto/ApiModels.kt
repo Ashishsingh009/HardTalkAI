@@ -66,6 +66,49 @@ data class HealthResponseDto(
     val engine: String,
     val scenarios: Int,
     val voice: Boolean = false,
+    val paypal: String = "mock",
+)
+
+@Serializable
+data class InvoiceTermsDto(
+    val amount: String? = null,
+    val currency: String? = null,
+    val dueDate: String? = null,
+    val recipientEmail: String? = null,
+    val recipientName: String? = null,
+    val description: String? = null,
+)
+
+@Serializable
+data class InvoiceExtractRequestDto(
+    val scenarioId: String,
+    val turns: List<ChatTurnDto> = emptyList(),
+)
+
+@Serializable
+data class InvoiceExtractResponseDto(
+    val terms: InvoiceTermsDto = InvoiceTermsDto(),
+    val missing: List<String> = emptyList(),
+    val source: String = "heuristic",
+)
+
+@Serializable
+data class InvoiceSendRequestDto(
+    val scenarioId: String,
+    val amount: String? = null,
+    val currency: String? = null,
+    val dueDate: String? = null,
+    val recipientEmail: String? = null,
+    val recipientName: String? = null,
+    val description: String? = null,
+)
+
+@Serializable
+data class InvoiceSendResponseDto(
+    val invoiceId: String,
+    val status: String,
+    val payerLink: String,
+    val mode: String,
 )
 
 @Serializable

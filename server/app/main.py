@@ -9,17 +9,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
 from . import ai
+from . import paypal
 from . import voice
 from .abuse import authorize_voice_session
 from .coach import respond
+from .invoice_extract import extract_terms, missing_fields, terms_from_send_request
 from .models import (
     ChatRequest,
     HealthResponse,
+    InvoiceExtractRequest,
+    InvoiceSendRequest,
     ScenariosResponse,
     VoiceCompleteRequest,
     VoiceSessionRequest,
 )
-from .scenarios import SCENARIOS, find_scenario
+from .paypal import PayPalError
+from .scenarios import INVOICE_SCENARIO_ID, SCENARIOS, find_scenario
 from .voice import VoiceProviderError
 
 # repo-root/docs/*.html (this file is server/app/main.py)
@@ -94,6 +99,7 @@ def health() -> HealthResponse:
         engine=ai.engine_name(),
         scenarios=len(SCENARIOS),
         voice=voice.is_available(),
+        paypal=paypal.paypal_mode(),  # type: ignore[arg-type]
     )
 
 
@@ -156,4 +162,47 @@ def voice_complete(body: VoiceCompleteRequest) -> JSONResponse:
     if scenario is None:
         return _error(404, f"Unknown scenario: {scenario_id}")
     result = voice.complete_round(scenario, body.turns)
+    return JSONResponse(content=result.model_dump())
+
+
+def _require_invoice_scenario(scenario_id: str):
+    if not scenario_id:
+        return None, _error(400, "scenarioId is required")
+    scenario = find_scenario(scenario_id)
+    if scenario is None:
+        return None, _error(404, f"Unknown scenario: {scenario_id}")
+    if scenario.id != INVOICE_SCENARIO_ID:
+        return None, _error(
+            400,
+            "PayPal invoicing is only available after the Chase an overdue invoice drill.",
+        )
+    return scenario, None
+
+
+@app.post("/api/invoice/extract")
+def invoice_extract(body: InvoiceExtractRequest) -> JSONResponse:
+    """Pull amount, currency, due date, recipient, and description from the round."""
+    scenario, err = _require_invoice_scenario((body.scenarioId or "").strip())
+    if err is not None:
+        return err
+    result = extract_terms(scenario, body.turns)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/api/invoice/send")
+def invoice_send(body: InvoiceSendRequest) -> JSONResponse:
+    """Create and send a sandbox (or mock) PayPal invoice. Never called implicitly."""
+    scenario, err = _require_invoice_scenario((body.scenarioId or "").strip())
+    if err is not None:
+        return err
+    del scenario  # catalog gate only; terms come from the reviewed form
+    terms = terms_from_send_request(body)
+    missing = missing_fields(terms)
+    if missing:
+        return _error(400, "Missing invoice fields: " + ", ".join(missing))
+    try:
+        result = paypal.create_and_send_invoice(terms)
+    except PayPalError as exc:
+        logger.warning("PayPal invoice send failed: %s", exc)
+        return _error(502, str(exc))
     return JSONResponse(content=result.model_dump())

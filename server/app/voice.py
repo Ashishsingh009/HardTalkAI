@@ -50,6 +50,7 @@ _WHITESPACE = re.compile(r"\s+")
 # Stock OpenAI voices — one per drill, not cloned.
 _PERSONA_VOICES: dict[str, str] = {
     "ask-for-raise": "coral",
+    "chase-overdue-invoice": "marin",
     "give-feedback": "ash",
     "decline-request": "marin",
     "push-back-deadline": "echo",
@@ -79,7 +80,7 @@ def realtime_instructions(scenario: Scenario) -> str:
     """Counterpart-only prompt. Do not let the model coach or mention Heather."""
     return (
         f"You are {scenario.persona.name}, {scenario.persona.role}. "
-        f"You are role-playing the other side of a difficult workplace conversation "
+        f"You are role-playing the other side of a difficult conversation "
         f"so the user can practice. Scenario: {scenario.summary} "
         f"Your starting disposition: {scenario.persona.mood}. "
         "Stay fully in character. Speak one to three natural conversational sentences. "

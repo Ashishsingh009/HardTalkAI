@@ -2,6 +2,7 @@ package ai.hardtalk.source.presentation.chat
 
 import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
+import ai.hardtalk.source.domain.model.InvoiceTerms
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.repository.BillingRepository
 import ai.hardtalk.source.domain.repository.PracticeRepository
@@ -54,6 +55,96 @@ class ChatViewModel(
         attemptId += 1
         val voice = _uiState.value.serverVoiceAvailable
         _uiState.value = initialState().copy(serverVoiceAvailable = voice)
+    }
+
+    fun closeInvoiceReview() {
+        _uiState.update { it.copy(reviewingInvoice = false, invoiceError = null) }
+    }
+
+    fun updateInvoiceTerms(terms: InvoiceTerms) {
+        _uiState.update {
+            it.copy(
+                invoiceTerms = terms,
+                invoiceError = null,
+                invoiceMissing = terms.missingRequired,
+            )
+        }
+    }
+
+    fun openInvoiceReview() {
+        val current = _uiState.value
+        if (!current.invoiceEligible) return
+        val capturedAttempt = attemptId
+        if (current.invoiceTerms != null) {
+            _uiState.update { it.copy(reviewingInvoice = true, invoiceError = null) }
+            return
+        }
+        _uiState.update {
+            it.copy(
+                reviewingInvoice = true,
+                invoiceExtracting = true,
+                invoiceError = null,
+            )
+        }
+        viewModelScope.launch {
+            runCatching {
+                practiceRepository.extractInvoiceTerms(scenario.id, current.messages)
+            }.onSuccess { extracted ->
+                if (capturedAttempt != attemptId) return@launch
+                _uiState.update {
+                    it.copy(
+                        invoiceExtracting = false,
+                        invoiceTerms = extracted.terms,
+                        invoiceMissing = extracted.missing.ifEmpty { extracted.terms.missingRequired },
+                        invoiceSource = extracted.source,
+                    )
+                }
+            }.onFailure { error ->
+                if (capturedAttempt != attemptId) return@launch
+                _uiState.update {
+                    it.copy(
+                        invoiceExtracting = false,
+                        invoiceTerms = InvoiceTerms(),
+                        invoiceError = error.message ?: "Could not extract invoice terms",
+                    )
+                }
+            }
+        }
+    }
+
+    fun sendPaypalInvoice() {
+        val current = _uiState.value
+        val terms = current.invoiceTerms ?: return
+        if (current.invoiceSending || current.invoiceResult != null) return
+        if (!terms.readyToSend) {
+            _uiState.update {
+                it.copy(invoiceError = "Fill the missing fields before sending.")
+            }
+            return
+        }
+        val capturedAttempt = attemptId
+        _uiState.update { it.copy(invoiceSending = true, invoiceError = null) }
+        viewModelScope.launch {
+            runCatching {
+                practiceRepository.sendPaypalInvoice(scenario.id, terms)
+            }.onSuccess { result ->
+                if (capturedAttempt != attemptId) return@launch
+                _uiState.update {
+                    it.copy(
+                        invoiceSending = false,
+                        invoiceResult = result,
+                    )
+                }
+            }.onFailure { error ->
+                if (capturedAttempt != attemptId) return@launch
+                _uiState.update {
+                    it.copy(
+                        invoiceSending = false,
+                        invoiceError = error.message ?: "Could not send the PayPal invoice",
+                    )
+                }
+            }
+        }
     }
 
     fun setCallMuted(muted: Boolean) {

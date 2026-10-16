@@ -297,7 +297,7 @@ private fun PaywallScrim(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "\"${scenario.title}\" is a Pro drill. The raise stays free. Unlock the rest of the catalog with a one-time Play purchase.",
+                text = "\"${scenario.title}\" is a Pro drill. The raise and overdue-invoice drills stay free. Unlock the rest of the catalog with a one-time Play purchase.",
                 color = HardTalkColors.TextMuted,
                 fontSize = 14.sp,
             )

@@ -37,6 +37,7 @@ fun RoundSummaryScreen(
     summary: RoundProgress,
     onRetry: () -> Unit,
     onPickAnother: () -> Unit,
+    onReviewInvoice: (() -> Unit)? = null,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -180,17 +181,42 @@ fun RoundSummaryScreen(
                 MoodChip(personaName = personaName, mood = mood, tone = tone)
             }
         }
+        if (onReviewInvoice != null) {
+            item {
+                Button(
+                    onClick = onReviewInvoice,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = HardTalkColors.Accent,
+                        contentColor = HardTalkColors.OnAccent,
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text("Review PayPal invoice")
+                }
+            }
+        }
         item {
-            Button(
-                onClick = onRetry,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = HardTalkColors.Accent,
-                    contentColor = HardTalkColors.OnAccent,
-                ),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Text("Try this scenario again")
+            if (onReviewInvoice != null) {
+                OutlinedButton(
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text("Try this scenario again", color = HardTalkColors.AccentMuted)
+                }
+            } else {
+                Button(
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = HardTalkColors.Accent,
+                        contentColor = HardTalkColors.OnAccent,
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text("Try this scenario again")
+                }
             }
         }
         item {

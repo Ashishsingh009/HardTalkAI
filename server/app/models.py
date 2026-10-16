@@ -70,6 +70,9 @@ class HealthResponse(BaseModel):
     # True when the server can mint an OpenAI Realtime client secret.
     # Typed POST /api/chat stays available either way.
     voice: bool = False
+    # "sandbox" when PAYPAL_CLIENT_ID + PAYPAL_CLIENT_SECRET are set;
+    # otherwise invoice send uses a clearly labeled mock.
+    paypal: Literal["sandbox", "mock"] = "mock"
 
 
 class VoiceSessionRequest(BaseModel):
@@ -101,3 +104,40 @@ class ScoredVoiceTurn(BaseModel):
 class VoiceCompleteResponse(BaseModel):
     messages: list[ScoredVoiceTurn]
     mood: str
+
+
+class InvoiceTerms(BaseModel):
+    amount: str | None = None
+    currency: str | None = None
+    dueDate: str | None = None
+    recipientEmail: str | None = None
+    recipientName: str | None = None
+    description: str | None = None
+
+
+class InvoiceExtractRequest(BaseModel):
+    scenarioId: str | None = None
+    turns: list[ChatTurn] = Field(default_factory=list)
+
+
+class InvoiceExtractResponse(BaseModel):
+    terms: InvoiceTerms
+    missing: list[str] = Field(default_factory=list)
+    source: Literal["ai", "heuristic"] = "heuristic"
+
+
+class InvoiceSendRequest(BaseModel):
+    scenarioId: str | None = None
+    amount: str | None = None
+    currency: str | None = None
+    dueDate: str | None = None
+    recipientEmail: str | None = None
+    recipientName: str | None = None
+    description: str | None = None
+
+
+class InvoiceSendResponse(BaseModel):
+    invoiceId: str
+    status: str
+    payerLink: str
+    mode: Literal["sandbox", "mock"]

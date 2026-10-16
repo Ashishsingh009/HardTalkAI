@@ -171,6 +171,80 @@ class HardTalkApiTest {
         assertEquals(75, result.messages[1].feedback?.overall)
     }
 
+    @Test
+    fun `extractInvoiceTerms posts transcript and parses terms`() = runTest {
+        val api = apiWith(
+            MockEngine { request ->
+                assertEquals(HttpMethod.Post, request.method)
+                assertTrue(request.url.toString().endsWith("/api/invoice/extract"))
+                val body = (request.body as TextContent).text
+                assertTrue("chase-overdue-invoice" in body)
+                assertTrue("casey@northwind.example" in body)
+                respond(
+                    content = """{"terms":{"amount":"2400.00","currency":"USD","dueDate":"2026-11-01","recipientEmail":"casey@northwind.example","recipientName":"Casey Quinn","description":"Brand site redesign"},"missing":[],"source":"heuristic"}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        val result = api.extractInvoiceTerms(
+            "chase-overdue-invoice",
+            listOf(
+                ai.hardtalk.source.data.api.dto.ChatTurnDto("user", "Invoice casey@northwind.example"),
+            ),
+        )
+        assertEquals("2400.00", result.terms.amount)
+        assertEquals("USD", result.terms.currency)
+        assertTrue(result.missing.isEmpty())
+    }
+
+    @Test
+    fun `sendPaypalInvoice posts reviewed terms`() = runTest {
+        val api = apiWith(
+            MockEngine { request ->
+                assertTrue(request.url.toString().endsWith("/api/invoice/send"))
+                val body = (request.body as TextContent).text
+                assertTrue("chase-overdue-invoice" in body)
+                assertTrue("2400.00" in body)
+                assertTrue("casey@northwind.example" in body)
+                respond(
+                    content = """{"invoiceId":"INV2-MOCK-TEST","status":"SENT","payerLink":"https://www.sandbox.paypal.com/invoice/p/#INV2-MOCK","mode":"mock"}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        val result = api.sendPaypalInvoice(
+            "chase-overdue-invoice",
+            ai.hardtalk.source.data.api.dto.InvoiceSendRequestDto(
+                scenarioId = "chase-overdue-invoice",
+                amount = "2400.00",
+                currency = "USD",
+                recipientEmail = "casey@northwind.example",
+                description = "Brand site redesign",
+            ),
+        )
+        assertEquals("INV2-MOCK-TEST", result.invoiceId)
+        assertEquals("mock", result.mode)
+    }
+
+    @Test
+    fun `getHealth parses paypal mode`() = runTest {
+        val api = apiWith(
+            MockEngine { request ->
+                assertTrue(request.url.toString().endsWith("/api/health"))
+                respond(
+                    content = """{"status":"ok","engine":"builtin","scenarios":11,"voice":false,"paypal":"mock"}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        val health = api.getHealth()
+        assertEquals("mock", health.paypal)
+        assertEquals(11, health.scenarios)
+    }
+
     private fun apiWith(engine: MockEngine): HardTalkApi = HardTalkApi(
         baseUrl = "http://10.0.2.2:3001/",
         client = createHardTalkHttpClient(engine),
