@@ -179,6 +179,20 @@ REPLIES: dict[str, dict[Tone, list[str]]] = {
             "This is a lot to drop with ten minutes on the clock. Budgets are locked. What exactly are you expecting me to do before Friday?",
         ],
     },
+    "chase-overdue-invoice": {
+        "warming": [
+            "That's fair — the brand site is live and $2,400 USD was the number. I can do 2026-11-01 if you send the invoice to casey@northwind.example. One line: brand site redesign.",
+            "Okay. Let's lock $2,400 USD due 2026-11-01. Email casey@northwind.example. I don't want this hanging over the relationship.",
+        ],
+        "neutral": [
+            "I hear you that it's overdue. Next quarter is a long wait, but cash really is tight. What if I paid half of the $2,400 this month?",
+            "Two thousand four hundred still feels high given the revisions. Can we talk $1,800 if I pay by November 15?",
+        ],
+        "guarded": [
+            "Come on, we're friends. Cash is tight. You're going to squeeze me over a brand site?",
+            "I said don't send anything. If you invoice me through PayPal now it's going to make this weird. Can we just wait?",
+        ],
+    },
     "give-feedback": {
         "warming": [
             "Thanks for saying it that way — that's fair. The last two dates did slip, and on-call covering it is on me to flag earlier. What would a weekly check look like so this doesn't repeat?",

@@ -1,5 +1,5 @@
 from app.engine import REPLIES, generate_reply, score_message
-from app.scenarios import FREE_SCENARIO_ID, SCENARIOS, find_scenario
+from app.scenarios import FREE_SCENARIO_ID, FREE_SCENARIO_IDS, INVOICE_SCENARIO_ID, SCENARIOS, find_scenario
 
 ORIGINAL_IDS = {"ask-for-raise", "give-feedback", "decline-request"}
 TONES = ("warming", "neutral", "guarded")
@@ -50,13 +50,15 @@ def test_makes_counterpart_guarded_for_weak_message():
 
 def test_catalog_size_and_stable_original_ids():
     ids = [s.id for s in SCENARIOS]
-    assert 8 <= len(ids) <= 10
+    assert 10 <= len(ids) <= 12
     assert ORIGINAL_IDS <= set(ids)
+    assert INVOICE_SCENARIO_ID in ids
     assert ids[0] == FREE_SCENARIO_ID == "ask-for-raise"
     raise_scenario = find_scenario(FREE_SCENARIO_ID)
     assert raise_scenario is not None
     assert raise_scenario.free is True
-    assert sum(1 for s in SCENARIOS if s.free) == 1
+    assert find_scenario(INVOICE_SCENARIO_ID).free is True
+    assert {s.id for s in SCENARIOS if s.free} == set(FREE_SCENARIO_IDS)
 
 
 def test_every_scenario_has_pushback_replies_for_all_tones():

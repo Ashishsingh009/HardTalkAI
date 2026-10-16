@@ -46,7 +46,7 @@
     <main>
       <p class="back"><a href="/">← HardTalkAI</a></p>
       <h1>Privacy policy</h1>
-      <p class="muted">HardTalkAI · Career coaching practice · Last updated 19 September 2026</p>
+      <p class="muted">HardTalkAI · Career coaching practice · Last updated 16 October 2026</p>
       <div class="card">
         <p>
           This is a short, honest policy for a <strong>prototype</strong>.
@@ -111,12 +111,22 @@
         <a href="https://openai.com/policies/privacy-policy">OpenAI’s privacy policy</a>.
       </p>
 
+      <h2>Optional PayPal sandbox invoice</h2>
+      <p>
+        After the Chase an overdue invoice drill, Android can extract agreed terms
+        from the transcript (<code>POST /api/invoice/extract</code>) and, only if you
+        tap <strong>Send PayPal invoice</strong>, create a sandbox invoice
+        (<code>POST /api/invoice/send</code>). That request includes amount, currency,
+        due date, recipient name/email, and a short description. If PayPal credentials
+        are unset, the server returns a labeled mock and does not call PayPal.
+      </p>
+
       <h2>What we do not collect / do not do</h2>
       <ul>
         <li>We do not sell personal information.</li>
         <li>We do not run ads, attribution SDKs, or analytics packages in this build.</li>
         <li>We do not ask for your name, email, phone, location, contacts, or photos. Android Call asks for the microphone only when you start a counterpart call.</li>
-        <li>Android may take a Play payment to unlock HardTalk Pro (the paid catalog). That purchase is processed by Google Play and RevenueCat. We do not create an account for you. The raise drill stays free. Web and the public Static Space demo are not paywalled.</li>
+        <li>Android may take a Play payment to unlock HardTalk Pro (the paid catalog). That purchase is processed by Google Play and RevenueCat. We do not create an account for you. The raise and overdue-invoice drills stay free. Web and the public Static Space demo are not paywalled.</li>
         <li>Practice messages are not posted publicly and are not shown to other users.</li>
         <li>This is a workplace-coaching prototype aimed at adults. Do not use it if you are under 13.</li>
       </ul>
@@ -138,7 +148,7 @@
       <h2>Changes</h2>
       <p>
         We will update this page when the product persists data, adds accounts,
-        analytics, or a production FastAPI host. Last updated 19 September 2026.
+        analytics, or a production FastAPI host. Last updated 16 October 2026.
       </p>
       <p class="muted">
         Canonical markdown:

@@ -85,13 +85,27 @@ fun ChatScreen(
             mood = uiState.mood,
             tone = uiState.counterpartTone,
             scoredTurns = uiState.scoredUserTurns,
-            canRetry = uiState.canRetry,
+            canRetry = uiState.canRetry && !uiState.reviewingInvoice,
             roundComplete = uiState.roundComplete,
-            onBack = onBack,
+            reviewingInvoice = uiState.reviewingInvoice,
+            onBack = if (uiState.reviewingInvoice) viewModel::closeInvoiceReview else onBack,
             onRetry = viewModel::retryScenario,
         )
 
-        if (summary != null) {
+        if (uiState.reviewingInvoice) {
+            InvoiceReviewScreen(
+                terms = uiState.invoiceTerms,
+                missing = uiState.invoiceMissing,
+                source = uiState.invoiceSource,
+                extracting = uiState.invoiceExtracting,
+                sending = uiState.invoiceSending,
+                result = uiState.invoiceResult,
+                error = uiState.invoiceError,
+                onTermsChange = viewModel::updateInvoiceTerms,
+                onSend = viewModel::sendPaypalInvoice,
+                onBackToRecap = viewModel::closeInvoiceReview,
+            )
+        } else if (summary != null) {
             RoundSummaryScreen(
                 scenarioTitle = uiState.scenario.title,
                 personaName = uiState.scenario.persona.name,
@@ -100,6 +114,7 @@ fun ChatScreen(
                 summary = summary,
                 onRetry = viewModel::retryScenario,
                 onPickAnother = onBack,
+                onReviewInvoice = if (uiState.invoiceEligible) viewModel::openInvoiceReview else null,
             )
         } else {
             uiState.error?.let { message ->
@@ -194,14 +209,15 @@ private fun ChatHeader(
     scoredTurns: Int,
     canRetry: Boolean,
     roundComplete: Boolean,
+    reviewingInvoice: Boolean = false,
     onBack: () -> Unit,
     onRetry: () -> Unit,
 ) {
     val turnLabel = scoredTurns.coerceAtMost(PracticeLoop.MAX_USER_TURNS)
-    val meta = if (roundComplete) {
-        "Recap · retry with intent"
-    } else {
-        "$personaName · ${tone.shortLabel} · $turnLabel/${PracticeLoop.MAX_USER_TURNS}"
+    val meta = when {
+        reviewingInvoice -> "Invoice · tap send to use PayPal"
+        roundComplete -> "Recap · retry with intent"
+        else -> "$personaName · ${tone.shortLabel} · $turnLabel/${PracticeLoop.MAX_USER_TURNS}"
     }
 
     Row(
@@ -215,7 +231,11 @@ private fun ChatHeader(
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
             modifier = Modifier.heightIn(min = 36.dp),
         ) {
-            Text("← Scenarios", color = HardTalkColors.AccentMuted, fontSize = 13.sp)
+            Text(
+                if (reviewingInvoice) "← Recap" else "← Scenarios",
+                color = HardTalkColors.AccentMuted,
+                fontSize = 13.sp,
+            )
         }
         Column(
             modifier = Modifier

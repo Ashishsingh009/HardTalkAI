@@ -35,7 +35,42 @@ data class HealthStatus(
     val engine: String,
     val voice: Boolean,
     val scenarios: Int,
+    val paypal: String = "mock",
 )
+
+data class InvoiceTerms(
+    val amount: String = "",
+    val currency: String = "USD",
+    val dueDate: String = "",
+    val recipientEmail: String = "",
+    val recipientName: String = "",
+    val description: String = "",
+) {
+    val missingRequired: List<String>
+        get() = buildList {
+            if (amount.isBlank()) add("amount")
+            if (currency.isBlank()) add("currency")
+            if (recipientEmail.isBlank()) add("client email")
+            if (description.isBlank()) add("description")
+        }
+
+    val readyToSend: Boolean get() = missingRequired.isEmpty()
+}
+
+data class InvoiceExtraction(
+    val terms: InvoiceTerms,
+    val missing: List<String> = emptyList(),
+    val source: String = "heuristic",
+)
+
+data class InvoiceSendResult(
+    val invoiceId: String,
+    val status: String,
+    val payerLink: String,
+    val mode: String,
+) {
+    val isMock: Boolean get() = mode.equals("mock", ignoreCase = true)
+}
 
 data class VoiceSession(
     val clientSecret: String,

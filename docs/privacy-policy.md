@@ -1,6 +1,6 @@
 # Privacy policy — HardTalkAI
 
-**Last updated:** 19 September 2026
+**Last updated:** 16 October 2026
 
 This is a short, honest policy for a **prototype**. It is not legal advice and it does not claim GDPR/CCPA certification, a Data Protection Officer, or a production-grade retention program. If something here is wrong for how you run the app, fix the app or fix this page before you ship.
 
@@ -47,12 +47,16 @@ Coaching scores/tips are **not** sent to OpenAI; they stay on our server.
 
 OpenAI’s handling of that data is governed by [OpenAI’s privacy policy](https://openai.com/policies/privacy-policy). We do not control their retention.
 
+### Optional PayPal sandbox invoice
+
+After the **Chase an overdue invoice** drill, Android can show a review screen. If you tap **Send PayPal invoice**, the client posts the reviewed terms (amount, currency, due date, recipient name/email, line-item description) to our API (`POST /api/invoice/send`). That API creates and sends a **PayPal sandbox** invoice when `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` are set. If they are not set, the server returns a clearly labeled **mock** invoice and does not call PayPal. Nothing is sent unless you tap the button. Term extraction (`POST /api/invoice/extract`) sends the round transcript to our server (and to OpenAI if a key is configured) so the form can be pre-filled.
+
 ## What we do not collect / do not do
 
 - We **do not sell** personal information.
 - We **do not** run ads, attribution SDKs, or analytics packages in this build.
 - We **do not** ask for your name, email, phone, location, contacts, or photos. Android **Call** asks for the **microphone** only when you start a counterpart call.
-- Android may take a **Play** payment to unlock HardTalk Pro (the paid catalog). That purchase is processed by Google Play and RevenueCat. We do not create an account for you. The raise drill stays free. Web and the public Static Space demo are not paywalled.
+- Android may take a **Play** payment to unlock HardTalk Pro (the paid catalog). That purchase is processed by Google Play and RevenueCat. We do not create an account for you. The raise and overdue-invoice drills stay free. Web and the public Static Space demo are not paywalled.
 - Practice messages are **not** posted publicly and are **not** shown to other users.
 - Children: this is a workplace-coaching prototype aimed at adults. Do not use it if you are under 13. We do not knowingly collect data from children.
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.main import DEFAULT_CORS_ORIGINS, app, cors_allow_origins
-from app.scenarios import FREE_SCENARIO_ID, SCENARIOS
+from app.scenarios import FREE_SCENARIO_ID, FREE_SCENARIO_IDS, INVOICE_SCENARIO_ID, SCENARIOS
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -17,25 +17,29 @@ def test_health_reports_ok():
     assert res.status_code == 200
     body = res.json()
     assert body["status"] == "ok"
-    assert 8 <= body["scenarios"] <= 10
+    assert 10 <= body["scenarios"] <= 12
     assert body["scenarios"] == len(SCENARIOS)
     assert "voice" in body
     assert body["voice"] in (True, False)
+    assert body["paypal"] in ("mock", "sandbox")
 
 
 def test_scenarios_returns_career_catalog():
     body = client.get("/api/scenarios").json()
     scenarios = body["scenarios"]
     ids = [s["id"] for s in scenarios]
-    assert 8 <= len(ids) <= 10
+    assert 10 <= len(ids) <= 12
     assert len(ids) == len(set(ids))
     assert ORIGINAL_IDS <= set(ids)
+    assert INVOICE_SCENARIO_ID in ids
     assert ids[0] == FREE_SCENARIO_ID == "ask-for-raise"
 
     by_id = {s["id"]: s for s in scenarios}
     free_ids = {s["id"] for s in scenarios if s.get("free")}
-    assert free_ids == {FREE_SCENARIO_ID}
+    assert free_ids == set(FREE_SCENARIO_IDS)
     assert by_id["ask-for-raise"]["free"] is True
+    assert by_id[INVOICE_SCENARIO_ID]["free"] is True
+    assert by_id[INVOICE_SCENARIO_ID]["persona"]["name"] == "Casey Quinn"
     assert by_id["ask-for-raise"]["persona"]["name"] == "Dana"
     assert by_id["give-feedback"]["persona"]["name"] == "Sam"
     assert by_id["decline-request"]["persona"]["name"] == "Priya"

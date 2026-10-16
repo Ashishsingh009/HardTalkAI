@@ -13,17 +13,21 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
     folder is the appropriate location.
 
 `:shared` talks to the FastAPI backend (`GET /api/scenarios`, `POST /api/chat`,
-`POST /api/voice/session`, `POST /api/voice/complete`). There is no
+`POST /api/voice/session`, `POST /api/voice/complete`, `POST /api/invoice/extract`,
+`POST /api/invoice/send`). There is no
 on-device coaching engine — scores and counterpart replies come from the server. The Android
 loop is practice → score → retry (career catalog from FastAPI, three scored turns per round),
 not an open-ended chat. Type a reply, or call the counterpart when the server has both `OPENAI_API_KEY` and
 `HARDTALK_VOICE_SECRET` (Android `local.properties` `hardtalk.voiceSecret`, never git).
 After each turn (or after hang-up), shared UI presents the existing feedback payload
 (clarity / empathy / assertiveness, tips, mood) with score history; after three turns a
-recap names how scores moved and what to try next. The raise drill is free. Other
-Android catalog drills need HardTalk Pro (`hardtalk_pro` via RevenueCat). Put the
-public Google SDK key in `local.properties` as `hardtalk.revenuecatGoogleApiKey` —
-never in git. Debug installs with no key still show the paywall. iOS stays ungated.
+recap names how scores moved and what to try next. After the overdue-invoice recap,
+**Review PayPal invoice** opens an editable terms screen; **Send PayPal invoice** is
+the only action that creates a sandbox/mock invoice. The raise and overdue-invoice
+drills are free. Other Android catalog drills need HardTalk Pro (`hardtalk_pro` via
+RevenueCat). Put the public Google SDK key in `local.properties` as
+`hardtalk.revenuecatGoogleApiKey` — never in git. Debug installs with no key still
+show the paywall. iOS stays ungated.
 
 ### Running the apps
 
