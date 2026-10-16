@@ -48,7 +48,7 @@ def test_heuristic_extracts_amount_email_date_and_description():
     assert terms.recipientEmail == "casey@northwind.example"
     assert terms.recipientName == "Casey Quinn"
     assert terms.description is not None
-    assert "brand" in terms.description.lower()
+    assert terms.description.lower() == "brand site redesign"
     assert missing_fields(terms) == []
 
 

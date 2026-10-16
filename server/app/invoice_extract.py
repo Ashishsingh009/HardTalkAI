@@ -34,7 +34,7 @@ _EMAIL_RE = re.compile(r"\b[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}\b", re.IGNORE
 _ISO_DATE_RE = re.compile(r"\b(20\d{2}-\d{2}-\d{2})\b")
 _CURRENCY_RE = re.compile(r"\b(USD|EUR|GBP|CAD|AUD)\b", re.IGNORECASE)
 _WORK_RE = re.compile(
-    r"\b(brand site(?: redesign)?|website redesign|logo (?:design|refresh)|"
+    r"\b(brand site redesign|brand site|website redesign|logo (?:design|refresh)|"
     r"retainer|consulting|freelance (?:work|invoice))\b",
     re.IGNORECASE,
 )
@@ -227,9 +227,11 @@ def extract_heuristic(
         if net:
             due = (today + timedelta(days=int(net.group(1)))).isoformat()
 
-    work = _WORK_RE.search(text)
-    description = work.group(0).strip().capitalize() if work else None
-    if description:
+    work_matches = list(_WORK_RE.finditer(text))
+    description = None
+    if work_matches:
+        # Prefer the longest phrase so "brand site redesign" wins over "brand site".
+        description = max(work_matches, key=lambda m: len(m.group(0))).group(0).strip()
         description = description[0].upper() + description[1:]
 
     name = None
