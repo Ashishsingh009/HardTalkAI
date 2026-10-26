@@ -349,7 +349,9 @@ class ChatViewModel(
                             error = null,
                         )
                     }
-                    if (scenario.id == PracticeLoop.INVOICE_SCENARIO_ID) {
+                    if (scenario.id == PracticeLoop.INVOICE_SCENARIO_ID &&
+                        _uiState.value.roundComplete
+                    ) {
                         prefetchInvoiceTerms(capturedAttempt, autoOpen = true)
                     }
                 }.onFailure { error ->
@@ -371,7 +373,7 @@ class ChatViewModel(
     private fun prefetchInvoiceTerms(capturedAttempt: Int, autoOpen: Boolean) {
         val current = _uiState.value
         if (current.scenario.id != PracticeLoop.INVOICE_SCENARIO_ID) return
-        if (!current.roundComplete && !autoOpen) return
+        if (!current.roundComplete) return
         if (current.invoiceTerms != null) {
             if (autoOpen) {
                 _uiState.update { it.copy(reviewingInvoice = true, invoiceError = null) }
@@ -394,7 +396,6 @@ class ChatViewModel(
                 _uiState.update {
                     it.copy(
                         invoiceExtracting = false,
-                        reviewingInvoice = autoOpen || it.reviewingInvoice,
                         invoiceTerms = extracted.terms,
                         invoiceMissing = extracted.missing.ifEmpty { extracted.terms.missingRequired },
                         invoiceSource = extracted.source,
@@ -405,7 +406,6 @@ class ChatViewModel(
                 _uiState.update {
                     it.copy(
                         invoiceExtracting = false,
-                        reviewingInvoice = autoOpen || it.reviewingInvoice,
                         invoiceTerms = InvoiceTerms(),
                         invoiceError = error.message ?: "Could not extract invoice terms",
                     )

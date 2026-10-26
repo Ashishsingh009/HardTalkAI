@@ -345,6 +345,77 @@ class PracticeViewModelTest {
     }
 
     @Test
+    fun `invoice voice hangup before three turns stays on recap`() = runTest {
+        val session = FakeVoiceCallSession()
+        val repo = FakePracticeRepository(voice = true)
+        val viewModel = ChatViewModel(
+            invoiceScenario(),
+            repo,
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        viewModel.startCall()
+        session.emit(
+            VoiceCallEvent.Ended(
+                turns = listOf(
+                    ChatMessage(ChatRole.COUNTERPART, invoiceScenario().opening),
+                    ChatMessage(ChatRole.USER, "The $2,400 brand site is 18 days overdue."),
+                    ChatMessage(ChatRole.COUNTERPART, "Cash is tight."),
+                ),
+                reason = "hangup",
+            ),
+        )
+
+        val early = viewModel.uiState.value
+        assertFalse(early.inCall)
+        assertFalse(early.roundComplete)
+        assertFalse(early.reviewingInvoice)
+        assertEquals(0, repo.extractInvoiceCalls)
+        assertEquals(0, repo.sendInvoiceCalls)
+        assertNull(early.invoiceTerms)
+
+        viewModel.onInputChange("Let's lock November 1 and keep the relationship.")
+        viewModel.send()
+        viewModel.onInputChange("I'll send PayPal after you confirm casey@northwind.example.")
+        viewModel.send()
+
+        val complete = viewModel.uiState.value
+        assertTrue(complete.roundComplete)
+        assertTrue(complete.invoiceEligible)
+        assertFalse(complete.reviewingInvoice)
+        assertEquals(0, repo.extractInvoiceCalls)
+        assertEquals(0, repo.sendInvoiceCalls)
+    }
+
+    @Test
+    fun `dismissing invoice review during extract does not reopen`() = runTest {
+        val holdExtract = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val repo = FakePracticeRepository(holdExtract = holdExtract)
+        val viewModel = ChatViewModel(invoiceScenario(), repo, FakeBillingRepository())
+        repeat(PracticeLoop.MAX_USER_TURNS) { index ->
+            viewModel.onInputChange("The $2,400 brand site is overdue. Let's lock a date.")
+            viewModel.send()
+        }
+
+        viewModel.openInvoiceReview()
+        val extracting = viewModel.uiState.value
+        assertTrue(extracting.reviewingInvoice)
+        assertTrue(extracting.invoiceExtracting)
+
+        viewModel.closeInvoiceReview()
+        assertFalse(viewModel.uiState.value.reviewingInvoice)
+
+        holdExtract.complete(Unit)
+        val after = viewModel.uiState.value
+        assertFalse(after.reviewingInvoice)
+        assertFalse(after.invoiceExtracting)
+        assertEquals("2400.00", after.invoiceTerms?.amount)
+        assertEquals(1, repo.extractInvoiceCalls)
+        assertEquals(0, repo.sendInvoiceCalls)
+    }
+
+    @Test
     fun `career voice hangup does not extract invoice terms`() = runTest {
         val session = FakeVoiceCallSession()
         val repo = FakePracticeRepository(voice = true)
@@ -546,6 +617,7 @@ class PracticeViewModelTest {
         private val voice: Boolean = false,
         private val scenarios: List<Scenario> = listOf(sampleScenario()),
         private val holdVoiceSession: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
+        private val holdExtract: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
     ) : PracticeRepository {
         var extractInvoiceCalls = 0
         var sendInvoiceCalls = 0
@@ -625,6 +697,7 @@ class PracticeViewModelTest {
             turns: List<ChatMessage>,
         ): InvoiceExtraction {
             extractInvoiceCalls += 1
+            holdExtract?.await()
             if (failSend) error("extract-boom")
             return InvoiceExtraction(
                 terms = InvoiceTerms(
