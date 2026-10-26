@@ -22,8 +22,9 @@ not an open-ended chat. Type a reply, or call the counterpart when the server ha
 After each turn (or after hang-up), shared UI presents the existing feedback payload
 (clarity / empathy / assertiveness, tips, mood) with score history; after three turns a
 recap names how scores moved and what to try next. After the overdue-invoice recap,
-**Review PayPal invoice** opens an editable terms screen; **Send PayPal invoice** is
-the only action that creates a sandbox/mock invoice. The raise and overdue-invoice
+**Review PayPal invoice** opens an editable terms screen. After a **Call** hang-up
+on that drill, review opens already filled from the transcript. **Send PayPal invoice**
+is the only action that creates a sandbox/mock invoice. The raise and overdue-invoice
 drills are free. Other Android catalog drills need HardTalk Pro (`hardtalk_pro` via
 RevenueCat). Put the public Google SDK key in `local.properties` as
 `hardtalk.revenuecatGoogleApiKey` — never in git. Debug installs with no key still

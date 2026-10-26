@@ -188,9 +188,13 @@ is easier to mock and keep sandbox-only.
 4. Android flow (emulator against local FastAPI, same steps as above):
 
    1. Open **Chase an overdue invoice** (Casey Quinn — **Free practice**).
-   2. Complete three scored turns (typed or Call). Name the amount and ask for a date.
-   3. On the recap, tap **Review PayPal invoice**. Edit anything the extractor missed.
-   4. Tap **Send PayPal invoice**. The app never sends without that tap.
+   2. Complete three scored turns. Typed: recap, then tap **Review PayPal invoice**.
+      **Call:** hang up after the counterpart call; the recap still exists (← Recap)
+      but review opens with terms already filled from the transcript. Name the amount
+      and a pay-by date while you talk.
+   3. Edit anything the extractor missed.
+   4. Tap **Send PayPal invoice**. The app never sends without that tap — including
+      after a Call hang-up.
    5. Read the status, invoice id, and payer link. In mock mode the card is labeled
       **Mock invoice (no PayPal credentials)**.
 
