@@ -3,6 +3,7 @@ package ai.hardtalk.source.presentation.chat
 import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
 import ai.hardtalk.source.domain.model.InvoiceTerms
+import ai.hardtalk.source.domain.model.PracticeLoop
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.repository.BillingRepository
 import ai.hardtalk.source.domain.repository.PracticeRepository
@@ -72,44 +73,8 @@ class ChatViewModel(
     }
 
     fun openInvoiceReview() {
-        val current = _uiState.value
-        if (!current.invoiceEligible) return
-        val capturedAttempt = attemptId
-        if (current.invoiceTerms != null) {
-            _uiState.update { it.copy(reviewingInvoice = true, invoiceError = null) }
-            return
-        }
-        _uiState.update {
-            it.copy(
-                reviewingInvoice = true,
-                invoiceExtracting = true,
-                invoiceError = null,
-            )
-        }
-        viewModelScope.launch {
-            runCatching {
-                practiceRepository.extractInvoiceTerms(scenario.id, current.messages)
-            }.onSuccess { extracted ->
-                if (capturedAttempt != attemptId) return@launch
-                _uiState.update {
-                    it.copy(
-                        invoiceExtracting = false,
-                        invoiceTerms = extracted.terms,
-                        invoiceMissing = extracted.missing.ifEmpty { extracted.terms.missingRequired },
-                        invoiceSource = extracted.source,
-                    )
-                }
-            }.onFailure { error ->
-                if (capturedAttempt != attemptId) return@launch
-                _uiState.update {
-                    it.copy(
-                        invoiceExtracting = false,
-                        invoiceTerms = InvoiceTerms(),
-                        invoiceError = error.message ?: "Could not extract invoice terms",
-                    )
-                }
-            }
-        }
+        if (!_uiState.value.invoiceEligible) return
+        prefetchInvoiceTerms(attemptId, autoOpen = true)
     }
 
     fun sendPaypalInvoice() {
@@ -384,6 +349,9 @@ class ChatViewModel(
                             error = null,
                         )
                     }
+                    if (scenario.id == PracticeLoop.INVOICE_SCENARIO_ID) {
+                        prefetchInvoiceTerms(capturedAttempt, autoOpen = true)
+                    }
                 }.onFailure { error ->
                     if (capturedAttempt != attemptId) return
                     _uiState.update {
@@ -395,6 +363,52 @@ class ChatViewModel(
                             error = error.message ?: "Could not score the call",
                         )
                     }
+                }
+            }
+        }
+    }
+
+    private fun prefetchInvoiceTerms(capturedAttempt: Int, autoOpen: Boolean) {
+        val current = _uiState.value
+        if (current.scenario.id != PracticeLoop.INVOICE_SCENARIO_ID) return
+        if (!current.roundComplete && !autoOpen) return
+        if (current.invoiceTerms != null) {
+            if (autoOpen) {
+                _uiState.update { it.copy(reviewingInvoice = true, invoiceError = null) }
+            }
+            return
+        }
+        _uiState.update {
+            it.copy(
+                reviewingInvoice = autoOpen || it.reviewingInvoice,
+                invoiceExtracting = true,
+                invoiceError = null,
+            )
+        }
+        val turns = current.messages
+        viewModelScope.launch {
+            runCatching {
+                practiceRepository.extractInvoiceTerms(scenario.id, turns)
+            }.onSuccess { extracted ->
+                if (capturedAttempt != attemptId) return@launch
+                _uiState.update {
+                    it.copy(
+                        invoiceExtracting = false,
+                        reviewingInvoice = autoOpen || it.reviewingInvoice,
+                        invoiceTerms = extracted.terms,
+                        invoiceMissing = extracted.missing.ifEmpty { extracted.terms.missingRequired },
+                        invoiceSource = extracted.source,
+                    )
+                }
+            }.onFailure { error ->
+                if (capturedAttempt != attemptId) return@launch
+                _uiState.update {
+                    it.copy(
+                        invoiceExtracting = false,
+                        reviewingInvoice = autoOpen || it.reviewingInvoice,
+                        invoiceTerms = InvoiceTerms(),
+                        invoiceError = error.message ?: "Could not extract invoice terms",
+                    )
                 }
             }
         }
