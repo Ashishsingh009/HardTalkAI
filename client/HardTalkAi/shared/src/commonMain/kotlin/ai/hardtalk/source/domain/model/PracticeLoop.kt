@@ -10,4 +10,10 @@ object PracticeLoop {
 
     /** Counterpart call auto-ends so the round stays a drill, not an open line. */
     const val MAX_CALL_DURATION_SECONDS = 90
+
+    /**
+     * PayPal hackathon drill. Free on Android so judges can run the getting-paid
+     * loop without Play Billing. Matches `INVOICE_SCENARIO_ID` on FastAPI.
+     */
+    const val INVOICE_SCENARIO_ID = "chase-overdue-invoice"
 }

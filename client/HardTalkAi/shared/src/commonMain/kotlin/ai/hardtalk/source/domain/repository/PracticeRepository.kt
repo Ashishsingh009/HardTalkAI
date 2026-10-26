@@ -2,6 +2,9 @@ package ai.hardtalk.source.domain.repository
 
 import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.HealthStatus
+import ai.hardtalk.source.domain.model.InvoiceExtraction
+import ai.hardtalk.source.domain.model.InvoiceSendResult
+import ai.hardtalk.source.domain.model.InvoiceTerms
 import ai.hardtalk.source.domain.model.ReplyResult
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.model.VoiceCompleteResult
@@ -23,4 +26,14 @@ interface PracticeRepository {
         scenarioId: String,
         turns: List<ChatMessage>,
     ): VoiceCompleteResult
+
+    suspend fun extractInvoiceTerms(
+        scenarioId: String,
+        turns: List<ChatMessage>,
+    ): InvoiceExtraction
+
+    suspend fun sendPaypalInvoice(
+        scenarioId: String,
+        terms: InvoiceTerms,
+    ): InvoiceSendResult
 }

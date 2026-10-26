@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from .models import Persona, Scenario
 
-# Android HardTalk Pro (`hardtalk_pro`) keeps this id playable and locks the rest.
+# Android HardTalk Pro (`hardtalk_pro`) keeps these ids playable and locks the rest.
 # Do not enforce that gate in this catalog — FastAPI stays ungated.
+# ask-for-raise is the career demo; chase-overdue-invoice is the PayPal hackathon path.
+# Both are free so judges can run the getting-paid loop without Play Billing.
 FREE_SCENARIO_ID = "ask-for-raise"
+INVOICE_SCENARIO_ID = "chase-overdue-invoice"
+FREE_SCENARIO_IDS = frozenset({FREE_SCENARIO_ID, INVOICE_SCENARIO_ID})
 
 # Original three ids are stable: ask-for-raise, give-feedback, decline-request.
 SCENARIOS: list[Scenario] = [
@@ -30,6 +34,32 @@ SCENARIOS: list[Scenario] = [
             "Name the raise or band you want, with a number",
             "Tie it to specific impact, not hours worked",
             "Stay collaborative when Dana cites the freeze",
+        ],
+        free=True,
+    ),
+    Scenario(
+        id="chase-overdue-invoice",
+        title="Chase an overdue invoice",
+        summary=(
+            "Casey hired you to redesign the Northwind brand site. The work has been "
+            "live for three weeks. Invoice HT-1842 for $2,400 USD is 18 days overdue. "
+            "Casey is friendly, stalling, and hoping you'll wait until next quarter. "
+            "You need a firm pay-by date without torching the client relationship."
+        ),
+        difficulty="moderate",
+        persona=Persona(
+            name="Casey Quinn",
+            role="Your client, founder of Northwind",
+            mood="warm, cash-strapped, hoping you'll let this slide until next quarter",
+        ),
+        opening=(
+            "Hey — I know the brand site has been live. Cash is tight this month. "
+            "Can we push the $2,400 to next quarter? Don't send anything through PayPal yet."
+        ),
+        goals=[
+            "Name the overdue amount and ask for a concrete pay-by date",
+            "Stay firm without threatening the relationship",
+            "Leave with terms a PayPal invoice could use: amount, date, and where to send it",
         ],
         free=True,
     ),

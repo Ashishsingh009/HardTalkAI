@@ -9,6 +9,9 @@ import ai.hardtalk.source.domain.model.PracticeLoop
 import ai.hardtalk.source.domain.model.CoachingDimension
 import ai.hardtalk.source.domain.model.CounterpartTone
 import ai.hardtalk.source.domain.model.HealthStatus
+import ai.hardtalk.source.domain.model.InvoiceExtraction
+import ai.hardtalk.source.domain.model.InvoiceSendResult
+import ai.hardtalk.source.domain.model.InvoiceTerms
 import ai.hardtalk.source.domain.model.ReplyResult
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.model.VoiceCompleteResult
@@ -377,6 +380,77 @@ class PracticeViewModelTest {
     }
 
     @Test
+    fun `invoice review is not offered on career drills`() = runTest {
+        val repo = FakePracticeRepository()
+        val viewModel = ChatViewModel(sampleScenario(), repo, FakeBillingRepository())
+        repeat(PracticeLoop.MAX_USER_TURNS) { index ->
+            viewModel.onInputChange("Attempt ${index + 1} with a clear ask and evidence.")
+            viewModel.send()
+        }
+        val complete = viewModel.uiState.value
+        assertTrue(complete.roundComplete)
+        assertFalse(complete.invoiceEligible)
+        assertFalse(complete.reviewingInvoice)
+        assertEquals(0, repo.sendInvoiceCalls)
+        viewModel.openInvoiceReview()
+        assertFalse(viewModel.uiState.value.reviewingInvoice)
+        assertEquals(0, repo.extractInvoiceCalls)
+    }
+
+    @Test
+    fun `invoice drill recap requires an explicit send tap`() = runTest {
+        val repo = FakePracticeRepository()
+        val viewModel = ChatViewModel(invoiceScenario(), repo, FakeBillingRepository())
+        repeat(PracticeLoop.MAX_USER_TURNS) { index ->
+            viewModel.onInputChange("The $2,400 brand site is overdue. Let's lock a date.")
+            viewModel.send()
+        }
+        val recap = viewModel.uiState.value
+        assertTrue(recap.roundComplete)
+        assertTrue(recap.invoiceEligible)
+        assertFalse(recap.reviewingInvoice)
+        assertEquals(0, repo.extractInvoiceCalls)
+        assertEquals(0, repo.sendInvoiceCalls)
+
+        viewModel.openInvoiceReview()
+        val review = viewModel.uiState.value
+        assertTrue(review.reviewingInvoice)
+        assertEquals(1, repo.extractInvoiceCalls)
+        assertEquals("2400.00", review.invoiceTerms?.amount)
+        assertEquals("casey@northwind.example", review.invoiceTerms?.recipientEmail)
+        assertEquals(0, repo.sendInvoiceCalls)
+
+        viewModel.sendPaypalInvoice()
+        val sent = viewModel.uiState.value
+        assertEquals(1, repo.sendInvoiceCalls)
+        assertEquals("INV2-MOCK-TEST", sent.invoiceResult?.invoiceId)
+        assertEquals("SENT", sent.invoiceResult?.status)
+        assertTrue(sent.invoiceResult?.isMock == true)
+
+        viewModel.sendPaypalInvoice()
+        assertEquals(1, repo.sendInvoiceCalls)
+    }
+
+    @Test
+    fun `invoice send stays blocked until required fields are filled`() = runTest {
+        val repo = FakePracticeRepository()
+        val viewModel = ChatViewModel(invoiceScenario(), repo, FakeBillingRepository())
+        repeat(PracticeLoop.MAX_USER_TURNS) { index ->
+            viewModel.onInputChange("Attempt ${index + 1} with a clear ask and evidence.")
+            viewModel.send()
+        }
+        viewModel.openInvoiceReview()
+        viewModel.updateInvoiceTerms(
+            viewModel.uiState.value.invoiceTerms!!.copy(recipientEmail = ""),
+        )
+        viewModel.sendPaypalInvoice()
+        val blocked = viewModel.uiState.value
+        assertEquals(0, repo.sendInvoiceCalls)
+        assertEquals("Fill the missing fields before sending.", blocked.invoiceError)
+        assertNull(blocked.invoiceResult)
+    }
+
+    @Test
     fun `call is blocked when the drill is locked`() = runTest {
         val session = FakeVoiceCallSession()
         val viewModel = ChatViewModel(
@@ -401,6 +475,8 @@ class PracticeViewModelTest {
         private val scenarios: List<Scenario> = listOf(sampleScenario()),
         private val holdVoiceSession: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
     ) : PracticeRepository {
+        var extractInvoiceCalls = 0
+        var sendInvoiceCalls = 0
         override suspend fun getScenarios(): List<Scenario> {
             if (failLoad) error("offline")
             return scenarios
@@ -471,6 +547,40 @@ class PracticeViewModelTest {
                 mood = if (userCount >= 3) "defensive and cautious" else "curious",
             )
         }
+
+        override suspend fun extractInvoiceTerms(
+            scenarioId: String,
+            turns: List<ChatMessage>,
+        ): InvoiceExtraction {
+            extractInvoiceCalls += 1
+            if (failSend) error("extract-boom")
+            return InvoiceExtraction(
+                terms = InvoiceTerms(
+                    amount = "2400.00",
+                    currency = "USD",
+                    dueDate = "2026-11-01",
+                    recipientEmail = "casey@northwind.example",
+                    recipientName = "Casey Quinn",
+                    description = "Brand site redesign",
+                ),
+                missing = emptyList(),
+                source = "heuristic",
+            )
+        }
+
+        override suspend fun sendPaypalInvoice(
+            scenarioId: String,
+            terms: InvoiceTerms,
+        ): InvoiceSendResult {
+            sendInvoiceCalls += 1
+            if (failSend) error("send-boom")
+            return InvoiceSendResult(
+                invoiceId = "INV2-MOCK-TEST",
+                status = "SENT",
+                payerLink = "https://www.sandbox.paypal.com/invoice/payer/v1/INV2-MOCK-TEST",
+                mode = "mock",
+            )
+        }
     }
 }
 
@@ -482,6 +592,17 @@ private fun sampleScenario() = Scenario(
     persona = Persona("Dana", "Your engineering manager", "busy"),
     opening = "What did you want to talk about?",
     goals = listOf("State clearly that you want a raise"),
+    free = true,
+)
+
+private fun invoiceScenario() = Scenario(
+    id = PracticeLoop.INVOICE_SCENARIO_ID,
+    title = "Chase an overdue invoice",
+    summary = "Casey is late paying for the brand site.",
+    difficulty = "moderate",
+    persona = Persona("Casey Quinn", "Your client", "stalling"),
+    opening = "Can we push the $2,400 to next quarter?",
+    goals = listOf("Name the overdue amount"),
     free = true,
 )
 

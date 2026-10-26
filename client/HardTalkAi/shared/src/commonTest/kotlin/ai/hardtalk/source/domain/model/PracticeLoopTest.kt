@@ -9,5 +9,6 @@ class PracticeLoopTest {
     fun `call duration cap stays at the 90 second drill`() {
         assertEquals(3, PracticeLoop.MAX_USER_TURNS)
         assertEquals(90, PracticeLoop.MAX_CALL_DURATION_SECONDS)
+        assertEquals("chase-overdue-invoice", PracticeLoop.INVOICE_SCENARIO_ID)
     }
 }

@@ -5,6 +5,8 @@ import ai.hardtalk.source.domain.model.ChatRole
 import ai.hardtalk.source.domain.model.CoachingInsights
 import ai.hardtalk.source.domain.model.CounterpartTone
 import ai.hardtalk.source.domain.model.Feedback
+import ai.hardtalk.source.domain.model.InvoiceSendResult
+import ai.hardtalk.source.domain.model.InvoiceTerms
 import ai.hardtalk.source.domain.model.PracticeLoop
 import ai.hardtalk.source.domain.model.RoundProgress
 import ai.hardtalk.source.domain.model.Scenario
@@ -23,6 +25,14 @@ data class ChatUiState(
     val callMuted: Boolean = false,
     val callStatus: String = "",
     val liveUserTurns: Int = 0,
+    val reviewingInvoice: Boolean = false,
+    val invoiceExtracting: Boolean = false,
+    val invoiceSending: Boolean = false,
+    val invoiceTerms: InvoiceTerms? = null,
+    val invoiceMissing: List<String> = emptyList(),
+    val invoiceSource: String? = null,
+    val invoiceResult: InvoiceSendResult? = null,
+    val invoiceError: String? = null,
 ) {
     val scoredUserTurns: Int
         get() = messages.count { it.role == ChatRole.USER && it.feedback != null }
@@ -53,4 +63,7 @@ data class ChatUiState(
 
     val counterpartTone: CounterpartTone
         get() = CoachingInsights.toneOf(mood)
+
+    val invoiceEligible: Boolean
+        get() = scenario.id == PracticeLoop.INVOICE_SCENARIO_ID && roundComplete
 }

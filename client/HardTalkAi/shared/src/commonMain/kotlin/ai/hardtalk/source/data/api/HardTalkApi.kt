@@ -4,6 +4,10 @@ import ai.hardtalk.source.data.api.dto.ApiErrorDto
 import ai.hardtalk.source.data.api.dto.ChatRequestDto
 import ai.hardtalk.source.data.api.dto.ChatTurnDto
 import ai.hardtalk.source.data.api.dto.HealthResponseDto
+import ai.hardtalk.source.data.api.dto.InvoiceExtractRequestDto
+import ai.hardtalk.source.data.api.dto.InvoiceExtractResponseDto
+import ai.hardtalk.source.data.api.dto.InvoiceSendRequestDto
+import ai.hardtalk.source.data.api.dto.InvoiceSendResponseDto
 import ai.hardtalk.source.data.api.dto.ReplyResultDto
 import ai.hardtalk.source.data.api.dto.ScenarioDto
 import ai.hardtalk.source.data.api.dto.ScenariosResponseDto
@@ -91,6 +95,35 @@ class HardTalkApi(
                     turns = turns,
                 ),
             )
+        }
+        ensureSuccess(response)
+        return response.body()
+    }
+
+    suspend fun extractInvoiceTerms(
+        scenarioId: String,
+        turns: List<ChatTurnDto>,
+    ): InvoiceExtractResponseDto {
+        val response = client.post("$root/api/invoice/extract") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                InvoiceExtractRequestDto(
+                    scenarioId = scenarioId,
+                    turns = turns,
+                ),
+            )
+        }
+        ensureSuccess(response)
+        return response.body()
+    }
+
+    suspend fun sendPaypalInvoice(
+        scenarioId: String,
+        terms: InvoiceSendRequestDto,
+    ): InvoiceSendResponseDto {
+        val response = client.post("$root/api/invoice/send") {
+            contentType(ContentType.Application.Json)
+            setBody(terms.copy(scenarioId = scenarioId))
         }
         ensureSuccess(response)
         return response.body()
