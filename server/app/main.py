@@ -6,15 +6,17 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from . import ai
+from . import analytics
 from . import paypal
 from . import voice
 from .abuse import authorize_voice_session
 from .coach import respond
 from .invoice_extract import extract_terms, missing_fields, terms_from_send_request
 from .models import (
+    AnalyticsEventRequest,
     ChatRequest,
     HealthResponse,
     InvoiceExtractRequest,
@@ -23,6 +25,7 @@ from .models import (
     VoiceCompleteRequest,
     VoiceSessionRequest,
 )
+from .voice import MAX_USER_TURNS
 from .paypal import PayPalError
 from .scenarios import INVOICE_SCENARIO_ID, SCENARIOS, find_scenario
 from .voice import VoiceProviderError
@@ -66,6 +69,7 @@ app.add_middleware(
         "Content-Type",
         "X-HardTalk-Client",
         "X-HardTalk-Voice-Token",
+        analytics.SESSION_HEADER,
     ],
 )
 
@@ -78,6 +82,10 @@ def _html(path: Path, missing: str) -> FileResponse | JSONResponse:
     if not path.is_file():
         return _error(404, missing)
     return FileResponse(path, media_type="text/html; charset=utf-8")
+
+
+def _session_id(request: Request) -> str:
+    return analytics.normalize_session(request.headers.get(analytics.SESSION_HEADER))
 
 
 @app.get("/", response_model=None)
@@ -104,12 +112,13 @@ def health() -> HealthResponse:
 
 
 @app.get("/api/scenarios", response_model=ScenariosResponse)
-def scenarios() -> ScenariosResponse:
+def scenarios(request: Request) -> ScenariosResponse:
+    analytics.record(name="catalog_view", session=_session_id(request))
     return ScenariosResponse(scenarios=SCENARIOS)
 
 
 @app.post("/api/chat")
-def chat(body: ChatRequest) -> JSONResponse:
+def chat(body: ChatRequest, request: Request) -> JSONResponse:
     scenario_id = (body.scenarioId or "").strip()
     if not scenario_id:
         return _error(400, "scenarioId is required")
@@ -123,6 +132,22 @@ def chat(body: ChatRequest) -> JSONResponse:
         return _error(404, f"Unknown scenario: {scenario_id}")
 
     result = respond(scenario, body.history, message)
+    user_turns = sum(1 for turn in body.history if turn.role == "user") + 1
+    session = _session_id(request)
+    analytics.record(
+        name="turn_scored",
+        session=session,
+        scenario_id=scenario_id,
+        channel="typed",
+        turn=min(user_turns, MAX_USER_TURNS),
+    )
+    if user_turns >= MAX_USER_TURNS:
+        analytics.record(
+            name="round_complete",
+            session=session,
+            scenario_id=scenario_id,
+            channel="typed",
+        )
     return JSONResponse(content=result.model_dump())
 
 
@@ -149,11 +174,17 @@ def voice_session(body: VoiceSessionRequest, request: Request) -> JSONResponse:
     except VoiceProviderError as exc:
         logger.warning("Voice session mint failed: %s", exc)
         return _error(502, str(exc))
+    analytics.record(
+        name="call_start",
+        session=_session_id(request),
+        scenario_id=scenario_id,
+        channel="voice",
+    )
     return JSONResponse(content=session.model_dump())
 
 
 @app.post("/api/voice/complete")
-def voice_complete(body: VoiceCompleteRequest) -> JSONResponse:
+def voice_complete(body: VoiceCompleteRequest, request: Request) -> JSONResponse:
     """Score a counterpart-call transcript. Scores stay local; nothing goes to OpenAI."""
     scenario_id = (body.scenarioId or "").strip()
     if not scenario_id:
@@ -162,6 +193,23 @@ def voice_complete(body: VoiceCompleteRequest) -> JSONResponse:
     if scenario is None:
         return _error(404, f"Unknown scenario: {scenario_id}")
     result = voice.complete_round(scenario, body.turns)
+    user_turns = sum(1 for turn in result.messages if turn.role == "user" and turn.feedback)
+    session = _session_id(request)
+    if user_turns:
+        analytics.record(
+            name="turn_scored",
+            session=session,
+            scenario_id=scenario_id,
+            channel="voice",
+            turn=min(user_turns, MAX_USER_TURNS),
+        )
+    if user_turns >= MAX_USER_TURNS:
+        analytics.record(
+            name="round_complete",
+            session=session,
+            scenario_id=scenario_id,
+            channel="voice",
+        )
     return JSONResponse(content=result.model_dump())
 
 
@@ -180,21 +228,27 @@ def _require_invoice_scenario(scenario_id: str):
 
 
 @app.post("/api/invoice/extract")
-def invoice_extract(body: InvoiceExtractRequest) -> JSONResponse:
+def invoice_extract(body: InvoiceExtractRequest, request: Request) -> JSONResponse:
     """Pull amount, currency, due date, recipient, and description from the round."""
     scenario, err = _require_invoice_scenario((body.scenarioId or "").strip())
     if err is not None:
         return err
     result = extract_terms(scenario, body.turns)
+    analytics.record(
+        name="invoice_review",
+        session=_session_id(request),
+        scenario_id=scenario.id,
+    )
     return JSONResponse(content=result.model_dump())
 
 
 @app.post("/api/invoice/send")
-def invoice_send(body: InvoiceSendRequest) -> JSONResponse:
+def invoice_send(body: InvoiceSendRequest, request: Request) -> JSONResponse:
     """Create and send a sandbox (or mock) PayPal invoice. Never called implicitly."""
     scenario, err = _require_invoice_scenario((body.scenarioId or "").strip())
     if err is not None:
         return err
+    scenario_id = scenario.id
     del scenario  # catalog gate only; terms come from the reviewed form
     terms = terms_from_send_request(body)
     missing = missing_fields(terms)
@@ -205,4 +259,35 @@ def invoice_send(body: InvoiceSendRequest) -> JSONResponse:
     except PayPalError as exc:
         logger.warning("PayPal invoice send failed: %s", exc)
         return _error(502, str(exc))
+    analytics.record(
+        name="invoice_send",
+        session=_session_id(request),
+        scenario_id=scenario_id,
+        mode=result.mode,
+    )
     return JSONResponse(content=result.model_dump())
+
+
+@app.post("/api/analytics/event")
+def analytics_event(body: AnalyticsEventRequest, request: Request) -> JSONResponse:
+    """Record a UI funnel step. Unknown names are dropped. No transcript is stored."""
+    name = (body.event or "").strip()
+    if not analytics.record(
+        name=name,
+        session=_session_id(request),
+        scenario_id=body.scenarioId,
+        channel=body.channel,
+        mode=body.mode,
+    ):
+        return _error(400, "Unknown analytics event")
+    return JSONResponse(content={"ok": True})
+
+
+@app.get("/api/analytics/funnel")
+def analytics_funnel() -> JSONResponse:
+    return JSONResponse(content=analytics.snapshot())
+
+
+@app.get("/analytics", response_model=None)
+def analytics_dashboard() -> HTMLResponse:
+    return HTMLResponse(analytics.render_dashboard_html())

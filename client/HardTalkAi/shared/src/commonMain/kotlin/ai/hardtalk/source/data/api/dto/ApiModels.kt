@@ -146,3 +146,11 @@ data class VoiceCompleteResponseDto(
     val messages: List<ScoredVoiceTurnDto> = emptyList(),
     val mood: String,
 )
+
+@Serializable
+data class AnalyticsEventRequestDto(
+    val event: String,
+    val scenarioId: String? = null,
+    val channel: String? = null,
+    val mode: String? = null,
+)

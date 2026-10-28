@@ -141,3 +141,10 @@ class InvoiceSendResponse(BaseModel):
     status: str
     payerLink: str
     mode: Literal["sandbox", "mock"]
+
+
+class AnalyticsEventRequest(BaseModel):
+    event: str | None = None
+    scenarioId: str | None = None
+    channel: str | None = None
+    mode: str | None = None

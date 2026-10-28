@@ -144,6 +144,8 @@ def test_play_docs_exist_and_stay_honest():
         assert "OpenAI" in text
         assert "prototype" in text.lower()
         assert "do not sell" in text.lower()
+        assert "funnel" in text.lower()
+        assert "third-party" in text.lower()
         assert "RevenueCat" in text or "do not take payments" in text.lower()
     assert "not legal advice" in md.lower()
     short = "Practice manager talks. Coach Heather scores clarity, empathy & assertiveness."

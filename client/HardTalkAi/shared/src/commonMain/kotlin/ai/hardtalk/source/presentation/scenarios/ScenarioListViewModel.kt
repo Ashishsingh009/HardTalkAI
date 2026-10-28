@@ -65,12 +65,20 @@ class ScenarioListViewModel(
         val ready = _uiState.value as? ScenarioListUiState.Ready ?: return
         if (canPlayScenario(scenario, ready.hasPro, ready.ungated)) {
             _uiState.value = ready.copy(openScenario = scenario, paywallScenario = null)
+            trackFunnel("scenario_open", scenario.id)
         } else {
             _uiState.value = ready.copy(
                 paywallScenario = scenario,
                 paywallError = null,
                 paywallPurchasing = false,
             )
+            trackFunnel("paywall_shown", scenario.id)
+        }
+    }
+
+    private fun trackFunnel(name: String, scenarioId: String) {
+        viewModelScope.launch {
+            runCatching { practiceRepository.trackFunnelEvent(name, scenarioId) }
         }
     }
 

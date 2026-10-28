@@ -36,4 +36,6 @@ interface PracticeRepository {
         scenarioId: String,
         terms: InvoiceTerms,
     ): InvoiceSendResult
+
+    suspend fun trackFunnelEvent(name: String, scenarioId: String? = null) = Unit
 }

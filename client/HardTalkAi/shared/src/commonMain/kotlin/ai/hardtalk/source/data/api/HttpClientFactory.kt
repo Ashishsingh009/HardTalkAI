@@ -13,8 +13,10 @@ expect fun provideHttpClientEngine(): HttpClientEngine
 fun createHardTalkHttpClient(engine: HttpClientEngine = provideHttpClientEngine()): HttpClient =
     HttpClient(engine) {
         expectSuccess = false
+        val sessionId = randomInstallId()
         defaultRequest {
             header(HARDTALK_CLIENT_HEADER, HARDTALK_CLIENT_VALUE)
+            header(HARDTALK_SESSION_HEADER, sessionId)
         }
         install(ContentNegotiation) {
             json(apiJson)

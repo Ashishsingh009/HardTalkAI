@@ -9,7 +9,7 @@ object LegalLinks {
         "https://github.com/Ashishsingh009/HardTalkAI/blob/main/docs/privacy-policy.md"
     const val CONTACT_EMAIL = "hello@hardtalk.ai"
     const val CONTACT_FALLBACK_EMAIL = "aashish2k2@gmail.com"
-    const val LAST_UPDATED = "16 October 2026"
+    const val LAST_UPDATED = "28 October 2026"
 
     val SUMMARY =
         "HardTalkAI is a prototype career-coaching practice app (Coach Heather). " +
@@ -25,7 +25,9 @@ object LegalLinks {
             "to PayPal’s sandbox (or a labeled mock if credentials are unset). Nothing " +
             "is sent without that tap. Android may unlock extra drills with a Play " +
             "purchase through RevenueCat (HardTalk Pro). We do not sell personal " +
-            "information or run ads. Chats are not written to a database in this " +
-            "prototype. Contact $CONTACT_EMAIL, or $CONTACT_FALLBACK_EMAIL if that inbox " +
-            "is not monitored yet."
+            "information or run ads. The coaching API may count first-party funnel " +
+            "steps (event name, scenario id, session token) in memory; practice " +
+            "replies are not stored there, and there is no third-party analytics SDK. " +
+            "Chats are not written to a database in this prototype. Contact " +
+            "$CONTACT_EMAIL, or $CONTACT_FALLBACK_EMAIL if that inbox is not monitored yet."
 }

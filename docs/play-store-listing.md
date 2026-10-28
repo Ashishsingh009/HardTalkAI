@@ -103,7 +103,7 @@ Collects:
 - **Microphone** — only if the user starts an Android counterpart call. Audio is streamed to OpenAI Realtime for the live 1:1; the transcript is scored on our server. Not sold. Not used for ads.
 - **Purchase history** — handled by Google Play. RevenueCat sees the Play purchase token to unlock HardTalk Pro. We do not store card numbers.
 
-Does not collect (this build): location, name/email in-app, photos, contacts, app-activity analytics.
+Does not collect (this build): location, name/email in-app, photos, contacts. App-activity: first-party funnel event names and scenario ids may be counted in memory on the coaching API; no third-party analytics SDK.
 
 Encryption in transit: **yes on production HTTPS**. Debug/emulator builds may use cleartext HTTP to a local FastAPI — do not ship that as the store default.
 
