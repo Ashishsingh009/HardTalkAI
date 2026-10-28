@@ -74,8 +74,9 @@ class PracticeViewModelTest {
 
     @Test
     fun `free drill opens without paywall`() = runTest {
+        val repo = FakePracticeRepository(scenarios = listOf(sampleScenario(), paidScenario()))
         val viewModel = ScenarioListViewModel(
-            FakePracticeRepository(scenarios = listOf(sampleScenario(), paidScenario())),
+            repo,
             FakeBillingRepository(),
         )
         viewModel.onScenarioTapped(sampleScenario())
@@ -83,13 +84,15 @@ class PracticeViewModelTest {
         assertTrue(state is ScenarioListUiState.Ready)
         assertEquals("ask-for-raise", state.openScenario?.id)
         assertNull(state.paywallScenario)
+        assertEquals(listOf<Pair<String, String?>>("scenario_open" to "ask-for-raise"), repo.funnelEvents)
     }
 
     @Test
     fun `paid drill shows paywall until purchase`() = runTest {
         val billing = FakeBillingRepository()
+        val repo = FakePracticeRepository(scenarios = listOf(sampleScenario(), paidScenario()))
         val viewModel = ScenarioListViewModel(
-            FakePracticeRepository(scenarios = listOf(sampleScenario(), paidScenario())),
+            repo,
             billing,
         )
         viewModel.onScenarioTapped(paidScenario())
@@ -97,6 +100,7 @@ class PracticeViewModelTest {
         assertTrue(locked is ScenarioListUiState.Ready)
         assertNull(locked.openScenario)
         assertEquals("give-feedback", locked.paywallScenario?.id)
+        assertEquals(listOf<Pair<String, String?>>("paywall_shown" to "give-feedback"), repo.funnelEvents)
         assertTrue(locked.isLocked(paidScenario()))
 
         viewModel.purchaseSelected()
@@ -621,6 +625,7 @@ class PracticeViewModelTest {
     ) : PracticeRepository {
         var extractInvoiceCalls = 0
         var sendInvoiceCalls = 0
+        val funnelEvents = mutableListOf<Pair<String, String?>>()
         override suspend fun getScenarios(): List<Scenario> {
             if (failLoad) error("offline")
             return scenarios
@@ -725,6 +730,10 @@ class PracticeViewModelTest {
                 payerLink = "https://www.sandbox.paypal.com/invoice/payer/v1/INV2-MOCK-TEST",
                 mode = "mock",
             )
+        }
+
+        override suspend fun trackFunnelEvent(name: String, scenarioId: String?) {
+            funnelEvents += name to scenarioId
         }
     }
 }

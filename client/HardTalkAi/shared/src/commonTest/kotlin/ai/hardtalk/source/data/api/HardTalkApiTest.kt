@@ -245,6 +245,26 @@ class HardTalkApiTest {
         assertEquals(11, health.scenarios)
     }
 
+    @Test
+    fun `trackFunnelEvent posts name and scenario without transcript`() = runTest {
+        val api = apiWith(
+            MockEngine { request ->
+                assertTrue(request.url.toString().endsWith("/api/analytics/event"))
+                assertTrue(request.headers.contains(HARDTALK_SESSION_HEADER))
+                val body = (request.body as TextContent).text
+                assertTrue("scenario_open" in body)
+                assertTrue("chase-overdue-invoice" in body)
+                assertFalse("secret transcript" in body)
+                respond(
+                    content = """{"ok":true}""",
+                    status = HttpStatusCode.OK,
+                    headers = jsonHeaders,
+                )
+            },
+        )
+        api.trackFunnelEvent("scenario_open", "chase-overdue-invoice")
+    }
+
     private fun apiWith(engine: MockEngine): HardTalkApi = HardTalkApi(
         baseUrl = "http://10.0.2.2:3001/",
         client = createHardTalkHttpClient(engine),

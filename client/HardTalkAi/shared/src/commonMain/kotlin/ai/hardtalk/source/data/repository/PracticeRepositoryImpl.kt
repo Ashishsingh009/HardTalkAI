@@ -59,4 +59,8 @@ class PracticeRepositoryImpl(
         scenarioId = scenarioId,
         terms = terms.toSendDto(scenarioId),
     ).toDomain()
+
+    override suspend fun trackFunnelEvent(name: String, scenarioId: String?) {
+        runCatching { api.trackFunnelEvent(name, scenarioId) }
+    }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchScenarios, sendMessage } from "./api";
+import { fetchScenarios, sendMessage, trackFunnelEvent } from "./api";
 import type { ChatTurn, Feedback, Scenario } from "./types";
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
@@ -61,6 +61,7 @@ export function App() {
     setMood(scenario.persona.mood);
     setInput("");
     setError(null);
+    trackFunnelEvent("scenario_open", scenario.id);
   }
 
   function reset() {

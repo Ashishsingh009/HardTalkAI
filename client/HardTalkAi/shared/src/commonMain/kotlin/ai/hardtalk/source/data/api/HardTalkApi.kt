@@ -1,5 +1,6 @@
 package ai.hardtalk.source.data.api
 
+import ai.hardtalk.source.data.api.dto.AnalyticsEventRequestDto
 import ai.hardtalk.source.data.api.dto.ApiErrorDto
 import ai.hardtalk.source.data.api.dto.ChatRequestDto
 import ai.hardtalk.source.data.api.dto.ChatTurnDto
@@ -127,6 +128,22 @@ class HardTalkApi(
         }
         ensureSuccess(response)
         return response.body()
+    }
+
+    suspend fun trackFunnelEvent(
+        name: String,
+        scenarioId: String? = null,
+    ) {
+        val response = client.post("$root/api/analytics/event") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                AnalyticsEventRequestDto(
+                    event = name,
+                    scenarioId = scenarioId,
+                ),
+            )
+        }
+        ensureSuccess(response)
     }
 
     private fun signedVoiceAccessToken(): String? {

@@ -51,7 +51,7 @@ The raise drill (**Ask your manager for a raise**, Dana) is marked **Free practi
 - Coaching scores and tips are computed on our FastAPI server with a deterministic rubric (markers for hedges, “I” asks, empathy, numbers). They do not require an LLM.
 - Counterpart *replies* are canned in-character lines unless the operator sets `OPENAI_API_KEY`. Without a key the app still runs fully offline. We did not enable OpenAI for the default demo so the video is reproducible.
 - Web (`localhost:5173`) shares the catalog and scores. The finite round + recap is the **Android / Compose Multiplatform** loop.
-- No accounts, no analytics SDK, no Play upload in this submission. Android HardTalk Pro is a real RevenueCat catalog gate; a live Play sandbox purchase still needs Ashish’s public SDK key and a Play product.
+- No accounts, no third-party analytics SDK, no Play upload in this submission. FastAPI may keep first-party funnel counts (event name, scenario id) in memory. Android HardTalk Pro is a real RevenueCat catalog gate; a live Play sandbox purchase still needs Ashish’s public SDK key and a Play product.
 
 ---
 

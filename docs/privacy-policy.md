@@ -1,6 +1,6 @@
 # Privacy policy — HardTalkAI
 
-**Last updated:** 16 October 2026
+**Last updated:** 28 October 2026
 
 This is a short, honest policy for a **prototype**. It is not legal advice and it does not claim GDPR/CCPA certification, a Data Protection Officer, or a production-grade retention program. If something here is wrong for how you run the app, fix the app or fix this page before you ship.
 
@@ -34,6 +34,10 @@ Audio for a live call is processed by OpenAI. We do not keep a recording on our 
 
 This prototype **does not write practice chats to a database**. The request is handled in memory. Ordinary web-server logs may still record IP address, time, and the URL path. Error logs may include a stack trace; they are not a chat archive.
 
+### First-party funnel counts
+
+The FastAPI host keeps a short in-memory log of **funnel steps** so operators can see catalog → drill → recap → Send PayPal invoice conversion (`GET /analytics` and `GET /api/analytics/funnel`). Each row is an event name, optional scenario id, optional channel (`typed` / `voice`), and a random session token from `X-HardTalk-Session`. **Practice replies, emails, and invoice amounts are not stored in that log.** Counts vanish when the process restarts. There is no Mixpanel, Amplitude, or other third-party analytics SDK.
+
 ### Optional OpenAI
 
 If the operator sets `OPENAI_API_KEY` on the server:
@@ -54,7 +58,7 @@ After the **Chase an overdue invoice** drill, Android can show a review screen. 
 ## What we do not collect / do not do
 
 - We **do not sell** personal information.
-- We **do not** run ads, attribution SDKs, or analytics packages in this build.
+- We **do not** run ads, attribution SDKs, or third-party analytics packages. First-party funnel counts (event name, scenario id, session token) may sit in memory on the coaching API until restart.
 - We **do not** ask for your name, email, phone, location, contacts, or photos. Android **Call** asks for the **microphone** only when you start a counterpart call.
 - Android may take a **Play** payment to unlock HardTalk Pro (the paid catalog). That purchase is processed by Google Play and RevenueCat. We do not create an account for you. The raise and overdue-invoice drills stay free. Web and the public Static Space demo are not paywalled.
 - Practice messages are **not** posted publicly and are **not** shown to other users.
@@ -70,7 +74,7 @@ If OpenAI was enabled for that session (typed reply or a live call), we cannot e
 
 ## Changes
 
-This is a stub for Play Console and in-app disclosure. We will update this file when the product persists data, adds accounts, analytics, or a production FastAPI host. The “last updated” date will change.
+This is a stub for Play Console and in-app disclosure. We will update this file when the product persists chats, adds accounts, or a production FastAPI host. The “last updated” date will change.
 
 ## Play Console URL
 
