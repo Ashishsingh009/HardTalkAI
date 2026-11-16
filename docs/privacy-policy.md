@@ -34,6 +34,10 @@ Audio for a live call is processed by OpenAI. We do not keep a recording on our 
 
 This prototype **does not write practice chats to a database**. The request is handled in memory. Ordinary web-server logs may still record IP address, time, and the URL path. Error logs may include a stack trace; they are not a chat archive.
 
+### Optional on-device recap examples
+
+If you choose **Get on-device examples**, Android downloads the EmbeddingGemma 2 text model from Hugging Face and stores the model in app-private storage. Example selection uses the completed round on your device. The model download carries no practice text, and example selection does not save or upload your replies or their embeddings. Typed drills and live calls use the services described above.
+
 ### First-party funnel counts
 
 The FastAPI host keeps a short in-memory log of **funnel steps** so operators can see catalog → drill → recap → Send PayPal invoice conversion (`GET /analytics` and `GET /api/analytics/funnel`). Each row is an event name, optional scenario id, optional channel (`typed` / `voice`), and a random session token from `X-HardTalk-Session`. **Practice replies, emails, and invoice amounts are not stored in that log.** Counts vanish when the process restarts. There is no Mixpanel, Amplitude, or other third-party analytics SDK.
@@ -64,7 +68,7 @@ After the **Chase an overdue invoice** drill, Android can show a review screen. 
 - Practice messages are **not** posted publicly and are **not** shown to other users.
 - Children: this is a workplace-coaching prototype aimed at adults. Do not use it if you are under 13. We do not knowingly collect data from children.
 
-Android’s `INTERNET` permission is used to reach the coaching API and, for a live call, OpenAI Realtime. `RECORD_AUDIO` is used only for the optional counterpart call. Debug builds may talk to a machine on your network over HTTP; a store build should point at HTTPS.
+Android’s `INTERNET` permission is used to reach the coaching API, OpenAI Realtime for a live call, and Hugging Face if you download on-device examples. `RECORD_AUDIO` is used only for the optional counterpart call. Debug builds may talk to a machine on your network over HTTP; a store build should point at HTTPS.
 
 ## Retention and deletion
 

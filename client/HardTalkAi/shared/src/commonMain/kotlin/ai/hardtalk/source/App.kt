@@ -2,6 +2,7 @@ package ai.hardtalk.source
 
 import ai.hardtalk.source.data.api.defaultApiBaseUrl
 import ai.hardtalk.source.data.api.persistentInstallId
+import ai.hardtalk.source.domain.model.RetryCoachingModel
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.repository.BillingRepository
 import ai.hardtalk.source.domain.repository.createBillingRepository
@@ -38,6 +39,7 @@ fun App(
     billingRepository: BillingRepository = createBillingRepository(),
     voiceSecret: String = "",
     installId: String = persistentInstallId(),
+    retryCoachingModel: RetryCoachingModel? = null,
 ) {
     val container = remember(apiBaseUrl, billingRepository, voiceSecret, installId) {
         AppContainer(apiBaseUrl, billingRepository, voiceSecret, installId)
@@ -87,6 +89,7 @@ fun App(
                             container.billingRepository,
                             voiceSupported = isVoiceCallSupported(),
                             voiceCallFactory = { createVoiceCallSession() },
+                            retryCoachingModel = retryCoachingModel,
                         )
                     }
                     ChatScreen(

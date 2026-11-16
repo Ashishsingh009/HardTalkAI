@@ -1,6 +1,7 @@
 package ai.hardtalk.source
 
 import ai.hardtalk.source.data.billing.AndroidBillingRepository
+import ai.hardtalk.source.data.coaching.AndroidRetryCoachingModel
 import ai.hardtalk.source.voice.AndroidVoiceHost
 import android.graphics.Color
 import android.os.Bundle
@@ -29,12 +30,14 @@ class MainActivity : ComponentActivity() {
             ungated = ungated,
             activityProvider = { this },
         )
+        val retryCoaching = AndroidRetryCoachingModel(applicationContext)
 
         setContent {
             App(
                 apiBaseUrl = BuildConfig.API_BASE_URL,
                 billingRepository = billing,
                 voiceSecret = BuildConfig.HARDTALK_VOICE_SECRET,
+                retryCoachingModel = retryCoaching,
             )
         }
     }

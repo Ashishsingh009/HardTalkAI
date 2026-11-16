@@ -4,6 +4,8 @@ import ai.hardtalk.source.domain.model.ChatMessage
 import ai.hardtalk.source.domain.model.ChatRole
 import ai.hardtalk.source.domain.model.InvoiceTerms
 import ai.hardtalk.source.domain.model.PracticeLoop
+import ai.hardtalk.source.domain.model.RetryCoaching
+import ai.hardtalk.source.domain.model.RetryCoachingModel
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.repository.BillingRepository
 import ai.hardtalk.source.domain.repository.PracticeRepository
@@ -13,6 +15,7 @@ import ai.hardtalk.source.voice.VoiceCallSession
 import ai.hardtalk.source.voice.toCallConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,12 +29,15 @@ class ChatViewModel(
     private val billingRepository: BillingRepository,
     private val voiceSupported: Boolean = false,
     private val voiceCallFactory: VoiceCallFactory? = null,
+    private val retryCoachingModel: RetryCoachingModel? = null,
 ) : ViewModel() {
 
     private var attemptId = 0
     private var callEpoch = 0
     private var activeCall: VoiceCallSession? = null
     private var callEventsJob: Job? = null
+    private val retryCoaching = retryCoachingModel?.let(::RetryCoaching)
+    private var retryCoachingJob: Job? = null
 
     private val _uiState = MutableStateFlow(initialState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -54,8 +60,85 @@ class ChatViewModel(
     fun retryScenario() {
         stopCallQuietly()
         attemptId += 1
+        retryCoachingJob?.cancel()
         val voice = _uiState.value.serverVoiceAvailable
         _uiState.value = initialState().copy(serverVoiceAvailable = voice)
+    }
+
+    fun downloadRetryCoaching() {
+        val state = _uiState.value.retryCoaching
+        if (state == RetryCoachingUiState.DownloadAvailable ||
+            state == RetryCoachingUiState.DownloadFailed
+        ) {
+            resolveRetryCoaching(download = true)
+        }
+    }
+
+    private fun resolveRetryCoaching(download: Boolean = false) {
+        val model = retryCoachingModel ?: return
+        val coaching = retryCoaching ?: return
+        val round = _uiState.value
+        if (!round.roundComplete || !coaching.supports(scenario.id)) return
+        if (retryCoachingJob?.isActive == true) return
+
+        val capturedAttempt = attemptId
+        retryCoachingJob = viewModelScope.launch {
+            suspend fun prepareModel(): Boolean {
+                val available = model.isAvailable()
+                if (capturedAttempt != attemptId) return false
+                if (available) return true
+                if (!download) {
+                    _uiState.update { it.copy(retryCoaching = RetryCoachingUiState.DownloadAvailable) }
+                    return false
+                }
+
+                _uiState.update { it.copy(retryCoaching = RetryCoachingUiState.Downloading(0)) }
+                try {
+                    model.download { percent ->
+                        viewModelScope.launch {
+                            if (capturedAttempt == attemptId) {
+                                _uiState.update { state ->
+                                    val progress = state.retryCoaching as? RetryCoachingUiState.Downloading
+                                    if (progress != null && percent > progress.percent) {
+                                        state.copy(retryCoaching = RetryCoachingUiState.Downloading(percent))
+                                    } else {
+                                        state
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    if (capturedAttempt == attemptId) {
+                        _uiState.update { it.copy(retryCoaching = RetryCoachingUiState.DownloadFailed) }
+                    }
+                    return false
+                }
+                return true
+            }
+
+            try {
+                if (!prepareModel() || capturedAttempt != attemptId) return@launch
+                _uiState.update { it.copy(retryCoaching = RetryCoachingUiState.Finding) }
+                val suggestion = coaching.suggest(scenario.id, round.messages)
+                if (capturedAttempt == attemptId) {
+                    _uiState.update {
+                        it.copy(
+                            retryCoaching = suggestion?.let { RetryCoachingUiState.Ready(it) }
+                                ?: RetryCoachingUiState.Hidden,
+                        )
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (capturedAttempt == attemptId) {
+                    _uiState.update { it.copy(retryCoaching = RetryCoachingUiState.Hidden) }
+                }
+            }
+        }
     }
 
     fun closeInvoiceReview() {
@@ -132,6 +215,8 @@ class ChatViewModel(
     fun leaveChat() {
         callEpoch += 1
         stopCallQuietly()
+        attemptId += 1
+        retryCoachingJob?.cancel()
         _uiState.update {
             it.copy(inCall = false, sending = false, callStatus = "")
         }
@@ -270,6 +355,7 @@ class ChatViewModel(
                         sending = false,
                     )
                 }
+                resolveRetryCoaching()
             }.onFailure { error ->
                 if (capturedAttempt != attemptId) return@launch
                 _uiState.update {
@@ -349,6 +435,7 @@ class ChatViewModel(
                             error = null,
                         )
                     }
+                    resolveRetryCoaching()
                     if (scenario.id == PracticeLoop.INVOICE_SCENARIO_ID &&
                         _uiState.value.roundComplete
                     ) {

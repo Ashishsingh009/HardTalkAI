@@ -112,6 +112,8 @@ fun ChatScreen(
                 mood = uiState.mood,
                 tone = uiState.counterpartTone,
                 summary = summary,
+                retryCoaching = uiState.retryCoaching,
+                onDownloadRetryCoaching = viewModel::downloadRetryCoaching,
                 onRetry = viewModel::retryScenario,
                 onPickAnother = onBack,
                 onReviewInvoice = if (uiState.invoiceEligible) viewModel::openInvoiceReview else null,

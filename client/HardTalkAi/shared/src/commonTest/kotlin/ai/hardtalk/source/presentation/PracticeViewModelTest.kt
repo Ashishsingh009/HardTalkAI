@@ -13,22 +13,28 @@ import ai.hardtalk.source.domain.model.InvoiceExtraction
 import ai.hardtalk.source.domain.model.InvoiceSendResult
 import ai.hardtalk.source.domain.model.InvoiceTerms
 import ai.hardtalk.source.domain.model.ReplyResult
+import ai.hardtalk.source.domain.model.RetryCoachingModel
 import ai.hardtalk.source.domain.model.Scenario
 import ai.hardtalk.source.domain.model.VoiceCompleteResult
 import ai.hardtalk.source.domain.model.VoiceSession
 import ai.hardtalk.source.domain.repository.PracticeRepository
 import ai.hardtalk.source.presentation.chat.ChatViewModel
+import ai.hardtalk.source.presentation.chat.RetryCoachingUiState
 import ai.hardtalk.source.presentation.scenarios.ScenarioListUiState
 import ai.hardtalk.source.presentation.scenarios.ScenarioListViewModel
 import ai.hardtalk.source.voice.VoiceCallConfig
 import ai.hardtalk.source.voice.VoiceCallEvent
 import ai.hardtalk.source.voice.VoiceCallSession
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -614,6 +620,98 @@ class PracticeViewModelTest {
         assertFalse(state.inCall)
         assertNull(session.connected)
     }
+
+    @Test
+    fun `completed round offers an optional download and then shows a local example`() = runTest {
+        val finishDownload = CompletableDeferred<Unit>()
+        var downloadCalls = 0
+        var embedCalls = 0
+        val model = object : RetryCoachingModel {
+            override suspend fun isAvailable(): Boolean = false
+
+            override suspend fun download(onProgress: (Int) -> Unit) {
+                downloadCalls++
+                onProgress(35)
+                finishDownload.await()
+            }
+
+            override suspend fun embed(inputs: List<String>): List<FloatArray> {
+                embedCalls++
+                return matchFirstRetryCard(inputs)
+            }
+        }
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(),
+            FakeBillingRepository(),
+            retryCoachingModel = model,
+        )
+        val turns = completeRaiseRound(viewModel)
+
+        assertNotNull(viewModel.uiState.value.roundSummary)
+        assertEquals(RetryCoachingUiState.DownloadAvailable, viewModel.uiState.value.retryCoaching)
+        assertEquals(0, downloadCalls)
+        assertEquals(0, embedCalls)
+
+        viewModel.downloadRetryCoaching()
+        runCurrent()
+        assertEquals(RetryCoachingUiState.Downloading(35), viewModel.uiState.value.retryCoaching)
+        assertEquals(1, downloadCalls)
+        finishDownload.complete(Unit)
+        runCurrent()
+
+        val ready = viewModel.uiState.value.retryCoaching as RetryCoachingUiState.Ready
+        assertTrue(ready.suggestion.quote in turns)
+        assertEquals(3, viewModel.uiState.value.scoredUserTurns)
+        assertEquals(1, embedCalls)
+    }
+
+    @Test
+    fun `starting another attempt drops an in-flight local example`() = runTest {
+        val finishEmbedding = CompletableDeferred<Unit>()
+        val model = object : RetryCoachingModel {
+            override suspend fun isAvailable(): Boolean = true
+
+            override suspend fun download(onProgress: (Int) -> Unit) = error("Unexpected download")
+
+            override suspend fun embed(inputs: List<String>): List<FloatArray> =
+                withContext(NonCancellable) {
+                    finishEmbedding.await()
+                    matchFirstRetryCard(inputs)
+                }
+        }
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(),
+            FakeBillingRepository(),
+            retryCoachingModel = model,
+        )
+        completeRaiseRound(viewModel)
+        assertEquals(RetryCoachingUiState.Finding, viewModel.uiState.value.retryCoaching)
+
+        viewModel.retryScenario()
+        finishEmbedding.complete(Unit)
+        runCurrent()
+
+        assertNull(viewModel.uiState.value.roundSummary)
+        assertEquals(RetryCoachingUiState.Hidden, viewModel.uiState.value.retryCoaching)
+        assertEquals(sampleScenario().opening, viewModel.uiState.value.messages.single().content)
+    }
+
+    private fun completeRaiseRound(viewModel: ChatViewModel): List<String> =
+        listOf(
+            "I would like to discuss my salary.",
+            "I took responsibility for payments.",
+            "Can we talk about the next band?",
+        ).onEach { text ->
+            viewModel.onInputChange(text)
+            viewModel.send()
+        }
+
+    private fun matchFirstRetryCard(inputs: List<String>): List<FloatArray> =
+        inputs.indices.map { index ->
+            if (index <= PracticeLoop.MAX_USER_TURNS) floatArrayOf(1f, 0f) else floatArrayOf(0f, 1f)
+        }
 
     private class FakePracticeRepository(
         private val failLoad: Boolean = false,
