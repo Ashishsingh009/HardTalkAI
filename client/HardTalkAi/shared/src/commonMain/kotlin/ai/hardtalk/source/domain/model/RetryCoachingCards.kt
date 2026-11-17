@@ -1,6 +1,23 @@
 package ai.hardtalk.source.domain.model
 
 internal object RetryCoachingCards {
+    fun completedExamplesForScenario(scenarioId: String): List<String> = when (scenarioId) {
+        "ask-for-raise" -> listOf(
+            "I’m asking to move up one band this cycle. I led the payments rewrite and reduced checkout errors by 20%.",
+            "I understand the budget freeze. Can we agree on when we’ll revisit my raise and what you need from me?",
+        )
+        "give-feedback" -> listOf(
+            "We missed the last two launch dates and on-call had to cover the fallout. What made it hard to flag the risk earlier?",
+            "For the next release let’s flag any dependency that threatens launch in the team channel and check in on Wednesday.",
+        )
+        "decline-request" -> listOf(
+            "I’m stretched too thin and can’t squeeze the dashboard in.",
+            "I’m already stretched and I can’t squeeze the dashboard in this sprint. My time is committed to the payments cutover.",
+            "I can deliver the dashboard next Tuesday, or we can move the cutover to make room on Friday. Which should we prioritize?",
+        )
+        else -> emptyList()
+    }
+
     private val raise = listOf(
         RetryCoachingCard(
             id = "raise-specific-ask",

@@ -14,22 +14,24 @@ class RetryCoachingTest {
     fun `selects the best card and quotes the matching scored user turn`() = runTest {
         val scenarioId = "decline-request"
         val cards = RetryCoachingCards.forScenario(scenarioId)
+        val completedExamples = RetryCoachingCards.completedExamplesForScenario(scenarioId)
         val targetIndex = 1
         val question = "Could you own the dashboard by Friday?"
         val attempt = "I can probably fit in the dashboard, although I'm already stretched."
         val irrelevant = "I saw the demo yesterday."
         val unfinished = "I am still editing this message."
         val model = FakeModel { inputs ->
-            assertEquals(cards.size + 2, inputs.size)
+            assertEquals(cards.size + completedExamples.size + 2, inputs.size)
             assertTrue(inputs.take(2).any { attempt in it })
             assertTrue(inputs.take(2).any { irrelevant in it })
             assertFalse(inputs.any { question in it || unfinished in it })
             val queryVectors = inputs.take(2).map { text ->
                 if (attempt in text) vector(1f, 0f, 0f) else vector(0f, 0f, 1f)
             }
-            queryVectors + cards.mapIndexed { index, _ ->
+            val cardVectors = cards.mapIndexed { index, _ ->
                 if (index == targetIndex) vector(1f, 0f, 0f) else vector(0f, 1f, 0f)
             }
+            queryVectors + cardVectors + completedExamples.map { vector(0f, 1f, 0f) }
         }
 
         val suggestion = assertNotNull(
@@ -75,14 +77,49 @@ class RetryCoachingTest {
 
     @Test
     fun `keeps the default takeaway when retrieval is weak or ambiguous`() = runTest {
+        val scenarioId = "ask-for-raise"
+        val cards = RetryCoachingCards.forScenario(scenarioId)
+        val completedExamples = RetryCoachingCards.completedExamplesForScenario(scenarioId)
         val messages = listOf(scoredUser("I'd like to talk about my next steps."))
-        val weak = FakeModel { inputs ->
-            listOf(vector(1f, 0f)) + List(inputs.size - 1) { vector(0f, 1f) }
+        val unrelated = vector(0f, 1f)
+        val controlVectors = completedExamples.map { unrelated }
+        val weak = FakeModel {
+            val cardVectors = cards.mapIndexed { index, _ ->
+                if (index == 0) vector(0.70f, 0.714f) else unrelated
+            }
+            listOf(vector(1f, 0f)) + cardVectors + controlVectors
         }
-        val ambiguous = FakeModel { inputs -> List(inputs.size) { vector(1f, 0f) } }
+        val ambiguous = FakeModel {
+            listOf(vector(1f, 0f)) + cards.map { vector(1f, 0f) } + controlVectors
+        }
 
-        assertNull(RetryCoaching(weak).suggest("ask-for-raise", messages))
-        assertNull(RetryCoaching(ambiguous).suggest("ask-for-raise", messages))
+        assertNull(RetryCoaching(weak).suggest(scenarioId, messages))
+        assertNull(RetryCoaching(ambiguous).suggest(scenarioId, messages))
+    }
+
+    @Test
+    fun `keeps the default takeaway when a completed example beats or nearly ties the best tactic`() = runTest {
+        val scenarioId = "decline-request"
+        val cards = RetryCoachingCards.forScenario(scenarioId)
+        val completedExamples = RetryCoachingCards.completedExamplesForScenario(scenarioId)
+        val messages = listOf(scoredUser("I can’t own both. Which one should move?"))
+        assertTrue(completedExamples.isNotEmpty())
+        val unrelated = vector(0f, 1f)
+        val clearlyCompleted = vector(1f, 0f) to vector(0.8f, 0.6f)
+        val closeToCompleted = vector(0.98f, 0.2f) to vector(1f, 0f)
+
+        for ((control, tactic) in listOf(clearlyCompleted, closeToCompleted)) {
+            val model = FakeModel {
+                val cardVectors = cards.mapIndexed { index, _ ->
+                    if (index == 0) tactic else unrelated
+                }
+                val controlVectors = completedExamples.mapIndexed { index, _ ->
+                    if (index == 0) control else unrelated
+                }
+                listOf(vector(1f, 0f)) + cardVectors + controlVectors
+            }
+            assertNull(RetryCoaching(model).suggest(scenarioId, messages))
+        }
     }
 
     @Test

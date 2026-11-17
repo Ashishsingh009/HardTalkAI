@@ -36,8 +36,11 @@ internal class RetryCoaching(private val model: RetryCoachingModel) {
 
         val queries = turns.map { "task: search result | query: ${it.take(MAX_QUERY_CHARACTERS)}" }
         val documents = cards.map { "title: ${it.guidance} | text: ${it.trigger}" }
-        val vectors = model.embed(queries + documents)
-        if (vectors.size != queries.size + documents.size) return null
+        val completedExamples = RetryCoachingCards.completedExamplesForScenario(scenarioId)
+            .map { "title: none | text: $it" }
+        val inputs = queries + documents + completedExamples
+        val vectors = model.embed(inputs)
+        if (vectors.size != inputs.size) return null
 
         val size = vectors.first().size
         val unitVectors = vectors.map { vector ->
@@ -48,7 +51,7 @@ internal class RetryCoaching(private val model: RetryCoachingModel) {
         val matches = cards.mapIndexed { index, card ->
             val document = unitVectors[queries.size + index]
             queriesByTurn.mapIndexed { turnIndex, query ->
-                Match(card, turns[turnIndex], cosine(query, document))
+                Match(card, turnIndex, cosine(query, document))
             }.maxBy { it.similarity }
         }.sortedByDescending { it.similarity }
 
@@ -58,10 +61,17 @@ internal class RetryCoaching(private val model: RetryCoachingModel) {
             (runnerUp != null && best.similarity - runnerUp.similarity < MIN_MARGIN)
         ) return null
 
-        return RetryCoachingSuggestion(best.quote, best.card.guidance, best.card.example)
+        // Similarity can rank statements with opposite intent near each other.
+        val bestQuery = queriesByTurn[best.turnIndex]
+        val alreadyAddressed = unitVectors.takeLast(completedExamples.size).any { example ->
+            best.similarity - cosine(bestQuery, example) < MIN_MARGIN
+        }
+        if (alreadyAddressed) return null
+
+        return RetryCoachingSuggestion(turns[best.turnIndex], best.card.guidance, best.card.example)
     }
 
-    private data class Match(val card: RetryCoachingCard, val quote: String, val similarity: Double)
+    private data class Match(val card: RetryCoachingCard, val turnIndex: Int, val similarity: Double)
 
     private fun normalize(vector: FloatArray): DoubleArray? {
         val squaredLength = vector.sumOf { coordinate ->
@@ -79,7 +89,7 @@ internal class RetryCoaching(private val model: RetryCoachingModel) {
     private companion object {
         const val MAX_QUERY_CHARACTERS = 2_000
         // Initial retrieval thresholds. Tune against labeled recap examples from the text model.
-        const val MIN_SIMILARITY = 0.50
-        const val MIN_MARGIN = 0.04
+        const val MIN_SIMILARITY = 0.74
+        const val MIN_MARGIN = 0.03
     }
 }

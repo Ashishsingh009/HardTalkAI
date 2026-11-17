@@ -5,6 +5,7 @@ import ai.hardtalk.source.data.coaching.AndroidRetryCoachingModel
 import ai.hardtalk.source.voice.AndroidVoiceHost
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Process
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity() {
             ungated = ungated,
             activityProvider = { this },
         )
-        val retryCoaching = AndroidRetryCoachingModel(applicationContext)
+        val retryCoaching = if (Process.is64Bit()) AndroidRetryCoachingModel(applicationContext) else null
 
         setContent {
             App(
