@@ -34,6 +34,7 @@ class ChatViewModel(
 
     private var attemptId = 0
     private var callEpoch = 0
+    private var pendingCallEpoch: Int? = null
     private var activeCall: VoiceCallSession? = null
     private var callEventsJob: Job? = null
     private val retryCoaching = retryCoachingModel?.let(::RetryCoaching)
@@ -212,6 +213,14 @@ class ChatViewModel(
         call.hangUp()
     }
 
+    fun onScreenDisposed() {
+        // A retained ViewModel can finish typed replies and recap work after rotation.
+        // Only a connecting or live microphone session needs to end with the screen.
+        if (activeCall != null || pendingCallEpoch == callEpoch) {
+            hangUpCall()
+        }
+    }
+
     fun leaveChat() {
         callEpoch += 1
         stopCallQuietly()
@@ -234,6 +243,7 @@ class ChatViewModel(
         val factory = voiceCallFactory ?: return
         val capturedAttempt = attemptId
         val epoch = ++callEpoch
+        pendingCallEpoch = epoch
         _uiState.update {
             it.copy(
                 inCall = true,
@@ -245,9 +255,11 @@ class ChatViewModel(
             )
         }
         viewModelScope.launch {
-            val session = runCatching {
+            val sessionResult = runCatching {
                 practiceRepository.createVoiceSession(current.scenario.id)
-            }.getOrElse { error ->
+            }
+            if (pendingCallEpoch == epoch) pendingCallEpoch = null
+            val session = sessionResult.getOrElse { error ->
                 if (capturedAttempt != attemptId || epoch != callEpoch) return@launch
                 _uiState.update {
                     it.copy(
@@ -502,6 +514,7 @@ class ChatViewModel(
     }
 
     private fun stopCallQuietly() {
+        pendingCallEpoch = null
         callEventsJob?.cancel()
         callEventsJob = null
         val call = activeCall

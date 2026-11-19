@@ -58,7 +58,7 @@ fun ChatScreen(
     val summary = uiState.roundSummary
 
     DisposableEffect(viewModel) {
-        onDispose { viewModel.leaveChat() }
+        onDispose { viewModel.onScreenDisposed() }
     }
 
     LaunchedEffect(uiState.messages.size, uiState.sending, uiState.roundComplete) {

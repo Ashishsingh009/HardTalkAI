@@ -157,6 +157,55 @@ class PracticeViewModelTest {
     }
 
     @Test
+    fun `screen disposal preserves an in-flight typed reply`() = runTest {
+        val finishSend = CompletableDeferred<Unit>()
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(holdSend = finishSend),
+            FakeBillingRepository(),
+        )
+        val text = "I shipped three launches and would like a raise."
+        viewModel.onInputChange(text)
+        viewModel.send()
+        assertTrue(viewModel.uiState.value.sending)
+
+        viewModel.onScreenDisposed()
+        assertTrue(viewModel.uiState.value.sending)
+        finishSend.complete(Unit)
+        runCurrent()
+
+        val after = viewModel.uiState.value
+        assertFalse(after.sending)
+        assertEquals(1, after.scoredUserTurns)
+        assertEquals(text, after.messages[1].content)
+        assertEquals(80, after.messages[1].feedback?.clarity)
+        assertEquals("Walk me through the number.", after.messages.last().content)
+    }
+
+    @Test
+    fun `explicitly leaving chat drops an in-flight typed reply`() = runTest {
+        val finishSend = CompletableDeferred<Unit>()
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(holdSend = finishSend),
+            FakeBillingRepository(),
+        )
+        viewModel.onInputChange("I shipped three launches and would like a raise.")
+        viewModel.send()
+        assertTrue(viewModel.uiState.value.sending)
+
+        viewModel.leaveChat()
+        val left = viewModel.uiState.value
+        finishSend.complete(Unit)
+        runCurrent()
+
+        assertEquals(left, viewModel.uiState.value)
+        assertFalse(left.sending)
+        assertEquals(0, left.scoredUserTurns)
+        assertNull(left.messages.last().feedback)
+    }
+
+    @Test
     fun `retryScenario restores opening and clears scores`() = runTest {
         val viewModel = ChatViewModel(
             sampleScenario(),
@@ -496,6 +545,127 @@ class PracticeViewModelTest {
     }
 
     @Test
+    fun `screen disposal cancels a pending voice session`() = runTest {
+        val finishMint = CompletableDeferred<Unit>()
+        val session = FakeVoiceCallSession()
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(voice = true, holdVoiceSession = finishMint),
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        viewModel.startCall()
+        assertTrue(viewModel.uiState.value.inCall)
+
+        viewModel.onScreenDisposed()
+        assertFalse(viewModel.uiState.value.inCall)
+        finishMint.complete(Unit)
+        runCurrent()
+
+        assertFalse(viewModel.uiState.value.inCall)
+        assertFalse(viewModel.uiState.value.sending)
+        assertNull(session.connected)
+        assertEquals(0, session.hangUpCount)
+    }
+
+    @Test
+    fun `a canceled mint does not interrupt a later typed send on screen disposal`() = runTest {
+        val finishMint = CompletableDeferred<Unit>()
+        val finishSend = CompletableDeferred<Unit>()
+        val session = FakeVoiceCallSession()
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(
+                voice = true,
+                holdVoiceSession = finishMint,
+                holdSend = finishSend,
+            ),
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        viewModel.startCall()
+        assertTrue(viewModel.uiState.value.inCall)
+        viewModel.retryScenario()
+        viewModel.onInputChange("I'd like to discuss twelve percent this cycle.")
+        viewModel.send()
+        assertTrue(viewModel.uiState.value.sending)
+
+        viewModel.onScreenDisposed()
+        assertTrue(viewModel.uiState.value.sending)
+        finishMint.complete(Unit)
+        finishSend.complete(Unit)
+        runCurrent()
+
+        assertFalse(viewModel.uiState.value.sending)
+        assertFalse(viewModel.uiState.value.inCall)
+        assertEquals(1, viewModel.uiState.value.scoredUserTurns)
+        assertNull(session.connected)
+    }
+
+    @Test
+    fun `screen disposal hangs up an active microphone session`() = runTest {
+        val session = FakeVoiceCallSession()
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(voice = true),
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        viewModel.startCall()
+        assertNotNull(session.connected)
+        assertTrue(viewModel.uiState.value.inCall)
+
+        viewModel.onScreenDisposed()
+        runCurrent()
+
+        assertEquals(1, session.hangUpCount)
+        assertFalse(viewModel.uiState.value.inCall)
+        assertFalse(viewModel.uiState.value.sending)
+    }
+
+    @Test
+    fun `screen disposal preserves scoring after a voice call has ended`() = runTest {
+        val finishScoring = CompletableDeferred<Unit>()
+        val session = FakeVoiceCallSession()
+        val repository = FakePracticeRepository(voice = true, holdVoiceComplete = finishScoring)
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            repository,
+            FakeBillingRepository(),
+            voiceSupported = true,
+            voiceCallFactory = { session },
+        )
+        viewModel.startCall()
+        val turns = listOf(
+            ChatMessage(ChatRole.COUNTERPART, sampleScenario().opening),
+            ChatMessage(ChatRole.USER, "I'd like a raise this cycle."),
+            ChatMessage(ChatRole.COUNTERPART, "Why this cycle?"),
+            ChatMessage(ChatRole.USER, "I shipped three launches."),
+            ChatMessage(ChatRole.COUNTERPART, "What are you asking for?"),
+            ChatMessage(ChatRole.USER, "I'd like twelve percent before Friday."),
+        )
+        session.emit(VoiceCallEvent.Ended(turns, "hangup"))
+        assertEquals(1, repository.voiceCompleteCalls)
+        assertEquals("Scoring the call…", viewModel.uiState.value.callStatus)
+
+        viewModel.onScreenDisposed()
+        assertTrue(viewModel.uiState.value.sending)
+        assertEquals(0, session.hangUpCount)
+        finishScoring.complete(Unit)
+        runCurrent()
+
+        val after = viewModel.uiState.value
+        assertFalse(after.inCall)
+        assertFalse(after.sending)
+        assertEquals(3, after.scoredUserTurns)
+        assertNotNull(after.roundSummary)
+        assertEquals(turns.map { it.content }, after.messages.map { it.content })
+    }
+
+    @Test
     fun `hang up during connect stops the connecting call`() = runTest {
         val session = FakeVoiceCallSession(blockConnect = true)
         val viewModel = ChatViewModel(
@@ -622,7 +792,7 @@ class PracticeViewModelTest {
     }
 
     @Test
-    fun `completed round offers an optional download and then shows a local example`() = runTest {
+    fun `completed round offers an optional download that finishes after screen disposal`() = runTest {
         val finishDownload = CompletableDeferred<Unit>()
         var downloadCalls = 0
         var embedCalls = 0
@@ -657,6 +827,8 @@ class PracticeViewModelTest {
         runCurrent()
         assertEquals(RetryCoachingUiState.Downloading(35), viewModel.uiState.value.retryCoaching)
         assertEquals(1, downloadCalls)
+        viewModel.onScreenDisposed()
+        assertEquals(RetryCoachingUiState.Downloading(35), viewModel.uiState.value.retryCoaching)
         finishDownload.complete(Unit)
         runCurrent()
 
@@ -664,6 +836,69 @@ class PracticeViewModelTest {
         assertTrue(ready.suggestion.quote in turns)
         assertEquals(3, viewModel.uiState.value.scoredUserTurns)
         assertEquals(1, embedCalls)
+    }
+
+    @Test
+    fun `screen disposal preserves an in-flight local example`() = runTest {
+        val finishEmbedding = CompletableDeferred<Unit>()
+        val model = object : RetryCoachingModel {
+            override suspend fun isAvailable(): Boolean = true
+
+            override suspend fun download(onProgress: (Int) -> Unit) = error("Unexpected download")
+
+            override suspend fun embed(inputs: List<String>): List<FloatArray> {
+                finishEmbedding.await()
+                return matchFirstRetryCard(inputs)
+            }
+        }
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(),
+            FakeBillingRepository(),
+            retryCoachingModel = model,
+        )
+        val turns = completeRaiseRound(viewModel)
+        assertEquals(RetryCoachingUiState.Finding, viewModel.uiState.value.retryCoaching)
+
+        viewModel.onScreenDisposed()
+        finishEmbedding.complete(Unit)
+        runCurrent()
+
+        val ready = viewModel.uiState.value.retryCoaching as RetryCoachingUiState.Ready
+        assertTrue(ready.suggestion.quote in turns)
+        assertNotNull(viewModel.uiState.value.roundSummary)
+    }
+
+    @Test
+    fun `explicitly leaving chat drops an in-flight local example`() = runTest {
+        val finishEmbedding = CompletableDeferred<Unit>()
+        val model = object : RetryCoachingModel {
+            override suspend fun isAvailable(): Boolean = true
+
+            override suspend fun download(onProgress: (Int) -> Unit) = error("Unexpected download")
+
+            override suspend fun embed(inputs: List<String>): List<FloatArray> =
+                withContext(NonCancellable) {
+                    finishEmbedding.await()
+                    matchFirstRetryCard(inputs)
+                }
+        }
+        val viewModel = ChatViewModel(
+            sampleScenario(),
+            FakePracticeRepository(),
+            FakeBillingRepository(),
+            retryCoachingModel = model,
+        )
+        completeRaiseRound(viewModel)
+        assertEquals(RetryCoachingUiState.Finding, viewModel.uiState.value.retryCoaching)
+
+        viewModel.leaveChat()
+        val left = viewModel.uiState.value
+        finishEmbedding.complete(Unit)
+        runCurrent()
+
+        assertEquals(left, viewModel.uiState.value)
+        assertFalse(viewModel.uiState.value.retryCoaching is RetryCoachingUiState.Ready)
     }
 
     @Test
@@ -720,9 +955,12 @@ class PracticeViewModelTest {
         private val scenarios: List<Scenario> = listOf(sampleScenario()),
         private val holdVoiceSession: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
         private val holdExtract: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
+        private val holdSend: CompletableDeferred<Unit>? = null,
+        private val holdVoiceComplete: CompletableDeferred<Unit>? = null,
     ) : PracticeRepository {
         var extractInvoiceCalls = 0
         var sendInvoiceCalls = 0
+        var voiceCompleteCalls = 0
         val funnelEvents = mutableListOf<Pair<String, String?>>()
         override suspend fun getScenarios(): List<Scenario> {
             if (failLoad) error("offline")
@@ -735,6 +973,7 @@ class PracticeViewModelTest {
             history: List<ChatMessage>,
         ): ReplyResult {
             if (failSend) error("boom")
+            holdSend?.await()
             assertTrue(history.isNotEmpty())
             val turnNumber = history.count { it.role == ChatRole.USER } + 1
             val feedback = when (turnNumber) {
@@ -774,6 +1013,8 @@ class PracticeViewModelTest {
             turns: List<ChatMessage>,
         ): VoiceCompleteResult {
             if (failSend) error("boom")
+            voiceCompleteCalls++
+            holdVoiceComplete?.await()
             val scored = mutableListOf<ChatMessage>()
             var userCount = 0
             for (turn in turns) {
