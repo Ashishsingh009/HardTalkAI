@@ -32,6 +32,7 @@ android {
         versionCode = 1
         versionName = "1.0"
         // Override at build time: ./gradlew :androidApp:installDebug -Phardtalk.apiBaseUrl=http://192.168.1.10:3001
+        // Release/store builds must pass an HTTPS host; assembleRelease/bundleRelease refuse HTTP.
         val apiBaseUrl = providers.gradleProperty("hardtalk.apiBaseUrl")
             .getOrElse("http://10.0.2.2:3001")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
@@ -78,6 +79,18 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+// Privacy policy: a store build must call an HTTPS API host, not debug HTTP.
+val checkReleaseApiBaseUrl = tasks.register<CheckReleaseApiBaseUrlTask>("checkReleaseApiBaseUrl") {
+    apiBaseUrl.set(
+        providers.gradleProperty("hardtalk.apiBaseUrl").orElse("http://10.0.2.2:3001"),
+    )
+}
+tasks.configureEach {
+    if (name == "assembleRelease" || name == "bundleRelease") {
+        dependsOn(checkReleaseApiBaseUrl)
     }
 }
 

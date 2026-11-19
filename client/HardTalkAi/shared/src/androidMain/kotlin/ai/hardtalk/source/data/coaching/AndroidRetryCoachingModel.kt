@@ -2,6 +2,7 @@ package ai.hardtalk.source.data.coaching
 
 import ai.hardtalk.source.domain.model.RetryCoachingModel
 import android.content.Context
+import android.os.StatFs
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.EmbeddingEngine
 import com.google.ai.edge.litertlm.EmbeddingEngineConfig
@@ -45,6 +46,7 @@ class AndroidRetryCoachingModel(context: Context) : RetryCoachingModel {
                 if (!modelDirectory.isDirectory && !modelDirectory.mkdirs()) {
                     throw IOException("Could not create the model directory.")
                 }
+                ensureStorageAvailable()
 
                 val partialFile = File(modelDirectory, "${modelFile.name}.part")
                 try {
@@ -92,11 +94,22 @@ class AndroidRetryCoachingModel(context: Context) : RetryCoachingModel {
 
     private fun hasModelFile(): Boolean = modelFile.isFile && modelFile.length() == MODEL_SIZE_BYTES
 
+    private fun ensureStorageAvailable() {
+        val stats = StatFs(appContext.noBackupFilesDir.absolutePath)
+        val needed = MODEL_SIZE_BYTES + STORAGE_HEADROOM_BYTES
+        if (stats.availableBytes < needed) {
+            throw IOException("Not enough storage to download the coaching model.")
+        }
+    }
+
     private suspend fun downloadVerifiedFile(file: File, onProgress: (Int) -> Unit) {
         val coroutineContext = currentCoroutineContext()
         val connection = (URL(MODEL_URL).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 15_000
-            readTimeout = 15_000
+            instanceFollowRedirects = true
+            connectTimeout = CONNECT_TIMEOUT_MS
+            readTimeout = READ_TIMEOUT_MS
+            setRequestProperty("Accept-Encoding", "identity")
+            setRequestProperty("User-Agent", USER_AGENT)
         }
         try {
             if (connection.responseCode != HttpURLConnection.HTTP_OK) {
@@ -146,5 +159,9 @@ class AndroidRetryCoachingModel(context: Context) : RetryCoachingModel {
             "resolve/8c9f652b5233a80313d5c848f3656e492cf0397f/embeddinggemma-2-text-270m.litertlm"
         const val MODEL_SIZE_BYTES = 164_626_432L
         const val MODEL_SHA_256 = "2d079ee2f6f066b1f368e8d7c819f55214eaef1d0513b312321901f30ab286fb"
+        const val STORAGE_HEADROOM_BYTES = 8L * 1024L * 1024L
+        const val CONNECT_TIMEOUT_MS = 20_000
+        const val READ_TIMEOUT_MS = 60_000
+        const val USER_AGENT = "HardTalkAI/1.0 (Android retry-coaching)"
     }
 }
