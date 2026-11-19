@@ -33,6 +33,7 @@ data class ChatUiState(
     val invoiceSource: String? = null,
     val invoiceResult: InvoiceSendResult? = null,
     val invoiceError: String? = null,
+    val retryCoaching: RetryCoachingUiState = RetryCoachingUiState.Hidden,
 ) {
     val scoredUserTurns: Int
         get() = messages.count { it.role == ChatRole.USER && it.feedback != null }

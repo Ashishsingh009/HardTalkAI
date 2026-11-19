@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -38,6 +39,8 @@ fun RoundSummaryScreen(
     onRetry: () -> Unit,
     onPickAnother: () -> Unit,
     onReviewInvoice: (() -> Unit)? = null,
+    retryCoaching: RetryCoachingUiState = RetryCoachingUiState.Hidden,
+    onDownloadRetryCoaching: () -> Unit = {},
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -152,13 +155,40 @@ fun RoundSummaryScreen(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = summary.takeaway,
-                    color = HardTalkColors.TextPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    lineHeight = 22.sp,
-                )
+                val suggestion = (retryCoaching as? RetryCoachingUiState.Ready)?.suggestion
+                if (suggestion == null) {
+                    Text(
+                        text = summary.takeaway,
+                        color = HardTalkColors.TextPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 22.sp,
+                    )
+                    RetryCoachingDownload(retryCoaching, onDownloadRetryCoaching)
+                } else {
+                    Text(
+                        text = suggestion.guidance,
+                        color = HardTalkColors.TextPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 22.sp,
+                    )
+                    Text(
+                        text = "You said “${suggestion.quote}”",
+                        color = HardTalkColors.TextSecondary,
+                        fontSize = 13.sp,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                    Text(
+                        text = "Try “${suggestion.example}”",
+                        color = HardTalkColors.TextPrimary,
+                        fontSize = 15.sp,
+                        lineHeight = 21.sp,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
                 val lastTips = summary.turns.last().feedback.tips
                 if (lastTips.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(10.dp))
@@ -236,5 +266,44 @@ fun RoundSummaryScreen(
                 modifier = Modifier.padding(bottom = 8.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun RetryCoachingDownload(
+    state: RetryCoachingUiState,
+    onDownload: () -> Unit,
+) {
+    when (state) {
+        RetryCoachingUiState.DownloadAvailable, RetryCoachingUiState.DownloadFailed -> {
+            if (state == RetryCoachingUiState.DownloadFailed) {
+                Text(
+                    "Couldn’t download the coaching model.",
+                    color = HardTalkColors.TextSecondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+            OutlinedButton(onClick = onDownload, modifier = Modifier.padding(top = 8.dp)) {
+                Text(
+                    if (state == RetryCoachingUiState.DownloadFailed) "Retry download (165 MB)"
+                    else "Get on-device examples (165 MB)",
+                    color = HardTalkColors.AccentMuted,
+                )
+            }
+        }
+        is RetryCoachingUiState.Downloading, RetryCoachingUiState.Finding -> {
+            Text(
+                if (state is RetryCoachingUiState.Downloading) {
+                    "Downloading coaching model… ${state.percent}%"
+                } else {
+                    "Finding an example on this device…"
+                },
+                color = HardTalkColors.TextSecondary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+        RetryCoachingUiState.Hidden, is RetryCoachingUiState.Ready -> Unit
     }
 }

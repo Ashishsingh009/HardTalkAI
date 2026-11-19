@@ -58,7 +58,7 @@ fun ChatScreen(
     val summary = uiState.roundSummary
 
     DisposableEffect(viewModel) {
-        onDispose { viewModel.leaveChat() }
+        onDispose { viewModel.onScreenDisposed() }
     }
 
     LaunchedEffect(uiState.messages.size, uiState.sending, uiState.roundComplete) {
@@ -112,6 +112,8 @@ fun ChatScreen(
                 mood = uiState.mood,
                 tone = uiState.counterpartTone,
                 summary = summary,
+                retryCoaching = uiState.retryCoaching,
+                onDownloadRetryCoaching = viewModel::downloadRetryCoaching,
                 onRetry = viewModel::retryScenario,
                 onPickAnother = onBack,
                 onReviewInvoice = if (uiState.invoiceEligible) viewModel::openInvoiceReview else null,

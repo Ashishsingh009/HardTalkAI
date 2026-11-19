@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 import pytest
 from app.models import InvoiceTerms
@@ -107,7 +108,8 @@ def test_sandbox_create_and_send_uses_invoicing_v2(monkeypatch):
         client_secret="sandbox-secret",
         api_base="https://api-m.sandbox.paypal.com",
     )
-    result = client.create_and_send_invoice(TERMS)
+    # Pin "today" so the Casey demo due date is not clamped once it is in the past.
+    result = client.create_and_send_invoice(TERMS, today=date(2026, 10, 15))
     assert result.mode == "sandbox"
     assert result.invoiceId == "INV2-TEST-CASEY"
     assert result.status == "SENT"

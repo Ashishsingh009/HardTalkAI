@@ -93,6 +93,15 @@
         Requests are handled in memory. Ordinary web-server logs may still record
         IP address, time, and URL path.
       </p>
+      <h2>Optional on-device recap examples</h2>
+      <p>
+        If you choose <strong>Get on-device examples</strong>, Android downloads the
+        EmbeddingGemma 2 text model from Hugging Face and stores it in app-private
+        storage. Example selection uses the completed round on your device. The
+        download carries no practice text, and example selection does not save or
+        upload your replies or their embeddings. Typed drills and live calls use the
+        services described above.
+      </p>
       <h2>First-party funnel counts</h2>
       <p>
         The FastAPI host keeps a short in-memory log of funnel steps
@@ -140,8 +149,9 @@
         <li>This is a workplace-coaching prototype aimed at adults. Do not use it if you are under 13.</li>
       </ul>
       <p>
-        Android’s INTERNET permission is used to reach the coaching API and, for a live
-        call, OpenAI Realtime. RECORD_AUDIO is used only for the optional counterpart call.
+        Android’s INTERNET permission is used to reach the coaching API, OpenAI Realtime
+        for a live call, and Hugging Face if you download on-device examples.
+        RECORD_AUDIO is used only for the optional counterpart call.
         Debug builds may use HTTP on a local network; a store build should use HTTPS.
       </p>
 
